@@ -3,6 +3,8 @@
 Repositorio monorepo del proyecto **pisunpa.com**.
 
 ## Estructura
+
+```
 ├── frontend/                # Angular (SPA)
 ├── backend/                 # Python (API)
 │   └── app/
@@ -13,7 +15,7 @@ Repositorio monorepo del proyecto **pisunpa.com**.
 │       │   ├── egresado.py
 │       │   ├── supletorio.py
 │       │   ├── metricas.py        # KPIs de semestre
-│       │   └── desarrolladores.py # equipo 
+│       │   └── desarrolladores.py # equipo "Nosotros"
 │       ├── schemas/
 │       │   ├── usuario.py
 │       │   ├── egresado.py
@@ -28,6 +30,7 @@ Repositorio monorepo del proyecto **pisunpa.com**.
 │       └── core/
 │           └── security.py
 └── database/                # PostgreSQL (init + seed)
+```
 
 ## Variables de entorno
 
