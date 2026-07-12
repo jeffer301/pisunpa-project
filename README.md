@@ -3,36 +3,38 @@
 Repositorio monorepo del proyecto **pisunpa.com**.
 
 ## Estructura
+
+```
 ├── frontend/                # Angular (SPA)
 ├── backend/                 # Python (API)
 │   └── app/
 │       ├── main.py
 │       ├── database.py
 │       ├── models/
-│       │   ├── usuarios.py
-│       │   ├── egresados.py
-│       │   ├── supletorios.py
+│       │   ├── usuario.py
+│       │   ├── egresado.py
+│       │   ├── supletorio.py
 │       │   ├── metricas.py        # KPIs de semestre
-│       │   └── desarrolladores.py # equipo "Nosotros"
+│       │   └── desarrolladores.py # equipo 
 │       ├── schemas/
-│       │   ├── usuarios.py
+│       │   ├── usuario.py
 │       │   ├── egresado.py
 │       │   ├── supletorio.py
 │       │   ├── metricas.py
 │       │   └── desarrolladores.py
 │       ├── routers/
+│       │   ├── auth.py
 │       │   ├── egresados.py
 │       │   ├── supletorios.py
-│       │   ├── metricas.py
-│       │   └── auth.py
+│       │   └── metricas.py
 │       └── core/
 │           └── security.py
 └── database/                # PostgreSQL (init + seed)
+```
 
 ## Variables de entorno
 
 Antes de levantar el proyecto, crea un archivo `.env` en la raíz (mismo nivel que `docker-compose.yml`), usando `.env.example` como referencia:
-
 
 > El archivo `.env` nunca se sube al repositorio (está en `.gitignore`). Cada quien crea el suyo localmente a partir de `.env.example`.
 
