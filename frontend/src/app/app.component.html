@@ -1,0 +1,35 @@
+<nav class="navbar">
+  <a class="brand" routerLink="/dashboard">pisunpa.com</a>
+  <div class="nav-links">
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/egresados" routerLinkActive="active">Egresados</a>
+    @if (authService.tienePermiso('escribir')) {
+      <a routerLink="/registrar" routerLinkActive="active">Registrar</a>
+    }
+    <a routerLink="/admin" routerLinkActive="active">Admin</a>
+  </div>
+
+  <div class="role-selector">
+    <button class="role-btn" (click)="toggleDropdown()">
+      {{ authService.usuarioActivo().nombre }} · {{ authService.usuarioActivo().rol }}
+      <span class="arrow">{{ dropdownAbierto() ? '▴' : '▾' }}</span>
+    </button>
+    @if (dropdownAbierto()) {
+      <div class="role-dropdown" (mouseleave)="cerrarDropdown()">
+        @for (u of usuariosService.usuarios(); track u.id) {
+          <button
+            class="role-option"
+            [class.selected]="u.id === authService.usuarioActivo().id"
+            (click)="seleccionarUsuario(u)"
+          >
+            {{ u.nombre }} — <span class="rol-text">{{ u.rol }}</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</nav>
+
+<main class="contenido">
+  <router-outlet></router-outlet>
+</main>
