@@ -8,29 +8,35 @@ import { Component, ChangeDetectionStrategy, input } from '@angular/core';
     :host { display: block; }
     .stat-card {
       background: #fff;
-      border-radius: 10px;
-      padding: 1.25rem 1.5rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       border-left: 4px solid #0a2463;
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.35rem;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
     }
     .stat-label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #666;
+      letter-spacing: 0.06em;
+      color: #4a5568;
       font-weight: 600;
     }
     .stat-value {
-      font-size: 2rem;
+      font-size: 2.25rem;
       font-weight: 700;
       color: #0a2463;
+      line-height: 1.2;
     }
     .stat-subtitle {
       font-size: 0.85rem;
-      color: #888;
+      color: #718096;
     }
   `],
   template: `
