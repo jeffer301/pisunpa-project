@@ -238,72 +238,35 @@ legend {
   border: 1px solid #c3e6cb;
 }
 
-/* Role selector */
-.role-selector {
+/* User info */
+.user-info {
   margin-left: auto;
-  position: relative;
-}
-
-.role-btn {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.25);
-  color: #fff;
-  padding: 0.4rem 0.9rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: background 0.2s;
+  gap: 1rem;
 }
 
-.role-btn:hover {
-  background: rgba(255,255,255,0.2);
-}
-
-.role-btn .arrow {
-  font-size: 0.7rem;
-}
-
-.role-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  min-width: 250px;
-  z-index: 100;
-  overflow: hidden;
-}
-
-.role-option {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.6rem 1rem;
-  border: none;
-  background: none;
-  cursor: pointer;
+.user-label {
+  color: rgba(255,255,255,0.85);
   font-size: 0.85rem;
-  color: #333;
-  transition: background 0.15s;
+  white-space: nowrap;
 }
 
-.role-option:hover {
-  background: #f0f4ff;
+.btn-logout {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.role-option.selected {
-  background: #e8eeff;
-  font-weight: 600;
-}
-
-.role-option .rol-text {
-  color: #666;
-  font-weight: normal;
+.btn-logout:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.6);
 }
 
 /* Admin table styles */

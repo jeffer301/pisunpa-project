@@ -1,33 +1,22 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
-import { UsuariosService } from './services/usuarios.service';
-import { Usuario } from './models/usuario.model';
+import { ROL_LABELS } from './core/auth/role.model';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })
 export class AppComponent {
   authService = inject(AuthService);
-  usuariosService = inject(UsuariosService);
+  private router = inject(Router);
 
-  dropdownAbierto = signal(false);
+  rolLabel = computed(() => ROL_LABELS[this.authService.usuarioActivo().rol]);
 
-  toggleDropdown(): void {
-    this.dropdownAbierto.update(v => !v);
-  }
-
-  cerrarDropdown(): void {
-    this.dropdownAbierto.set(false);
-  }
-
-  seleccionarUsuario(usuario: Usuario): void {
-    this.authService.cambiarUsuario(usuario);
-    this.dropdownAbierto.set(false);
+  cerrarSesion(): void {
+    this.router.navigate(['/login']);
   }
 }

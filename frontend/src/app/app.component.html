@@ -6,27 +6,15 @@
     @if (authService.tienePermiso('escribir')) {
       <a routerLink="/registrar" routerLinkActive="active">Registrar</a>
     }
-    <a routerLink="/admin" routerLinkActive="active">Admin</a>
-  </div>
-
-  <div class="role-selector">
-    <button class="role-btn" (click)="toggleDropdown()">
-      {{ authService.usuarioActivo().nombre }} · {{ authService.usuarioActivo().rol }}
-      <span class="arrow">{{ dropdownAbierto() ? '▴' : '▾' }}</span>
-    </button>
-    @if (dropdownAbierto()) {
-      <div class="role-dropdown" (mouseleave)="cerrarDropdown()">
-        @for (u of usuariosService.usuarios(); track u.id) {
-          <button
-            class="role-option"
-            [class.selected]="u.id === authService.usuarioActivo().id"
-            (click)="seleccionarUsuario(u)"
-          >
-            {{ u.nombre }} — <span class="rol-text">{{ u.rol }}</span>
-          </button>
-        }
-      </div>
+    @if (authService.usuarioActivo().rol === 'administrador') {
+      <a routerLink="/admin" routerLinkActive="active">Admin</a>
     }
+  </div>
+  <div class="user-info">
+    <span class="user-label">
+      👤 {{ authService.usuarioActivo().nombre }} ({{ rolLabel() }})
+    </span>
+    <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
   </div>
 </nav>
 
