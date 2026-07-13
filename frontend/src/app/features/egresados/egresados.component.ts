@@ -7,11 +7,12 @@ import { Egresado } from '../../models/egresado.model';
 import { Programa } from '../../models/programa.model';
 import { Departamento } from '../../models/departamento.model';
 import { Ciudad } from '../../models/ciudad.model';
+import { EgresadoModalComponent } from './egresado-modal/egresado-modal.component';
 
 @Component({
   selector: 'app-egresados',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EgresadoModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './egresados.component.html',
 })
@@ -28,6 +29,9 @@ export class EgresadosComponent implements OnInit {
   filtroNombre = signal('');
   filtroPrograma = signal(0);
   filtroLaboral = signal<'todos' | 'trabaja' | 'no_trabaja'>('todos');
+
+  egresadoSeleccionado: Egresado | null = null;
+  mostrarModalEdicion = false;
 
   private mapaProgramas = new Map<number, string>();
   private mapaCiudades = new Map<number, string>();
@@ -110,6 +114,26 @@ export class EgresadosComponent implements OnInit {
     this.egresadosService.eliminarEgresado(id).subscribe(() => {
       this.egresados.update(list => list.filter(e => e.id !== id));
       this.aplicarFiltros();
+    });
+  }
+
+  abrirEditar(egresado: Egresado): void {
+    this.egresadoSeleccionado = { ...egresado };
+    this.mostrarModalEdicion = true;
+  }
+
+  cerrarModalEdicion(): void {
+    this.mostrarModalEdicion = false;
+    this.egresadoSeleccionado = null;
+  }
+
+  onGuardarEdicion(egresado: Egresado): void {
+    this.egresadosService.actualizarEgresado(egresado).subscribe(() => {
+      this.egresados.update(list =>
+        list.map(e => e.id === egresado.id ? egresado : e)
+      );
+      this.aplicarFiltros();
+      this.cerrarModalEdicion();
     });
   }
 }

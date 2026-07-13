@@ -55,6 +55,7 @@
           <td>{{ e.trabajaActualmente ? e.empresa : '—' }}</td>
           @if (authService.tienePermiso('escribir')) {
             <td class="acciones">
+              <button class="btn-editar" (click)="abrirEditar(e)">Editar</button>
               <button class="btn-eliminar" (click)="eliminar(e.id)">Eliminar</button>
             </td>
           }
@@ -69,3 +70,12 @@
     </tbody>
   </table>
 </div>
+
+@if (mostrarModalEdicion && egresadoSeleccionado) {
+  <app-egresado-modal
+    titulo="Editar Egresado"
+    [egresado]="egresadoSeleccionado"
+    (guardar)="onGuardarEdicion($event)"
+    (cerrar)="cerrarModalEdicion()"
+  />
+}
