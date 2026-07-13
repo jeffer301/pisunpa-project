@@ -1,0 +1,60 @@
+<div class="contenedor">
+  <div class="admin-header">
+    <div>
+      <h2>Administración de Usuarios</h2>
+      <p class="subtitulo">Gestiona los usuarios y roles del sistema</p>
+    </div>
+    @if (puedeGestionar) {
+      <button class="btn-nuevo" (click)="abrirCrear()">+ Nuevo Usuario</button>
+    }
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        @if (puedeGestionar) {
+          <th>Acciones</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (u of usuariosService.usuarios(); track u.id) {
+        <tr>
+          <td>{{ u.nombre }}</td>
+          <td>{{ u.email }}</td>
+          <td><span class="rol-badge">{{ rolLabels[u.rol] }}</span></td>
+          <td>
+            <span class="estado-badge" [class.activo]="u.activo" [class.inactivo]="!u.activo">
+              {{ u.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          @if (puedeGestionar) {
+            <td class="acciones">
+              <button class="btn-editar" (click)="abrirEditar(u)">Editar</button>
+              <button class="btn-eliminar" (click)="eliminar(u.id)">Eliminar</button>
+            </td>
+          }
+        </tr>
+      } @empty {
+        <tr>
+          <td [attr.colspan]="puedeGestionar ? 5 : 4" class="vacio">
+            No hay usuarios registrados.
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (mostrarModal) {
+    <app-usuario-modal
+      [titulo]="modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario'"
+      [usuario]="usuarioSeleccionado"
+      (guardar)="onGuardar($event)"
+      (cerrar)="cerrarModal()"
+    />
+  }
+</div>
