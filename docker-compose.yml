@@ -20,7 +20,8 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      # Recuerda: Django necesita la librería dj-database-url para leer esto
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
     depends_on:
       - database
 
@@ -34,8 +35,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Solo mantenemos la inicialización si crea usuarios/roles adicionales.
+      # ELIMINADO: 02-seed.sql. Django se encargará de los datos semilla.
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
 
   pgadmin:
     image: dpage/pgadmin4

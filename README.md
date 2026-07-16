@@ -5,32 +5,48 @@ Repositorio monorepo del proyecto **pisunpa.com**.
 ## Estructura
 
 ```
-├── frontend/                # Angular (SPA)
-├── backend/                 # Python (API)
-│   └── app/
-│       ├── main.py
-│       ├── database.py
-│       ├── models/
-│       │   ├── usuario.py
-│       │   ├── egresado.py
-│       │   ├── supletorio.py
-│       │   ├── metricas.py        # KPIs de semestre
-│       │   └── desarrolladores.py # equipo "Nosotros"
-│       ├── schemas/
-│       │   ├── usuario.py
-│       │   ├── egresado.py
-│       │   ├── supletorio.py
-│       │   ├── metricas.py
-│       │   └── desarrolladores.py
-│       ├── routers/
-│       │   ├── auth.py
-│       │   ├── egresados.py
-│       │   ├── supletorios.py
-│       │   └── metricas.py
-│       └── core/
-│           └── security.py
+├── frontend/                 # Angular (SPA)
+└── backend/                  # Proyecto Django
+    ├── manage.py             # Interfaz de línea de comandos para administrar el proyecto
+    ├── requirements.txt      # Dependencias (Django, djangorestframework, psycopg2, etc.)
+    ├── config/               # El núcleo de configuración (El cerebro)
+    │   ├── __init__.py
+    │   ├── settings.py       # Configuración global, base de datos, JWT y registro de apps
+    │   ├── urls.py           # Enrutador maestro (delegador de URLs)
+    │   └── wsgi.py           # Interfaz de servidor web
+    │
+    └── apps/                 # DOMINIOS DE NEGOCIO (Las "Apps" modulares)
+        │
+        ├── usuarios/         # Módulo 1: Identidad, Roles y Desarrolladores
+        │   ├── models.py     
+        │   ├── serializers.py
+        │   ├── views.py      
+        │   └── urls.py       
+        │
+        ├── supletorios/      # Módulo 2: Máquina de Estados y Solicitudes
+        │   ├── models.py     
+        │   ├── serializers.py
+        │   ├── views.py      
+        │   └── urls.py       
+        │
+        └── egresados/        # Módulo 3: Analítica, Métricas y Seguimiento
+            ├── models.py     
+            ├── serializers.py
+            ├── views.py      
+            └── urls.py
 └── database/                # PostgreSQL (init + seed)
 ```
+
+##  Aviso de Refactorización Arquitectónica: Migración a Django REST Framework
+
+Para soportar la escalabilidad de los 15 módulos proyectados sin colapsar la mantenibilidad del código, el backend ha sido reestructurado. Hemos abandonado FastAPI y la arquitectura de "Capas Técnicas" en favor de Django REST Framework (DRF) y un enfoque de **Diseño Orientado al Dominio (Domain-Driven Design)**.
+
+### ¿Qué cambia para el equipo?
+
+1. **Eliminación de Carpetas Globales:** Ya no existen las carpetas `models/`, `schemas/` o `routers/`. Todo el código está dividido en **Apps** (módulos independientes) dentro de la carpeta `backend/apps/`. Cada app (ej. `supletorios`, `egresados`) es un ecosistema cerrado con su propia base de datos, lógica de validación y rutas.
+2. **Reemplazo de Pydantic por Serializers:** La validación de datos que antes se hacía en la carpeta `schemas/` ahora está estrictamente controlada por los archivos `serializers.py` dentro de cada módulo. Estos serializadores dictan el contrato exacto (JSON) que el frontend (Angular) debe enviar y recibir.
+3. **Autenticación Estricta por JWT:** El sistema de seguridad centralizado ha sido reemplazado. Todas las peticiones desde Angular hacia endpoints protegidos DEBEN incluir el token en la cabecera: `Authorization: Bearer <tu_token>`. 
+4. **Documentación como Contrato:** No se adivinarán las rutas. El contrato de la API (Swagger/OpenAPI) será autogenerado y será la única fuente de verdad para el equipo de frontend. Si un campo en el JSON no coincide con el Serializer, la petición será rechazada con un Error 400 automáticamente.
 
 ## Variables de entorno
 
