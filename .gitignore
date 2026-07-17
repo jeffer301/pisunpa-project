@@ -9,3 +9,5 @@ postgres_data/
 dist/
 frontend/.angular/
 frontend/dist/
+.superpowers/
+docs/superpowers/
