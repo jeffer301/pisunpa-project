@@ -1,13 +1,12 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
-import { UsuariosService } from '../../services/usuarios.service';
-import { Usuario } from '../../models/usuario.model';
-import { ROL_LABELS, Rol } from '../../core/auth/role.model';
 
 @Component({
   selector: 'app-login',
   standalone: true,
+  imports: [FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host {
@@ -23,7 +22,7 @@ import { ROL_LABELS, Rol } from '../../core/auth/role.model';
       border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.2);
       padding: 3rem 2.5rem;
-      max-width: 520px;
+      max-width: 420px;
       width: 90%;
       text-align: center;
     }
@@ -41,83 +40,77 @@ import { ROL_LABELS, Rol } from '../../core/auth/role.model';
       margin-bottom: 2rem;
     }
 
-    .login-section-title {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #a0aec0;
-      font-weight: 600;
-      margin-bottom: 1rem;
+    .form-group {
+      text-align: left;
+      margin-bottom: 1.25rem;
     }
 
-    .user-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.35rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #1a202c;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #3da5d9;
+      box-shadow: 0 0 0 3px rgba(61, 165, 217, 0.15);
+    }
+
+    .form-group input.invalid {
+      border-color: #e53e3e;
+      box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+    }
+
+    .field-error {
+      color: #e53e3e;
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+
+    .login-error {
+      background: #fff5f5;
+      color: #e53e3e;
+      border: 1px solid #fed7d7;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
       text-align: left;
     }
 
-    .user-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0.875rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: #fff;
-    }
-
-    .user-card:hover {
-      border-color: #3da5d9;
-      box-shadow: 0 2px 8px rgba(61, 165, 217, 0.15);
-      transform: translateY(-1px);
-    }
-
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #e8eeff;
-      color: #0a2463;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
+    .btn-login {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0a2463;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
       font-size: 1rem;
-      flex-shrink: 0;
-    }
-
-    .user-details {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .user-name {
       font-weight: 600;
-      color: #1a202c;
-      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
-    .user-email {
-      color: #a0aec0;
-      font-size: 0.8rem;
+    .btn-login:hover {
+      background: #163d8f;
     }
 
-    .rol-tag {
-      background: #e8eeff;
-      color: #0a2463;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .rol-tag.lectura {
-      background: #fff3cd;
-      color: #856404;
+    .btn-login:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
     }
   `],
   template: `
@@ -125,39 +118,91 @@ import { ROL_LABELS, Rol } from '../../core/auth/role.model';
       <div class="login-brand">pisunpa.com</div>
       <p class="login-subtitle">Sistema de Gestión de Egresados</p>
 
-      <p class="login-section-title">Selecciona un usuario para continuar</p>
+      @if (errorMensaje()) {
+        <div class="login-error">{{ errorMensaje() }}</div>
+      }
 
-      <div class="user-cards">
-        @for (u of usuarios(); track u.id) {
-          <button class="user-card" (click)="seleccionar(u)">
-            <div class="user-avatar">{{ u.nombre.charAt(0) }}</div>
-            <div class="user-details">
-              <div class="user-name">{{ u.nombre }}</div>
-              <div class="user-email">{{ u.email }}</div>
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <div class="form-group">
+          <label for="email">Correo Electrónico</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="tu@pisunpa.com"
+            [(ngModel)]="email"
+            name="email"
+            required
+            email
+            #emailField="ngModel"
+            [class.invalid]="emailField.invalid && emailField.touched"
+          />
+          @if (emailField.invalid && emailField.touched) {
+            <div class="field-error">
+              @if (emailField.errors?.['required']) {
+                El correo es obligatorio.
+              } @else if (emailField.errors?.['email']) {
+                Ingrese un correo válido.
+              }
             </div>
-            <span class="rol-tag" [class.lectura]="esLectura(u.rol)">
-              {{ rolLabels[u.rol] }}
-            </span>
-          </button>
-        }
-      </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••"
+            [(ngModel)]="password"
+            name="password"
+            required
+            minlength="6"
+            #passwordField="ngModel"
+            [class.invalid]="passwordField.invalid && passwordField.touched"
+          />
+          @if (passwordField.invalid && passwordField.touched) {
+            <div class="field-error">
+              @if (passwordField.errors?.['required']) {
+                La contraseña es obligatoria.
+              } @else if (passwordField.errors?.['minlength']) {
+                Mínimo 6 caracteres.
+              }
+            </div>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn-login"
+          [disabled]="loginForm.invalid"
+        >
+          Iniciar Sesión
+        </button>
+      </form>
     </div>
   `
 })
 export class LoginComponent {
   private authService = inject(AuthService);
-  private usuariosService = inject(UsuariosService);
   private router = inject(Router);
 
-  usuarios = this.usuariosService.usuarios;
-  rolLabels = ROL_LABELS;
+  email = '';
+  password = '';
+  errorMensaje = signal('');
 
-  esLectura(rol: Rol): boolean {
-    return rol === 'profesor' || rol === 'egresado';
-  }
+  onSubmit(): void {
+    this.errorMensaje.set('');
 
-  seleccionar(usuario: Usuario): void {
-    this.authService.cambiarUsuario(usuario);
-    this.router.navigate(['/dashboard']);
+    if (!this.email || !this.password) {
+      this.errorMensaje.set('Complete todos los campos.');
+      return;
+    }
+
+    const exito = this.authService.login(this.email, this.password);
+    if (exito) {
+      this.router.navigate(['/dashboard']);
+    } else {
+      this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
+    }
   }
 }

@@ -7,6 +7,7 @@ const USUARIOS_MOCK: Usuario[] = [
   { id: 3, nombre: 'Ana María López', email: 'ana@pisunpa.com', rol: 'secretario', activo: true },
   { id: 4, nombre: 'Carlos Pérez', email: 'carlos@pisunpa.com', rol: 'profesor', activo: true },
   { id: 5, nombre: 'Juan Estudiante', email: 'juan@pisunpa.com', rol: 'egresado', activo: true },
+  { id: 6, nombre: 'María Estudiante', email: 'maria@pisunpa.com', rol: 'estudiante', activo: true },
 ];
 
 @Injectable({ providedIn: 'root' })

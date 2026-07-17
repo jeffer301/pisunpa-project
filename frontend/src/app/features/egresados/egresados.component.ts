@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EgresadosService } from '../../services/egresados.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Egresado } from '../../models/egresado.model';
@@ -8,30 +9,52 @@ import { Programa } from '../../models/programa.model';
 import { Departamento } from '../../models/departamento.model';
 import { Ciudad } from '../../models/ciudad.model';
 import { EgresadoModalComponent } from './egresado-modal/egresado-modal.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { FeedbackService } from '../../shared/services/feedback.service';
 
 @Component({
   selector: 'app-egresados',
   standalone: true,
-  imports: [CommonModule, FormsModule, EgresadoModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, EgresadoModalComponent, ConfirmDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './egresados.component.html',
 })
 export class EgresadosComponent implements OnInit {
   private egresadosService = inject(EgresadosService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private feedback = inject(FeedbackService);
   authService = inject(AuthService);
 
-  egresados = signal<Egresado[]>([]);
-  egresadosFiltrados = signal<Egresado[]>([]);
-  programas = signal<Programa[]>([]);
-  departamentos = signal<Departamento[]>([]);
-  ciudades = signal<Ciudad[]>([]);
+  readonly egresados = signal<Egresado[]>([]);
+  readonly programas = signal<Programa[]>([]);
+  readonly departamentos = signal<Departamento[]>([]);
+  readonly ciudades = signal<Ciudad[]>([]);
 
-  filtroNombre = signal('');
-  filtroPrograma = signal(0);
-  filtroLaboral = signal<'todos' | 'trabaja' | 'no_trabaja'>('todos');
+  readonly filtroNombre = signal('');
+  readonly filtroPrograma = signal(0);
+  readonly filtroLaboral = signal<'todos' | 'trabaja' | 'no_trabaja'>('todos');
+  readonly filtroPendiente = signal<'ninguno' | 'sin-empleo' | 'sin-empresa'>('ninguno');
 
-  egresadoSeleccionado: Egresado | null = null;
-  mostrarModalEdicion = false;
+  readonly egresadoSeleccionado = signal<Egresado | null>(null);
+  readonly mostrarModalEdicion = signal(false);
+  readonly egresadoPendienteEliminacion = signal<Egresado | null>(null);
+
+  readonly egresadosFiltrados = computed(() => this.egresados().filter((egresado) => {
+    const consulta = this.filtroNombre().trim().toLocaleLowerCase();
+    const nombre = `${egresado.nombres} ${egresado.apellidos}`.toLocaleLowerCase();
+    if (consulta && !nombre.includes(consulta)) return false;
+    if (this.filtroPrograma() && egresado.idPrograma !== this.filtroPrograma()) return false;
+    if (this.filtroLaboral() === 'trabaja' && !egresado.trabajaActualmente) return false;
+    if (this.filtroLaboral() === 'no_trabaja' && egresado.trabajaActualmente) return false;
+    if (this.filtroPendiente() === 'sin-empleo') return !egresado.trabajaActualmente;
+    if (this.filtroPendiente() === 'sin-empresa') return egresado.trabajaActualmente && !egresado.empresa.trim();
+    return true;
+  }));
+
+  readonly hayFiltrosActivos = computed(() => Boolean(
+    this.filtroNombre().trim() || this.filtroPrograma() || this.filtroLaboral() !== 'todos' || this.filtroPendiente() !== 'ninguno'
+  ));
 
   private mapaProgramas = new Map<number, string>();
   private mapaCiudades = new Map<number, string>();
@@ -52,7 +75,10 @@ export class EgresadosComponent implements OnInit {
     });
     this.egresadosService.getEgresados().subscribe(e => {
       this.egresados.set(e);
-      this.egresadosFiltrados.set([...e]);
+    });
+    this.route.queryParamMap.subscribe(params => {
+      const pendiente = params.get('pendiente');
+      this.filtroPendiente.set(pendiente === 'sin-empleo' || pendiente === 'sin-empresa' ? pendiente : 'ninguno');
     });
   }
 
@@ -70,61 +96,54 @@ export class EgresadosComponent implements OnInit {
 
   onFiltroNombre(valor: string): void {
     this.filtroNombre.set(valor);
-    this.aplicarFiltros();
   }
 
-  onFiltroPrograma(valor: number): void {
+  onFiltroPrograma(valor: string | number): void {
     this.filtroPrograma.set(Number(valor));
-    this.aplicarFiltros();
   }
 
   onFiltroLaboral(valor: string): void {
     this.filtroLaboral.set(valor as 'todos' | 'trabaja' | 'no_trabaja');
-    this.aplicarFiltros();
   }
 
-  aplicarFiltros(): void {
-    let resultado = [...this.egresados()];
-    const nombre = this.filtroNombre();
-    const programa = this.filtroPrograma();
-    const laboral = this.filtroLaboral();
-
-    if (nombre.trim()) {
-      const busqueda = nombre.toLowerCase();
-      resultado = resultado.filter(e =>
-        e.nombres.toLowerCase().includes(busqueda) ||
-        e.apellidos.toLowerCase().includes(busqueda)
-      );
-    }
-
-    if (programa) {
-      resultado = resultado.filter(e => e.idPrograma === programa);
-    }
-
-    if (laboral === 'trabaja') {
-      resultado = resultado.filter(e => e.trabajaActualmente);
-    } else if (laboral === 'no_trabaja') {
-      resultado = resultado.filter(e => !e.trabajaActualmente);
-    }
-
-    this.egresadosFiltrados.set(resultado);
+  aplicarPendiente(pendiente: 'sin-empleo' | 'sin-empresa'): void {
+    this.filtroPendiente.set(pendiente);
   }
 
-  eliminar(id: number): void {
-    this.egresadosService.eliminarEgresado(id).subscribe(() => {
-      this.egresados.update(list => list.filter(e => e.id !== id));
-      this.aplicarFiltros();
+  limpiarFiltros(): void {
+    this.filtroNombre.set('');
+    this.filtroPrograma.set(0);
+    this.filtroLaboral.set('todos');
+    this.filtroPendiente.set('ninguno');
+    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+  }
+
+  solicitarEliminacion(egresado: Egresado): void {
+    this.egresadoPendienteEliminacion.set(egresado);
+  }
+
+  cancelarEliminacion(): void {
+    this.egresadoPendienteEliminacion.set(null);
+  }
+
+  confirmarEliminacion(): void {
+    const egresado = this.egresadoPendienteEliminacion();
+    if (!egresado) return;
+    this.egresadosService.eliminarEgresado(egresado.id).subscribe(() => {
+      this.egresados.update(list => list.filter(item => item.id !== egresado.id));
+      this.cancelarEliminacion();
+      this.feedback.show('Egresado eliminado.');
     });
   }
 
   abrirEditar(egresado: Egresado): void {
-    this.egresadoSeleccionado = { ...egresado };
-    this.mostrarModalEdicion = true;
+    this.egresadoSeleccionado.set({ ...egresado });
+    this.mostrarModalEdicion.set(true);
   }
 
   cerrarModalEdicion(): void {
-    this.mostrarModalEdicion = false;
-    this.egresadoSeleccionado = null;
+    this.mostrarModalEdicion.set(false);
+    this.egresadoSeleccionado.set(null);
   }
 
   onGuardarEdicion(egresado: Egresado): void {
@@ -132,8 +151,8 @@ export class EgresadosComponent implements OnInit {
       this.egresados.update(list =>
         list.map(e => e.id === egresado.id ? egresado : e)
       );
-      this.aplicarFiltros();
       this.cerrarModalEdicion();
+      this.feedback.show('Egresado actualizado.');
     });
   }
 }

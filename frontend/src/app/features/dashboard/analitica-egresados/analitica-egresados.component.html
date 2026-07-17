@@ -1,0 +1,75 @@
+<div class="dashboard-header">
+  <h2>Analítica de Egresados</h2>
+  <p>Métricas clave y distribución del empleo de egresados</p>
+</div>
+
+<div class="kpi-grid">
+  <app-stat-card label="Total Egresados" [value]="totalEgresados()" />
+  <app-stat-card label="Tasa de Empleabilidad" [value]="tasaEmpleabilidad()" [subtitle]="empleabilidadDetalle()" />
+  <app-stat-card label="Tasa de Desempleo" [value]="tasaNoEmpleo()" [subtitle]="noEmpleoDetalle()" />
+</div>
+
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Distribución por Programa</div>
+    @if (distribucionProgramas().length > 0) {
+      <div class="bar-list">
+        @for (prog of distribucionProgramas(); track prog.nombre) {
+          <div class="bar-row">
+            <span class="bar-label">{{ prog.nombre }}</span>
+            <div class="bar-track">
+              <div class="bar-fill programa" [style.width.%]="prog.porcentaje"></div>
+            </div>
+            <span class="bar-count">{{ prog.count }}</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">Sin datos disponibles</div>
+    }
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Sectores Laborales</div>
+    @if (sectoresLaborales().length > 0) {
+      <div class="bar-list">
+        @for (sector of sectoresLaborales(); track sector.nombre) {
+          <div class="bar-row">
+            <span class="bar-label">{{ sector.nombre }}</span>
+            <div class="bar-track">
+              <div class="bar-fill sector" [style.width.%]="sector.porcentaje"></div>
+            </div>
+            <span class="bar-count">{{ sector.count }}</span>
+            <span class="bar-pct">{{ ((sector.count / totalEgresados()) * 100).toFixed(0) }}%</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">Sin datos de sectores disponibles</div>
+    }
+  </div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Distribución Salarial Estimada</div>
+  @if (rangosSalariales().length > 0) {
+    <div class="bar-list">
+      @for (rango of rangosSalariales(); track rango.label) {
+        <div class="bar-row">
+          <span class="bar-label">{{ rango.label }}</span>
+          <div class="bar-track">
+            <div class="bar-fill salario" [style.width.%]="rango.porcentaje"></div>
+          </div>
+          <span class="bar-count">{{ rango.count }}</span>
+          <span class="bar-pct">{{ ((rango.count / egresados.length) * 100).toFixed(0) }}%</span>
+        </div>
+      }
+    </div>
+    <div class="leyenda-salarios">
+      <strong>Nota:</strong> Los datos salariales son estimaciones basadas en los rangos del mercado laboral regional.
+      Los valores exactos se actualizarán cuando la encuesta de seguimiento esté disponible.
+    </div>
+  } @else {
+    <div class="empty-state">Sin datos salariales disponibles</div>
+  }
+</div>

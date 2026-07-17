@@ -5,3 +5,7 @@ venv/
 *.pyc
 pgdata/
 postgres_data/
+.angular/
+dist/
+frontend/.angular/
+frontend/dist/

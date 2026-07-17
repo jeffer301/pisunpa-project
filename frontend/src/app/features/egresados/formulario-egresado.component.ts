@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { EgresadosService } from '../../services/egresados.service';
@@ -10,20 +10,20 @@ import { Ciudad } from '../../models/ciudad.model';
   selector: 'app-formulario-egresado',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './formulario-egresado.component.html',
 })
 export class FormularioEgresadoComponent implements OnInit {
+
+  private fb = inject(FormBuilder);
+  private egresadosService = inject(EgresadosService);
 
   formulario!: FormGroup;
   programas: Programa[] = [];
   departamentos: Departamento[] = [];
   ciudades: Ciudad[] = [];
-  mensajeExito = '';
-
-  constructor(
-    private fb: FormBuilder,
-    private egresadosService: EgresadosService,
-  ) {}
+  mensajeExito = signal('');
+  guardando = signal(false);
 
   ngOnInit(): void {
     this.formulario = this.fb.group({
@@ -67,6 +67,8 @@ export class FormularioEgresadoComponent implements OnInit {
       this.formulario.markAllAsTouched();
       return;
     }
+
+    this.guardando.set(true);
     const val = this.formulario.value;
     this.egresadosService.guardarEgresado({
       nombres: val.nombres,
@@ -79,11 +81,17 @@ export class FormularioEgresadoComponent implements OnInit {
       idCiudad: val.idCiudad,
       trabajaActualmente: val.trabajaActualmente,
       empresa: val.trabajaActualmente ? val.empresa : '',
-    }).subscribe(() => {
-      this.mensajeExito = 'Egresado guardado exitosamente.';
-      this.formulario.reset({ idPrograma: 1, idDepartamento: 1, trabajaActualmente: true });
-      this.egresadosService.getCiudadesByDepartamento(1).subscribe(c => this.ciudades = c);
-      setTimeout(() => this.mensajeExito = '', 3000);
+    }).subscribe({
+      next: () => {
+        this.mensajeExito.set('Egresado guardado exitosamente.');
+        this.formulario.reset({ idPrograma: 1, idDepartamento: 1, trabajaActualmente: true });
+        this.egresadosService.getCiudadesByDepartamento(1).subscribe(c => this.ciudades = c);
+        this.guardando.set(false);
+        setTimeout(() => this.mensajeExito.set(''), 3000);
+      },
+      error: () => {
+        this.guardando.set(false);
+      }
     });
   }
 

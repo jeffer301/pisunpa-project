@@ -1,23 +1,34 @@
-<nav class="navbar">
-  <a class="brand" routerLink="/dashboard">pisunpa.com</a>
-  <div class="nav-links">
-    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-    <a routerLink="/egresados" routerLinkActive="active">Egresados</a>
-    @if (authService.tienePermiso('escribir')) {
-      <a routerLink="/registrar" routerLinkActive="active">Registrar</a>
-    }
-    @if (authService.usuarioActivo().rol === 'administrador') {
-      <a routerLink="/admin" routerLinkActive="active">Admin</a>
-    }
-  </div>
-  <div class="user-info">
-    <span class="user-label">
-      👤 {{ authService.usuarioActivo().nombre }} ({{ rolLabel() }})
-    </span>
-    <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
-  </div>
-</nav>
+@if (authService.usuarioActivo()) {
+  <nav class="navbar">
+    <a class="brand" routerLink="/dashboard">pisunpa.com</a>
+    <div class="nav-links">
+      @if (esEstudiante()) {
+        <a routerLink="/estudiante/solicitud-supletorio" routerLinkActive="active">Solicitar Supletorio</a>
+        <a routerLink="/estudiante/pago-supletorio" routerLinkActive="active">Mis Supletorios</a>
+      }
+      @if (esProfesor()) {
+        <a routerLink="/profesor/supletorios-pendientes" routerLinkActive="active">Supletorios Pendientes</a>
+      }
+      @if (esAdmin()) {
+        <a routerLink="/dashboard/analitica-egresados" routerLinkActive="active">Dashboard Analítico</a>
+        <a routerLink="/admin/gestion-egresados" routerLinkActive="active">Gestión de Egresados</a>
+        <a routerLink="/admin/bandeja-supletorios" routerLinkActive="active">Bandeja de Supletorios</a>
+      }
+      @if (authService.tienePermiso('escribir') && !esAdmin()) {
+        <a routerLink="/registrar" routerLinkActive="active">Registrar</a>
+      }
+      <a routerLink="/dashboard/objetivos-proyecto" routerLinkActive="active">Objetivos del Proyecto</a>
+    </div>
+    <div class="user-info">
+      <span class="user-label">
+        👤 {{ authService.usuarioActivo()!.nombre }} ({{ rolLabel() }})
+      </span>
+      <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  </nav>
+}
 
 <main class="contenido">
+  <app-feedback-banner />
   <router-outlet></router-outlet>
 </main>

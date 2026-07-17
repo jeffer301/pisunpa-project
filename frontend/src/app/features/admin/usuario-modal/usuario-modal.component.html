@@ -35,7 +35,9 @@
 
     <div class="acciones-form">
       <button type="button" class="btn-cancelar" (click)="cerrar.emit()">Cancelar</button>
-      <button type="submit" class="btn-guardar">Guardar</button>
+      <button type="submit" class="btn-guardar" [disabled]="formulario.invalid || guardando()">
+        {{ guardando() ? 'Guardando...' : 'Guardar' }}
+      </button>
     </div>
   </form>
 </app-modal>
