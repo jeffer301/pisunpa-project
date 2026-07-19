@@ -1,12 +1,12 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host {
@@ -112,6 +112,66 @@ import { AuthService } from '../../core/auth/auth.service';
       background: #a0aec0;
       cursor: not-allowed;
     }
+
+    .login-links {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .forgot-link {
+      font-size: 0.85rem;
+      color: #3da5d9;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .forgot-link:hover {
+      color: #0a2463;
+      text-decoration: underline;
+    }
+
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.25rem 0;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .login-divider span {
+      font-size: 0.8rem;
+      color: #a0aec0;
+      white-space: nowrap;
+    }
+
+    .register-btn {
+      display: inline-block;
+      padding: 0.65rem 1rem;
+      background: transparent;
+      color: #0a2463;
+      border: 2px solid #0a2463;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .register-btn:hover {
+      background: #0a2463;
+      color: #fff;
+    }
   `],
   template: `
     <div class="login-container">
@@ -179,6 +239,18 @@ import { AuthService } from '../../core/auth/auth.service';
           Iniciar Sesión
         </button>
       </form>
+
+      <div class="login-links">
+        <a class="forgot-link" routerLink="/login">¿Olvidaste tu contraseña?</a>
+
+        <div class="login-divider">
+          <span>o</span>
+        </div>
+
+        <a class="register-btn" routerLink="/registro-egresado">
+          ¿Eres egresado antiguo y no tienes cuenta? Regístrate aquí
+        </a>
+      </div>
     </div>
   `
 })
