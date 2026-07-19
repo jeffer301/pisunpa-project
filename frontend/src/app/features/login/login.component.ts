@@ -37,7 +37,14 @@ import { AuthService } from '../../core/auth/auth.service';
     .login-subtitle {
       color: #718096;
       font-size: 0.95rem;
-      margin-bottom: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-slogan {
+      font-size: 0.82rem;
+      font-style: italic;
+      color: #5a8db5;
+      margin-bottom: 1.75rem;
     }
 
     .form-group {
@@ -177,6 +184,7 @@ import { AuthService } from '../../core/auth/auth.service';
     <div class="login-container">
       <div class="login-brand">pisunpa.com</div>
       <p class="login-subtitle">Sistema de Gestión de Egresados</p>
+      <p class="login-slogan">Innovar no es una opción, es nuestro próximo paso. ¡Construyamos juntos el futuro!</p>
 
       @if (errorMensaje()) {
         <div class="login-error">{{ errorMensaje() }}</div>
