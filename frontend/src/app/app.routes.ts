@@ -11,6 +11,8 @@ import { GestionEgresadosComponent } from './features/admin/gestion-egresados/ge
 import { AnaliticaEgresadosComponent } from './features/dashboard/analitica-egresados/analitica-egresados.component';
 import { ObjetivosProyectoComponent } from './features/dashboard/objetivos-proyecto/objetivos-proyecto.component';
 import { SupletoriosPendientesComponent } from './features/profesor/supletorios-pendientes/supletorios-pendientes.component';
+import { PortalEgresadoComponent } from './features/portal-egresado/portal-egresado.component';
+import { RegistroManualComponent } from './features/registro-manual/registro-manual.component';
 import { authGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { Rol } from './core/auth/role.model';
@@ -20,6 +22,7 @@ const rolesEstudiante = ['estudiante', 'egresado'] as Rol[];
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'registro-egresado', component: RegistroManualComponent },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'egresados', component: EgresadosComponent, canActivate: [authGuard] },
@@ -27,6 +30,7 @@ export const routes: Routes = [
   { path: 'admin', component: AdminComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'estudiante/solicitud-supletorio', component: SolicitudSupletorioComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesEstudiante } },
   { path: 'estudiante/pago-supletorio', component: PagoSupletorioComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesEstudiante } },
+  { path: 'egresado/perfil', component: PortalEgresadoComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesEstudiante } },
   { path: 'admin/bandeja-supletorios', component: BandejaSupletoriosComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'profesor/supletorios-pendientes', component: SupletoriosPendientesComponent, canActivate: [authGuard, roleGuard], data: { roles: ['profesor'] as Rol[] } },
   { path: 'admin/gestion-egresados', component: GestionEgresadosComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },

@@ -236,7 +236,7 @@ export class PagoSupletorioComponent {
   arrastrando = signal(false);
   subiendo = signal(false);
 
-  readonly urlAcademusoft = 'https://academusoft.unipacifica.edu.co';
+  readonly urlAcademusoft = 'https://www.unipacifico.edu.co/p/46/sistemas-y-tecnologia/academusoft';
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
