@@ -15,7 +15,7 @@ Repositorio monorepo del proyecto **pisunpa.com**.
     │   ├── urls.py           # Enrutador maestro (delegador de URLs)
     │   └── wsgi.py           # Interfaz de servidor web
     │
-    └── apps/                 # DOMINIOS DE NEGOCIO (Las "Apps" modulares)
+    └── app/                 # DOMINIOS DE NEGOCIO (Las "Apps" modulares)
         │
         ├── usuarios/         # Módulo 1: Identidad, Roles y Desarrolladores
         │   ├── models.py     
