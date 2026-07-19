@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { FeedbackService } from '../../shared/services/feedback.service';
 
 @Component({
   selector: 'app-registro-manual',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="registro-container">
@@ -75,6 +76,7 @@ import { FeedbackService } from '../../shared/services/feedback.service';
             @if (mensajeExito()) {
               <span class="exito">{{ mensajeExito() }}</span>
             }
+            <a class="btn-back" routerLink="/login">Volver al Inicio de Sesión</a>
             <button type="submit" class="btn-submit" [disabled]="enviando()">
               {{ enviando() ? 'Enviando...' : 'Enviar Solicitud' }}
             </button>
@@ -179,6 +181,24 @@ import { FeedbackService } from '../../shared/services/feedback.service';
     .btn-submit:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    .btn-back {
+      display: inline-block;
+      padding: 0.6rem 1.25rem;
+      background: transparent;
+      color: var(--color-primary);
+      border: 1px solid var(--color-primary);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-back:hover {
+      background: var(--color-primary);
+      color: #fff;
     }
 
     @media (max-width: 720px) {
