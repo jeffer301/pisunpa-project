@@ -5,36 +5,52 @@ Repositorio monorepo del proyecto **pisunpa.com**.
 ## Estructura
 
 ```
-├── frontend/                 # Angular (SPA)
-└── backend/                  # Proyecto Django
-    ├── manage.py             # Interfaz de línea de comandos para administrar el proyecto
-    ├── requirements.txt      # Dependencias (Django, djangorestframework, psycopg2, etc.)
-    ├── config/               # El núcleo de configuración (El cerebro)
-    │   ├── __init__.py
-    │   ├── settings.py       # Configuración global, base de datos, JWT y registro de apps
-    │   ├── urls.py           # Enrutador maestro (delegador de URLs)
-    │   └── wsgi.py           # Interfaz de servidor web
+├── frontend/                 # Aplicación cliente en Angular (SPA)
+└── backend/                  # Entorno contenerizado del Proyecto Django
+    ├── manage.py             # Script de control e interfaz de comandos de Django
+    ├── Dockerfile            # Configuración de construcción de la imagen backend
+    ├── requirements.txt      # Dependencias (Django, DRF, SimpleJWT, Celery, Redis)
     │
-    └── apps/                 # DOMINIOS DE NEGOCIO (Las "Apps" modulares)
+    ├── core_project/         # Directorio de Configuración Global (El cerebro del proyecto)
+    │   ├── __init__.py
+    │   ├── settings.py       # Configuración centralizada, DB, variables de Celery y JWT
+    │   ├── urls.py           # Enrutador maestro y delegador de prefijos API
+    │   ├── asgi.py           # Configuración asíncrona para servidores web compatibles
+    │   └── wsgi.py           # Interfaz estándar de comunicación con el servidor web
+    │
+    └── app/                  # DOMINIOS DE NEGOCIO (Módulos monolíticos fuertemente cohesionados)
+        ├── __init__.py
         │
-        ├── usuarios/         # Módulo 1: Identidad, Roles y Desarrolladores
+        ├── usuarios/         # Dominio 1: Identidad, Roles (RBAC) y Seguridad Core
+        │   ├── migrations/
+        │   ├── __init__.py
+        │   ├── admin.py
+        │   ├── apps.py       
         │   ├── models.py     
         │   ├── serializers.py
-        │   ├── views.py      
-        │   └── urls.py       
+        │   ├── urls.py
+        │   └── views.py      
         │
-        ├── supletorios/      # Módulo 2: Máquina de Estados y Solicitudes
+        ├── supletorios/      # Dominio 2: Motor de Estados y Solicitudes de Exámenes
+        │   ├── migrations/
+        │   ├── __init__.py
+        │   ├── admin.py
+        │   ├── apps.py       
         │   ├── models.py     
         │   ├── serializers.py
-        │   ├── views.py      
-        │   └── urls.py       
+        │   ├── urls.py
+        │   └── views.py      
         │
-        └── egresados/        # Módulo 3: Analítica, Métricas y Seguimiento
+        └── egresados/        # Dominio 3: Repositorio Dinámico, Analítica y Seguimiento
+            ├── migrations/
+            ├── __init__.py
+            ├── admin.py
+            ├── apps.py       
             ├── models.py     
             ├── serializers.py
-            ├── views.py      
-            └── urls.py
-└── database/                # PostgreSQL (init + seed)
+            ├── urls.py
+            └── views.py      
+└── database/                 # Persistencia e inicialización de PostgreSQL (init + seed)
 ```
 
 ##  Aviso de Refactorización Arquitectónica: Migración a Django REST Framework
@@ -47,6 +63,10 @@ Para soportar la escalabilidad de los 15 módulos proyectados sin colapsar la ma
 2. **Reemplazo de Pydantic por Serializers:** La validación de datos que antes se hacía en la carpeta `schemas/` ahora está estrictamente controlada por los archivos `serializers.py` dentro de cada módulo. Estos serializadores dictan el contrato exacto (JSON) que el frontend (Angular) debe enviar y recibir.
 3. **Autenticación Estricta por JWT:** El sistema de seguridad centralizado ha sido reemplazado. Todas las peticiones desde Angular hacia endpoints protegidos DEBEN incluir el token en la cabecera: `Authorization: Bearer <tu_token>`. 
 4. **Documentación como Contrato:** No se adivinarán las rutas. El contrato de la API (Swagger/OpenAPI) será autogenerado y será la única fuente de verdad para el equipo de frontend. Si un campo en el JSON no coincide con el Serializer, la petición será rechazada con un Error 400 automáticamente.
+
+## Flujo de Trabajo Asíncrono (Celery + Redis)
+
+Para salvaguardar la estabilidad de la API, el hilo principal de peticiones HTTP tiene prohibido ejecutar procesos pesados de cómputo o I/O. Operaciones críticas como "la importación masiva de datos académicos los viernes" o el envío de notificaciones institucionales y códigos de verificación OTP son delegadas de forma asíncrona a un clúster de Celery Workers. Redis actúa como el broker de mensajería centralizado que administra estas colas en memoria con velocidad sub-milisegundo.
 
 ## Variables de entorno
 
@@ -65,7 +85,7 @@ docker compose up --build
 Levantar solo backend, base de datos y pgAdmin mientras el frontend aún no tiene su `package.json`:
 
 ```bash
-docker compose up --build backend database pgadmin
+docker compose up --build backend database celery_worker redis pgadmin
 ```
 
 > Nota: al levantar `backend`, Docker Compose también construye y levanta `database` automáticamente, ya que es una dependencia declarada (`depends_on`). No es necesario iniciar `database` por separado.
@@ -75,6 +95,7 @@ Esto levantará:
 - **Frontend** en `http://localhost:4200`
 - **Backend** en `http://localhost:8000`
 - **PostgreSQL** en `http://localhost:5432`
+- **Redis In-Memory Broker** en http://localhost:6379   
 - **pgAdmin** en `http://localhost:5050`
 
 ## Conectarse a la base de datos con pgAdmin

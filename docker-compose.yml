@@ -15,15 +15,42 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    stdin_open: true 
+    tty: true
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
     environment:
-      # Recuerda: Django necesita la librería dj-database-url para leer esto
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - database
+      - redis
+
+  # Contenedor independiente para procesar tareas en segundo plano
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A core_project worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - database
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
   database:
     image: postgres:16-alpine
@@ -35,8 +62,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Solo mantenemos la inicialización si crea usuarios/roles adicionales.
-      # ELIMINADO: 02-seed.sql. Django se encargará de los datos semilla.
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
 
   pgadmin:
@@ -54,3 +79,4 @@ services:
 volumes:
   pgdata:
   pgadmin_data:
+  redis_data:  # Persistencia para colas de Redis en caso de reinicio
