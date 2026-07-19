@@ -1,0 +1,89 @@
+<div class="contenedor">
+  <h2>Pago de Supletorio</h2>
+  <p class="subtitulo">Universidad del Pacífico — Buenaventura</p>
+
+  <div class="seccion-tutorial">
+    <h3>Cómo descargar tu recibo de pago</h3>
+    <div class="pasos">
+      <div class="paso">
+        <div class="paso-numero">1</div>
+        <div class="paso-contenido">
+          <strong>Ingresar a Academusoft</strong>
+          <p>Ingresa al portal oficial de la university con tu usuario y contraseña institucional.</p>
+        </div>
+      </div>
+      <div class="paso">
+        <div class="paso-numero">2</div>
+        <div class="paso-contenido">
+          <strong>Navegar a la pestaña de Pagos</strong>
+          <p>Una vez dentro, ubica y haz clic en la pestaña <span class="resaltar">"Financiero"</span> o <span class="resaltar">"Pagos"</span> en el menú principal.</p>
+        </div>
+      </div>
+      <div class="paso">
+        <div class="paso-numero">3</div>
+        <div class="paso-contenido">
+          <strong>Seleccionar el supletorio</strong>
+          <p>Busca el registro correspondiente a tu solicitud de supletorio y haz clic en <span class="resaltar">"Ver recibo"</span> o <span class="resaltar">"Descargar"</span>.</p>
+        </div>
+      </div>
+      <div class="paso">
+        <div class="paso-numero">4</div>
+        <div class="paso-contenido">
+          <strong>Descargar el comprobante</strong>
+          <p>Descarga el recibo de pago en formato PDF. Guarda el archivo para subirlo en el paso siguiente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seccion-academusoft">
+    <p>¿Listo? Accede directamente al portal de Academusoft:</p>
+    <a class="btn-academusoft" [href]="urlAcademusoft" target="_blank" rel="noopener noreferrer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" y1="14" x2="21" y2="3" />
+      </svg>
+      Ir a Academusoft
+    </a>
+  </div>
+
+  <div class="seccion-comprobante">
+    <h3>Subir comprobante de pago</h3>
+    <p>Una vez realizado el pago, sube aquí tu comprobante (PDF o imagen).</p>
+
+    <div class="dropzone"
+      [class.arrastrando]="arrastrando()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+      (click)="fileInput.click()">
+      <div class="dropzone-icono">📄</div>
+      <div class="dropzone-texto">
+        Arrastra tu archivo aquí o <strong>haz clic para seleccionar</strong>
+      </div>
+      <p class="dropzone-texto">PDF, JPG, PNG o WebP — Máximo 10 MB</p>
+      <input #fileInput class="dropzone-input" type="file"
+        accept=".pdf,.jpg,.jpeg,.png,.webp"
+        (change)="onFileSelected($event)" />
+    </div>
+
+    @if (archivoComprobante()) {
+      <div class="archivo-cargado">
+        <div class="archivo-cargado-icono">✅</div>
+        <div class="archivo-cargado-info">
+          <div class="nombre">{{ archivoComprobante()!.name }}</div>
+          <div class="tamano">{{ formatTamano(archivoComprobante()!.size) }}</div>
+        </div>
+        <button class="btn-quitar-archivo" type="button" (click)="eliminarArchivo()">Quitar</button>
+      </div>
+    }
+
+    <button class="btn-enviar" type="button"
+      [disabled]="!archivoComprobante() || subiendo()"
+      (click)="enviarComprobante()">
+      {{ subiendo() ? 'Enviando...' : 'Enviar comprobante' }}
+    </button>
+  </div>
+</div>

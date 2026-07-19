@@ -1,0 +1,106 @@
+<div class="contenedor">
+  <h2>Registro de Egresado</h2>
+  <p class="subtitulo">Universidad del Pacífico — Buenaventura</p>
+
+  @if (mensajeExito()) {
+    <div class="exito">{{ mensajeExito() }}</div>
+  }
+
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+
+    <div class="campo">
+      <label for="nombres">Nombres *</label>
+      <input id="nombres" formControlName="nombres" />
+      @if (campoInvalido('nombres')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="apellidos">Apellidos *</label>
+      <input id="apellidos" formControlName="apellidos" />
+      @if (campoInvalido('apellidos')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="direccion">Dirección *</label>
+      <input id="direccion" formControlName="direccion" />
+      @if (campoInvalido('direccion')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="edad">Edad *</label>
+      <input id="edad" type="number" formControlName="edad" />
+      @if (campoInvalido('edad')) {
+        <span class="error">Edad mínima 18 años.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="fechaGraduacion">Fecha de Graduación *</label>
+      <input id="fechaGraduacion" type="date" formControlName="fechaGraduacion" />
+      @if (campoInvalido('fechaGraduacion')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="idPrograma">Programa *</label>
+      <select id="idPrograma" formControlName="idPrograma">
+        @for (p of programas; track p.id) {
+          <option [value]="p.id">{{ p.nombre }}</option>
+        }
+      </select>
+    </div>
+
+    <fieldset>
+      <legend>Ubicación</legend>
+
+      <div class="campo">
+        <label for="idDepartamento">Departamento *</label>
+        <select id="idDepartamento" formControlName="idDepartamento">
+          @for (d of departamentos; track d.id) {
+            <option [value]="d.id">{{ d.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="idCiudad">Ciudad *</label>
+        <select id="idCiudad" formControlName="idCiudad">
+          @for (c of ciudades; track c.id) {
+            <option [value]="c.id">{{ c.nombre }}</option>
+          }
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Situación Laboral</legend>
+
+      <div class="campo-radio">
+        <label>¿Trabaja actualmente? *</label>
+        <label><input type="radio" formControlName="trabajaActualmente" [value]="true" /> Sí</label>
+        <label><input type="radio" formControlName="trabajaActualmente" [value]="false" /> No</label>
+      </div>
+
+      @if (formulario.get('trabajaActualmente')!.value) {
+        <div class="campo">
+          <label for="empresa">Empresa *</label>
+          <input id="empresa" formControlName="empresa" />
+          @if (campoInvalido('empresa')) {
+            <span class="error">Campo obligatorio cuando trabaja.</span>
+          }
+        </div>
+      }
+    </fieldset>
+
+    <button type="submit" [disabled]="formulario.invalid || guardando()">
+      {{ guardando() ? 'Guardando...' : 'Guardar' }}
+    </button>
+  </form>
+</div>

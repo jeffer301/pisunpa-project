@@ -1,0 +1,208 @@
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/auth/auth.service';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    :host {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a2463 0%, #163d8f 50%, #3da5d9 100%);
+    }
+
+    .login-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      padding: 3rem 2.5rem;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .login-brand {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0a2463;
+      margin-bottom: 0.25rem;
+    }
+
+    .login-subtitle {
+      color: #718096;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.35rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #1a202c;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #3da5d9;
+      box-shadow: 0 0 0 3px rgba(61, 165, 217, 0.15);
+    }
+
+    .form-group input.invalid {
+      border-color: #e53e3e;
+      box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+    }
+
+    .field-error {
+      color: #e53e3e;
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+
+    .login-error {
+      background: #fff5f5;
+      color: #e53e3e;
+      border: 1px solid #fed7d7;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0a2463;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-login:hover {
+      background: #163d8f;
+    }
+
+    .btn-login:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+    }
+  `],
+  template: `
+    <div class="login-container">
+      <div class="login-brand">pisunpa.com</div>
+      <p class="login-subtitle">Sistema de Gestión de Egresados</p>
+
+      @if (errorMensaje()) {
+        <div class="login-error">{{ errorMensaje() }}</div>
+      }
+
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <div class="form-group">
+          <label for="email">Correo Electrónico</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="tu@pisunpa.com"
+            [(ngModel)]="email"
+            name="email"
+            required
+            email
+            #emailField="ngModel"
+            [class.invalid]="emailField.invalid && emailField.touched"
+          />
+          @if (emailField.invalid && emailField.touched) {
+            <div class="field-error">
+              @if (emailField.errors?.['required']) {
+                El correo es obligatorio.
+              } @else if (emailField.errors?.['email']) {
+                Ingrese un correo válido.
+              }
+            </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••"
+            [(ngModel)]="password"
+            name="password"
+            required
+            minlength="6"
+            #passwordField="ngModel"
+            [class.invalid]="passwordField.invalid && passwordField.touched"
+          />
+          @if (passwordField.invalid && passwordField.touched) {
+            <div class="field-error">
+              @if (passwordField.errors?.['required']) {
+                La contraseña es obligatoria.
+              } @else if (passwordField.errors?.['minlength']) {
+                Mínimo 6 caracteres.
+              }
+            </div>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn-login"
+          [disabled]="loginForm.invalid"
+        >
+          Iniciar Sesión
+        </button>
+      </form>
+    </div>
+  `
+})
+export class LoginComponent {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  email = '';
+  password = '';
+  errorMensaje = signal('');
+
+  onSubmit(): void {
+    this.errorMensaje.set('');
+
+    if (!this.email || !this.password) {
+      this.errorMensaje.set('Complete todos los campos.');
+      return;
+    }
+
+    const exito = this.authService.login(this.email, this.password);
+    if (exito) {
+      this.router.navigate(['/dashboard']);
+    } else {
+      this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
+    }
+  }
+}

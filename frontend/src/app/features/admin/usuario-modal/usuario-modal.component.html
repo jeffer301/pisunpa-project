@@ -1,0 +1,43 @@
+<app-modal [titulo]="titulo()" (cerrar)="cerrar.emit()">
+  <form [formGroup]="formulario" (ngSubmit)="onSubmit()">
+
+    <div class="campo">
+      <label for="nombre">Nombre *</label>
+      <input id="nombre" formControlName="nombre" />
+      @if (campoInvalido('nombre')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="email">Email *</label>
+      <input id="email" type="email" formControlName="email" />
+      @if (campoInvalido('email')) {
+        <span class="error">Ingrese un email válido.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="rol">Rol *</label>
+      <select id="rol" formControlName="rol">
+        @for (r of roles; track r.value) {
+          <option [value]="r.value">{{ r.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="campo-check">
+      <label>
+        <input type="checkbox" formControlName="activo" />
+        Activo
+      </label>
+    </div>
+
+    <div class="acciones-form">
+      <button type="button" class="btn-cancelar" (click)="cerrar.emit()">Cancelar</button>
+      <button type="submit" class="btn-guardar" [disabled]="formulario.invalid || guardando()">
+        {{ guardando() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </div>
+  </form>
+</app-modal>
