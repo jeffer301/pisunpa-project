@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FeedbackService } from '../../../shared/services/feedback.service';
+import { SupletorioService } from '../../../services/supletorio.service';
 
 @Component({
   selector: 'app-pago-supletorio',
@@ -232,11 +233,13 @@ export class PagoSupletorioComponent {
 
   private feedbackService = inject(FeedbackService);
 
+  private supletorioService = inject(SupletorioService);
+
   archivoComprobante = signal<File | null>(null);
   arrastrando = signal(false);
   subiendo = signal(false);
 
-  readonly urlAcademusoft = 'https://academusoft.unipacifica.edu.co';
+  readonly urlAcademusoft = 'https://www.unipacifico.edu.co/p/46/sistemas-y-tecnologia/academusoft';
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -294,16 +297,24 @@ export class PagoSupletorioComponent {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  enviarComprobante(): void {
-    const archivo = this.archivoComprobante();
-    if (!archivo) return;
+ 
+enviarComprobante(): void {
+  const archivo = this.archivoComprobante();
+  if (!archivo) return;
 
-    this.subiendo.set(true);
+  this.subiendo.set(true);
 
-    setTimeout(() => {
+  this.supletorioService.subirComprobante(archivo).subscribe({
+    next: () => {
       this.feedbackService.show('Comprobante de pago enviado exitosamente.', 'success');
       this.archivoComprobante.set(null);
       this.subiendo.set(false);
-    }, 1500);
-  }
+    },
+    error: (err) => {
+      this.feedbackService.show('No se pudo enviar el comprobante.', 'error');
+      this.subiendo.set(false);
+      console.error(err);
+    }
+  });
+}
 }

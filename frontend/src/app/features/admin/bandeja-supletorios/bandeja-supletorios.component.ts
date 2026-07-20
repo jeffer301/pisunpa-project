@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
+import { SupletorioService } from '../../../services/supletorio.service';
+
 export type EstadoSolicitud = 'pendiente' | 'aprobada' | 'rechazada';
 export type EstadoPago = 'pendiente' | 'comprobante_subido' | 'pagado';
 
@@ -148,12 +150,17 @@ export class BandejaSupletoriosComponent {
 
   readonly feedbackService = inject(FeedbackService);
 
+  private supletorioService = inject(SupletorioService); // nuevo
+
+  
+
   readonly filtroBusqueda = signal('');
   readonly filtroEstadoSolicitud = signal<'todos' | EstadoSolicitud>('todos');
   readonly filtroEstadoPago = signal<'todos' | EstadoPago>('todos');
   readonly solicitudPendienteAccion = signal<{ solicitud: SolicitudSupletorio; accion: 'aprobar' | 'rechazar' } | null>(null);
   readonly solicitudPendientePago = signal<SolicitudSupletorio | null>(null);
 
+  /*
   readonly solicitudes = signal<SolicitudSupletorio[]>([
     {
       id: 1, estudiante: 'Ana García López', email: 'ana.garcia@unipacifica.edu.co',
@@ -179,7 +186,20 @@ export class BandejaSupletoriosComponent {
       grupo: 'C', descripcion: 'No asistió por viaje familiar.', fechaParcial: '2026-07-05',
       estadoSolicitud: 'rechazada', estadoPago: 'pendiente', comprobanteNombre: null,
     },
-  ]);
+  ]); */
+
+
+  readonly solicitudes = signal<SolicitudSupletorio[]>([]); // ya no hardcodeado
+  
+  ngOnInit(): void {
+    this.supletorioService.getBandeja().subscribe({
+      next: (data) => this.solicitudes.set(data),
+      error: (err) => {
+        this.feedbackService.show('No se pudieron cargar las solicitudes.', 'error');
+        console.error(err);
+      }
+    });
+  }
 
   readonly solicitudesFiltradas = computed(() => this.solicitudes().filter(s => {
     const consulta = this.filtroBusqueda().trim().toLocaleLowerCase();
@@ -210,17 +230,31 @@ export class BandejaSupletoriosComponent {
     this.solicitudPendienteAccion.set(null);
   }
 
+ 
   confirmarAccion(): void {
     const pendiente = this.solicitudPendienteAccion();
     if (!pendiente) return;
 
-    const nuevoEstado: EstadoSolicitud = pendiente.accion === 'aprobar' ? 'aprobada' : 'rechazada';
-    this.solicitudes.update(lista =>
-      lista.map(s => s.id === pendiente.solicitud.id ? { ...s, estadoSolicitud: nuevoEstado } : s)
-    );
-    this.feedbackService.show(`Solicitud ${nuevoEstado}.`);
-    this.cancelarAccion();
+    const accion$ = pendiente.accion === 'aprobar'
+      ? this.supletorioService.aprobar(pendiente.solicitud.id)
+      : this.supletorioService.rechazar(pendiente.solicitud.id);
+
+    accion$.subscribe({
+      next: (actualizado) => {
+        this.solicitudes.update(lista =>
+          lista.map(s => s.id === actualizado.id ? actualizado : s)
+        );
+        this.feedbackService.show(`Solicitud ${actualizado.estadoSolicitud}.`);
+        this.cancelarAccion();
+      },
+      error: (err) => {
+        this.feedbackService.show('No se pudo procesar la acción.', 'error');
+        console.error(err);
+      }
+    });
   }
+
+
 
   solicitarConfirmarPago(solicitud: SolicitudSupletorio): void {
     this.solicitudPendientePago.set(solicitud);
@@ -230,16 +264,25 @@ export class BandejaSupletoriosComponent {
     this.solicitudPendientePago.set(null);
   }
 
-  confirmarPago(): void {
+    confirmarPago(): void {
     const solicitud = this.solicitudPendientePago();
     if (!solicitud) return;
 
-    this.solicitudes.update(lista =>
-      lista.map(s => s.id === solicitud.id ? { ...s, estadoPago: 'pagado' } : s)
-    );
-    this.feedbackService.show('Pago confirmado.');
-    this.cancelarConfirmarPago();
+    this.supletorioService.confirmarPago(solicitud.id).subscribe({
+      next: (actualizado) => {
+        this.solicitudes.update(lista =>
+          lista.map(s => s.id === actualizado.id ? actualizado : s)
+        );
+        this.feedbackService.show('Pago confirmado.');
+        this.cancelarConfirmarPago();
+      },
+      error: (err) => {
+        this.feedbackService.show('No se pudo confirmar el pago.', 'error');
+        console.error(err);
+      }
+    });
   }
+
 
   textoAccionAprobarRechazar(): { titulo: string; mensaje: string } {
     const pendiente = this.solicitudPendienteAccion();

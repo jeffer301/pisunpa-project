@@ -5,60 +5,62 @@ Repositorio monorepo del proyecto **pisunpa.com**.
 ## Estructura
 
 ```
-├── frontend/                    # Angular (SPA)
-└── backend/                     # Proyecto Django
-    ├── manage.py                # DJANGO_SETTINGS_MODULE = 'core_project.settings'
-    ├── requirements.txt         # Django, DRF, django-environ, psycopg2-binary, dj-database-url,
-    │                             # django-cors-headers, djangorestframework-simplejwt,
-    │                             # drf-spectacular, django-import-export, celery, redis
+├── frontend/
+└── backend/
+    ├── manage.py
+    ├── requirements.txt
     ├── Dockerfile
     │
-    ├── core_project/            # Núcleo de configuración (antes documentado como config/)
+    ├── core_project/
     │   ├── __init__.py
-    │   ├── settings.py          # Scaffold default de Django (sin DRF, JWT, apps ni Postgres configurados aún)
+    │   ├── settings.py
     │   ├── urls.py
     │   ├── wsgi.py
     │   └── asgi.py
     │
-    └── app/                     # DOMINIOS DE NEGOCIO (Las "Apps" modulares)
+    └── app/
+        ├── __init__.py
         │
-        ├── usuarios/            # Módulo 1: Identidad, Roles y Desarrolladores
+        ├── usuarios/
         │   ├── __init__.py
         │   ├── admin.py
         │   ├── apps.py
         │   ├── migrations/
         │   │   └── __init__.py
-        │   ├── models.py        
+        │   ├── models.py
         │   ├── serializers.py
-        │   ├── views.py         
+        │   ├── views.py
         │   ├── urls.py
         │   └── tests.py
         │
-        ├── supletorios/         # Módulo 2: Máquina de Estados y Solicitudes
+        ├── supletorios/
         │   ├── __init__.py
         │   ├── admin.py
         │   ├── apps.py
         │   ├── migrations/
-        │   │   └── __init__.py
-        │   ├── models.py        
+        │   │   ├── __init__.py
+        │   │   └── 0001_initial.py
+        │   ├── models.py
         │   ├── serializers.py
-        │   ├── views.py         
+        │   ├── views.py
         │   ├── urls.py
+        │   ├── utils.py
         │   └── tests.py
         │
-        └── egresados/           # Módulo 3: Analítica, Métricas y Seguimiento
+        └── egresados/
             ├── __init__.py
             ├── admin.py
             ├── apps.py
             ├── migrations/
-            │   └── __init__.py
-            ├── models.py        
+            │   ├── __init__.py
+            │   └── 0001_initial.py
+            ├── models.py
             ├── serializers.py
-            ├── views.py         
+            ├── views.py
             ├── urls.py
             └── tests.py
 
-└── database/                    # PostgreSQL (init + seed) 
+└── database/
 ```
 
 ##  Aviso de Refactorización Arquitectónica: Migración a Django REST Framework
@@ -71,6 +73,33 @@ Para soportar la escalabilidad de los 15 módulos proyectados sin colapsar la ma
 2. **Reemplazo de Pydantic por Serializers:** La validación de datos que antes se hacía en la carpeta `schemas/` ahora está estrictamente controlada por los archivos `serializers.py` dentro de cada módulo. Estos serializadores dictan el contrato exacto (JSON) que el frontend (Angular) debe enviar y recibir.
 3. **Autenticación Estricta por JWT:** El sistema de seguridad centralizado ha sido reemplazado. Todas las peticiones desde Angular hacia endpoints protegidos DEBEN incluir el token en la cabecera: `Authorization: Bearer <tu_token>`. 
 4. **Documentación como Contrato:** No se adivinarán las rutas. El contrato de la API (Swagger/OpenAPI) será autogenerado y será la única fuente de verdad para el equipo de frontend. Si un campo en el JSON no coincide con el Serializer, la petición será rechazada con un Error 400 automáticamente.
+
+
+## Estado actual del proyecto (actualizado)
+
+### Backend
+- Núcleo (`core_project/`): DRF, JWT (SimpleJWT), CORS y las 3 apps registradas. Base de datos en SQLite local mientras no exista Postgres real (cambia con `USE_SQLITE=False` en `.env`).
+- **supletorios**: módulo funcional completo (modelo, serializers, views, admin). Endpoints protegidos con JWT.
+- **egresados**: solo catálogos (`Programa`, `Departamento`, `Ciudad`) implementados y públicos. El resto del módulo (gestión, analítica) en pausa.
+- **usuarios**: pendiente (Duvan) — sin esto, no hay JWT real y los endpoints de `supletorios` responden 401.
+- Documentación autogenerada: `http://127.0.0.1:8000/api/docs/`
+
+### Frontend
+- Catálogos de egresados (`programas`, `departamentos`, `ciudades`) conectados por HTTP al backend real.
+- `supletorio.service.ts` conectado a los 4 componentes de supletorios (solicitud, pago, bandeja, pendientes) — responde 401 hasta que exista autenticación JWT real.
+- Login sigue siendo mock (`usuarios.service.ts`), no genera token válido para el backend.
+
+### Cómo correr en desarrollo
+\`\`\`bash
+# Backend
+cd backend
+python manage.py runserver
+
+# Frontend
+cd frontend
+ng serve
+\`\`\`
+
 
 ## Variables de entorno
 

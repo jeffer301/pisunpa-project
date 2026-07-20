@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
+import { SupletorioService } from '../../../services/supletorio.service';
+
 interface SupletorioPendiente {
   id: number;
   estudiante: string;
@@ -198,8 +200,11 @@ export class SupletoriosPendientesComponent {
 
   private readonly feedbackService = inject(FeedbackService);
 
+  private supletorioService = inject(SupletorioService); 
+
   readonly supletorioPendiente = signal<SupletorioPendiente | null>(null);
 
+  /*
   readonly solicitudes = signal<SupletorioPendiente[]>([
     {
       id: 1, estudiante: 'Luis Rodríguez Pérez', programa: 'Derecho',
@@ -211,11 +216,26 @@ export class SupletoriosPendientesComponent {
       asignatura: 'Contabilidad General', grupo: 'A', fechaParcial: '2026-07-12',
       estado: 'listo',
     },
-  ]);
+  ]); */
+
+   readonly solicitudes = signal<SupletorioPendiente[]>([]); // ya no hardcodeado
 
   readonly pendientes = computed(() =>
     this.solicitudes().filter(s => s.estado === 'listo')
   );
+
+   ngOnInit(): void {
+    this.supletorioService.getPendientes().subscribe({
+      next: (data) => this.solicitudes.set(data),
+      error: (err) => {
+        this.feedbackService.show('No se pudieron cargar los pendientes.', 'error');
+        console.error(err);
+      }
+    });
+  }
+
+ 
+
 
   confirmarRealizado(supletorio: SupletorioPendiente): void {
     this.supletorioPendiente.set(supletorio);
@@ -225,14 +245,22 @@ export class SupletoriosPendientesComponent {
     this.supletorioPendiente.set(null);
   }
 
-  marcarRealizado(): void {
+   marcarRealizado(): void {
     const supletorio = this.supletorioPendiente();
     if (!supletorio) return;
 
-    this.solicitudes.update(lista =>
-      lista.map(s => s.id === supletorio.id ? { ...s, estado: 'realizado' as const } : s)
-    );
-    this.feedbackService.show(`Supletorio de ${supletorio.estudiante} marcado como realizado.`);
-    this.cancelarRealizado();
+    this.supletorioService.marcarRealizado(supletorio.id).subscribe({
+      next: (actualizado) => {
+        this.solicitudes.update(lista =>
+          lista.map(s => s.id === actualizado.id ? actualizado : s)
+        );
+        this.feedbackService.show(`Supletorio de ${actualizado.estudiante} marcado como realizado.`);
+        this.cancelarRealizado();
+      },
+      error: (err) => {
+        this.feedbackService.show('No se pudo marcar como realizado.', 'error');
+        console.error(err);
+      }
+    });
   }
 }

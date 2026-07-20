@@ -3,6 +3,7 @@
     <a class="brand" routerLink="/dashboard">pisunpa.com</a>
     <div class="nav-links">
       @if (esEstudiante()) {
+        <a routerLink="/egresado/perfil" routerLinkActive="active">Mi Portal</a>
         <a routerLink="/estudiante/solicitud-supletorio" routerLinkActive="active">Solicitar Supletorio</a>
         <a routerLink="/estudiante/pago-supletorio" routerLinkActive="active">Mis Supletorios</a>
       }

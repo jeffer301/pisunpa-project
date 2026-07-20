@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { EgresadosService } from '../../../services/egresados.service';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { Programa } from '../../../models/programa.model';
+import { SupletorioService } from '../../../services/supletorio.service';
 
 @Component({
   selector: 'app-solicitud-supletorio',
@@ -76,6 +77,8 @@ export class SolicitudSupletorioComponent implements OnInit {
   private egresadosService = inject(EgresadosService);
   private feedbackService = inject(FeedbackService);
 
+  private supletorioService = inject(SupletorioService);
+
   formulario!: FormGroup;
   programas: Programa[] = [];
   guardando = signal(false);
@@ -119,21 +122,38 @@ export class SolicitudSupletorioComponent implements OnInit {
     this.archivosSeleccionados.update(files => files.filter((_, i) => i !== index));
   }
 
-  guardar(): void {
-    if (this.formulario.invalid) {
-      this.formulario.markAllAsTouched();
-      return;
-    }
+  
+guardar(): void {
+  if (this.formulario.invalid) {
+    this.formulario.markAllAsTouched();
+    return;
+  }
 
-    this.guardando.set(true);
+  this.guardando.set(true);
+  const val = this.formulario.value;
 
-    setTimeout(() => {
+  this.supletorioService.crearSolicitud({
+    fechaParcial: val.fechaParcial,
+    profesor: val.profesor,
+    asignatura: val.asignatura,
+    grupoAsignatura: val.grupoAsignatura,
+    idPrograma: val.idPrograma,
+    descripcion: val.descripcion,
+    anexos: this.archivosSeleccionados(),
+  }).subscribe({
+    next: () => {
       this.feedbackService.show('Solicitud de supletorio enviada exitosamente.', 'success');
       this.formulario.reset();
       this.archivosSeleccionados.set([]);
       this.guardando.set(false);
-    }, 1000);
-  }
+    },
+    error: (err) => {
+      this.feedbackService.show('No se pudo enviar la solicitud.', 'error');
+      this.guardando.set(false);
+      console.error(err);
+    }
+  });
+}
 
   campoInvalido(campo: string): boolean {
     const ctrl = this.formulario.get(campo)!;

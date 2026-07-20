@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { Egresado } from '../models/egresado.model';
 import { Programa } from '../models/programa.model';
@@ -8,32 +9,10 @@ import { Ciudad } from '../models/ciudad.model';
 @Injectable({ providedIn: 'root' })
 export class EgresadosService {
 
-  private departamentos: Departamento[] = [
-    { id: 1, nombre: 'Valle del Cauca' },
-    { id: 2, nombre: 'Cauca' },
-    { id: 3, nombre: 'Nariño' },
-    { id: 4, nombre: 'Bolívar' },
-    { id: 5, nombre: 'Antioquia' },
-  ];
+  private http = inject(HttpClient);
+  private readonly apiUrl = 'http://127.0.0.1:8000/api/egresados';
 
-  private ciudades: Ciudad[] = [
-    { id: 1, nombre: 'Cali', idDepartamento: 1 },
-    { id: 2, nombre: 'Buenaventura', idDepartamento: 1 },
-    { id: 3, nombre: 'Palmira', idDepartamento: 1 },
-    { id: 4, nombre: 'Popayán', idDepartamento: 2 },
-    { id: 5, nombre: 'Pasto', idDepartamento: 3 },
-    { id: 6, nombre: 'Cartagena', idDepartamento: 4 },
-    { id: 7, nombre: 'Medellín', idDepartamento: 5 },
-  ];
-
-  private programas: Programa[] = [
-    { id: 1, nombre: 'Ingeniería de Sistemas' },
-    { id: 2, nombre: 'Ingeniería Civil' },
-    { id: 3, nombre: 'Derecho' },
-    { id: 4, nombre: 'Medicina' },
-    { id: 5, nombre: 'Administración de Empresas' },
-  ];
-
+  // --- Egresados: sigue en mock, sin tocar ---
   private egresados: Egresado[] = [
     {
       id: 1, nombres: 'Juan', apellidos: 'Pérez López',
@@ -54,25 +33,28 @@ export class EgresadosService {
       trabajaActualmente: false, empresa: ''
     },
   ];
-
   private nextId = 4;
 
+  // --- Catálogos: ahora conectados al backend real ---
+
   getDepartamentos(): Observable<Departamento[]> {
-    return of(this.departamentos);
+    return this.http.get<Departamento[]>(`${this.apiUrl}/departamentos/`);
   }
 
   getCiudades(): Observable<Ciudad[]> {
-    return of(this.ciudades);
+    return this.http.get<Ciudad[]>(`${this.apiUrl}/ciudades/`);
   }
 
   getCiudadesByDepartamento(idDepartamento: number): Observable<Ciudad[]> {
-    const filtradas = this.ciudades.filter(c => c.idDepartamento === idDepartamento);
-    return of(filtradas);
+    const params = new HttpParams().set('idDepartamento', idDepartamento);
+    return this.http.get<Ciudad[]>(`${this.apiUrl}/ciudades/`, { params });
   }
 
   getProgramas(): Observable<Programa[]> {
-    return of(this.programas);
+    return this.http.get<Programa[]>(`${this.apiUrl}/programas/`);
   }
+
+  // --- Egresados: sin tocar, sigue en memoria ---
 
   getEgresados(): Observable<Egresado[]> {
     return of(this.egresados);
