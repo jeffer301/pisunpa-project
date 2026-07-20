@@ -118,7 +118,7 @@ docker compose up --build
 Levantar solo backend, base de datos y pgAdmin mientras el frontend aún no tiene su `package.json`:
 
 ```bash
-docker compose up --build backend database pgadmin
+docker compose up --build backend database celery_worker redis pgadmin
 ```
 
 > Nota: al levantar `backend`, Docker Compose también construye y levanta `database` automáticamente, ya que es una dependencia declarada (`depends_on`). No es necesario iniciar `database` por separado.
@@ -128,7 +128,9 @@ Esto levantará:
 - **Frontend** en `http://localhost:4200`
 - **Backend** en `http://localhost:8000`
 - **PostgreSQL** en `http://localhost:5432`
+- **Redis In-Memory Broker** en http://localhost:6379`   
 - **pgAdmin** en `http://localhost:5050`
+
 
 ## Conectarse a la base de datos con pgAdmin
 
