@@ -3,6 +3,8 @@
 Django>=5.0,<5.1
 djangorestframework>=3.15,<3.16
 
+# CONFIGURACIÓN Y VARIABLES DE ENTORNO
+django-environ>=0.11.0
 
 # BASE DE DATOS Y ORM
 psycopg2-binary>=2.9,<3.0
@@ -17,3 +19,7 @@ djangorestframework-simplejwt>=5.3,<5.4
 # HERRAMIENTAS ESTRATÉGICAS DE NEGOCIO
 drf-spectacular>=0.27,<0.28
 django-import-export>=3.3,<4.0
+
+# TAREAS ASÍNCRONAS Y COLAS DE MENSAJES
+celery>=5.4.0
+redis>=5.0.0

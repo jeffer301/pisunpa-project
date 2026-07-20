@@ -5,36 +5,60 @@ Repositorio monorepo del proyecto **pisunpa.com**.
 ## Estructura
 
 ```
-├── frontend/                 # Angular (SPA)
-└── backend/                  # Proyecto Django
-    ├── manage.py             # Interfaz de línea de comandos para administrar el proyecto
-    ├── requirements.txt      # Dependencias (Django, djangorestframework, psycopg2, etc.)
-    ├── config/               # El núcleo de configuración (El cerebro)
-    │   ├── __init__.py
-    │   ├── settings.py       # Configuración global, base de datos, JWT y registro de apps
-    │   ├── urls.py           # Enrutador maestro (delegador de URLs)
-    │   └── wsgi.py           # Interfaz de servidor web
+├── frontend/                    # Angular (SPA)
+└── backend/                     # Proyecto Django
+    ├── manage.py                # DJANGO_SETTINGS_MODULE = 'core_project.settings'
+    ├── requirements.txt         # Django, DRF, django-environ, psycopg2-binary, dj-database-url,
+    │                             # django-cors-headers, djangorestframework-simplejwt,
+    │                             # drf-spectacular, django-import-export, celery, redis
+    ├── Dockerfile
     │
-    └── app/                 # DOMINIOS DE NEGOCIO (Las "Apps" modulares)
+    ├── core_project/            # Núcleo de configuración (antes documentado como config/)
+    │   ├── __init__.py
+    │   ├── settings.py          # Scaffold default de Django (sin DRF, JWT, apps ni Postgres configurados aún)
+    │   ├── urls.py
+    │   ├── wsgi.py
+    │   └── asgi.py
+    │
+    └── app/                     # DOMINIOS DE NEGOCIO (Las "Apps" modulares)
         │
-        ├── usuarios/         # Módulo 1: Identidad, Roles y Desarrolladores
-        │   ├── models.py     
+        ├── usuarios/            # Módulo 1: Identidad, Roles y Desarrolladores
+        │   ├── __init__.py
+        │   ├── admin.py
+        │   ├── apps.py
+        │   ├── migrations/
+        │   │   └── __init__.py
+        │   ├── models.py        
         │   ├── serializers.py
-        │   ├── views.py      
-        │   └── urls.py       
+        │   ├── views.py         
+        │   ├── urls.py
+        │   └── tests.py
         │
-        ├── supletorios/      # Módulo 2: Máquina de Estados y Solicitudes
-        │   ├── models.py     
+        ├── supletorios/         # Módulo 2: Máquina de Estados y Solicitudes
+        │   ├── __init__.py
+        │   ├── admin.py
+        │   ├── apps.py
+        │   ├── migrations/
+        │   │   └── __init__.py
+        │   ├── models.py        
         │   ├── serializers.py
-        │   ├── views.py      
-        │   └── urls.py       
+        │   ├── views.py         
+        │   ├── urls.py
+        │   └── tests.py
         │
-        └── egresados/        # Módulo 3: Analítica, Métricas y Seguimiento
-            ├── models.py     
+        └── egresados/           # Módulo 3: Analítica, Métricas y Seguimiento
+            ├── __init__.py
+            ├── admin.py
+            ├── apps.py
+            ├── migrations/
+            │   └── __init__.py
+            ├── models.py        
             ├── serializers.py
-            ├── views.py      
-            └── urls.py
-└── database/                # PostgreSQL (init + seed)
+            ├── views.py         
+            ├── urls.py
+            └── tests.py
+
+└── database/                    # PostgreSQL (init + seed) 
 ```
 
 ##  Aviso de Refactorización Arquitectónica: Migración a Django REST Framework
