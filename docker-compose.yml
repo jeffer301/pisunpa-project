@@ -22,6 +22,7 @@ services:
     environment:
       # Recuerda: Django necesita la librería dj-database-url para leer esto
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
       - database
 
