@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from .services import UsuarioService
 
 Usuario = get_user_model()
 
@@ -19,10 +20,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id",)
 
-class RegistroSerializer(serializers.ModelSerializer):
 
-    password = serializers.CharField(write_only = True)
-    password2 = serializers.CharField(write_only = True)
+class RegistroSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
 
     class Meta:
         model = Usuario
@@ -44,37 +45,25 @@ class RegistroSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"password": "Las contraseñas no coinciden"}
             )
-
         return attrs
     
     def validate_email(self, value):
-
         if Usuario.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 "Ya existe un usuario con este correo."
             )
-
         return value
 
     def validate_documento(self, value):
-
         if Usuario.objects.filter(documento=value).exists():
             raise serializers.ValidationError(
                 "Ya existe un usuario con este documento."
             )
-
         return value
 
     def create(self, validated_data):
-
+        # Removemos la confirmación de contraseña requerida solo a nivel del serializador
         validated_data.pop("password2")
-
-        password = validated_data.pop("password")
-
-        usuario = Usuario(**validated_data)
-
-        usuario.set_password(password)
-
-        usuario.save()
-
-        return usuario
+        
+        # Delegamos la persistencia e instanciación a la capa de servicios
+        return UsuarioService.registrar_usuario(validated_data)

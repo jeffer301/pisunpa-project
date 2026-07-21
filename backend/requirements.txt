@@ -23,4 +23,6 @@ django-import-export>=3.3,<4.0
 celery>=5.4.0
 redis>=5.0.0
 
-#
+# UTILIDADES Y HERRAMIENTAS DE DESARROLLO
+Pillow>=10.0.0
+
