@@ -5,52 +5,62 @@ Repositorio monorepo del proyecto **pisunpa.com**.
 ## Estructura
 
 ```
-├── frontend/                 # Aplicación cliente en Angular (SPA)
-└── backend/                  # Entorno contenerizado del Proyecto Django
-    ├── manage.py             # Script de control e interfaz de comandos de Django
-    ├── Dockerfile            # Configuración de construcción de la imagen backend
-    ├── requirements.txt      # Dependencias (Django, DRF, SimpleJWT, Celery, Redis)
+├── frontend/
+└── backend/
+    ├── manage.py
+    ├── requirements.txt
+    ├── Dockerfile
     │
-    ├── core_project/         # Directorio de Configuración Global (El cerebro del proyecto)
+    ├── core_project/
     │   ├── __init__.py
-    │   ├── settings.py       # Configuración centralizada, DB, variables de Celery y JWT
-    │   ├── urls.py           # Enrutador maestro y delegador de prefijos API
-    │   ├── asgi.py           # Configuración asíncrona para servidores web compatibles
-    │   └── wsgi.py           # Interfaz estándar de comunicación con el servidor web
+    │   ├── settings.py
+    │   ├── urls.py
+    │   ├── wsgi.py
+    │   └── asgi.py
     │
-    └── app/                  # DOMINIOS DE NEGOCIO (Módulos monolíticos fuertemente cohesionados)
+    └── app/
         ├── __init__.py
         │
-        ├── usuarios/         # Dominio 1: Identidad, Roles (RBAC) y Seguridad Core
-        │   ├── migrations/
+        ├── usuarios/
         │   ├── __init__.py
         │   ├── admin.py
-        │   ├── apps.py       
-        │   ├── models.py     
-        │   ├── serializers.py
-        │   ├── urls.py
-        │   └── views.py      
-        │
-        ├── supletorios/      # Dominio 2: Motor de Estados y Solicitudes de Exámenes
+        │   ├── apps.py
         │   ├── migrations/
+        │   │   └── __init__.py
+        │   ├── models.py
+        │   ├── serializers.py
+        │   ├── views.py
+        │   ├── urls.py
+        │   └── tests.py
+        │
+        ├── supletorios/
         │   ├── __init__.py
         │   ├── admin.py
-        │   ├── apps.py       
-        │   ├── models.py     
+        │   ├── apps.py
+        │   ├── migrations/
+        │   │   ├── __init__.py
+        │   │   └── 0001_initial.py
+        │   ├── models.py
         │   ├── serializers.py
+        │   ├── views.py
         │   ├── urls.py
-        │   └── views.py      
+        │   ├── utils.py
+        │   └── tests.py
         │
-        └── egresados/        # Dominio 3: Repositorio Dinámico, Analítica y Seguimiento
-            ├── migrations/
+        └── egresados/
             ├── __init__.py
             ├── admin.py
-            ├── apps.py       
-            ├── models.py     
+            ├── apps.py
+            ├── migrations/
+            │   ├── __init__.py
+            │   └── 0001_initial.py
+            ├── models.py
             ├── serializers.py
+            ├── views.py
             ├── urls.py
-            └── views.py      
-└── database/                 # Persistencia e inicialización de PostgreSQL (init + seed)
+            └── tests.py
+
+└── database/
 ```
 
 ##  Aviso de Refactorización Arquitectónica: Migración a Django REST Framework
@@ -67,6 +77,32 @@ Para soportar la escalabilidad de los 15 módulos proyectados sin colapsar la ma
 ## Flujo de Trabajo Asíncrono (Celery + Redis)
 
 Para salvaguardar la estabilidad de la API, el hilo principal de peticiones HTTP tiene prohibido ejecutar procesos pesados de cómputo o I/O. Operaciones críticas como "la importación masiva de datos académicos los viernes" o el envío de notificaciones institucionales y códigos de verificación OTP son delegadas de forma asíncrona a un clúster de Celery Workers. Redis actúa como el broker de mensajería centralizado que administra estas colas en memoria con velocidad sub-milisegundo.
+
+## Estado actual del proyecto (actualizado)
+
+### Backend
+- Núcleo (`core_project/`): DRF, JWT (SimpleJWT), CORS y las 3 apps registradas. Base de datos en SQLite local mientras no exista Postgres real (cambia con `USE_SQLITE=False` en `.env`).
+- **supletorios**: módulo funcional completo (modelo, serializers, views, admin). Endpoints protegidos con JWT.
+- **egresados**: solo catálogos (`Programa`, `Departamento`, `Ciudad`) implementados y públicos. El resto del módulo (gestión, analítica) en pausa.
+- **usuarios**: pendiente (Duvan) — sin esto, no hay JWT real y los endpoints de `supletorios` responden 401.
+- Documentación autogenerada: `http://127.0.0.1:8000/api/docs/`
+
+### Frontend
+- Catálogos de egresados (`programas`, `departamentos`, `ciudades`) conectados por HTTP al backend real.
+- `supletorio.service.ts` conectado a los 4 componentes de supletorios (solicitud, pago, bandeja, pendientes) — responde 401 hasta que exista autenticación JWT real.
+- Login sigue siendo mock (`usuarios.service.ts`), no genera token válido para el backend.
+
+### Cómo correr en desarrollo
+\`\`\`bash
+# Backend
+cd backend
+python manage.py runserver
+
+# Frontend
+cd frontend
+ng serve
+\`\`\`
+
 
 ## Variables de entorno
 
@@ -95,8 +131,9 @@ Esto levantará:
 - **Frontend** en `http://localhost:4200`
 - **Backend** en `http://localhost:8000`
 - **PostgreSQL** en `http://localhost:5432`
-- **Redis In-Memory Broker** en http://localhost:6379   
+- **Redis In-Memory Broker** en `http://localhost:6379`   
 - **pgAdmin** en `http://localhost:5050`
+
 
 ## Conectarse a la base de datos con pgAdmin
 

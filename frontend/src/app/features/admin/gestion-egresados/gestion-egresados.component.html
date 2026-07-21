@@ -1,0 +1,124 @@
+<div class="contenedor">
+  <div class="admin-header">
+    <div>
+      <h2>Gestión de Egresados</h2>
+      <p class="subtitulo">Administra el registro de egresados del sistema</p>
+    </div>
+    <a class="btn-nuevo" routerLink="/registrar">+ Nuevo egresado</a>
+  </div>
+
+  <div class="filtros management-toolbar">
+    <input type="search" aria-label="Buscar egresados" placeholder="Buscar por nombre o apellido..."
+      [value]="filtroNombre()" (input)="filtroNombre.set($any($event.target).value)" />
+    <select aria-label="Filtrar por programa" [value]="filtroPrograma()"
+      (change)="onFiltroPrograma($any($event.target).value)">
+      <option [value]="0">Todos los programas</option>
+      @for (p of programas(); track p.id) {
+        <option [value]="p.id">{{ p.nombre }}</option>
+      }
+    </select>
+    @if (hayFiltrosActivos()) {
+      <button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
+    }
+  </div>
+
+  <p class="contador">{{ egresadosFiltrados().length }} egresado(s) encontrado(s)</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre Completo</th>
+        <th>Programa</th>
+        <th>¿Trabaja?</th>
+        <th>Empresa</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (e of egresadosFiltrados(); track e.id) {
+        <tr>
+          <td>{{ e.nombres }} {{ e.apellidos }}</td>
+          <td>{{ nombrePrograma(e.idPrograma) }}</td>
+          <td>{{ e.trabajaActualmente ? 'Sí' : 'No' }}</td>
+          <td>{{ e.trabajaActualmente ? e.empresa : '—' }}</td>
+          <td class="acciones">
+            <button class="btn-editar" (click)="abrirEditar(e)">Editar</button>
+            <button class="btn-eliminar" (click)="solicitarEliminacion(e)">Eliminar</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="5" class="vacio">
+            @if (hayFiltrosActivos()) {
+              No se encontraron egresados con los filtros aplicados.
+            } @else {
+              No hay egresados registrados.
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  </div>
+
+  <div class="importar-section">
+    <div class="importar-header">
+      <h3>Importar Egresados</h3>
+    </div>
+    <p class="importar-descripcion">
+      Carga masiva de egresados mediante un archivo CSV o Excel. Prepara tu archivo con los campos:
+      <strong>nombres, apellidos, dirección, edad, fecha de graduación, programa, departamento, ciudad, situación laboral y empresa</strong>.
+    </p>
+
+    <div class="importar-dropzone"
+      [class.arrastrando]="arrastrandoImportacion()"
+      (dragover)="onDragOverImportacion($event)"
+      (dragleave)="onDragLeaveImportacion($event)"
+      (drop)="onDropImportacion($event)"
+      (click)="fileImportacionInput.click()">
+      <div class="importar-dropzone-texto">
+        Arrastra tu archivo CSV o Excel aquí, o <strong>haz clic para seleccionar</strong>
+      </div>
+      <input #fileImportacionInput class="importar-dropzone-input" type="file"
+        accept=".csv,.xls,.xlsx"
+        (change)="onFileImportacionSelected($event)" />
+    </div>
+
+    @if (archivoImportacion()) {
+      <div class="archivo-importado">
+        <div class="archivo-importado-info">
+          <div class="nombre">{{ archivoImportacion()!.name }}</div>
+          <div class="detalle">{{ (archivoImportacion()!.size / 1024).toFixed(1) }} KB</div>
+        </div>
+        <button class="btn-quitar-archivo" type="button" (click)="eliminarArchivoImportacion()">Quitar</button>
+      </div>
+    }
+
+    <button class="btn-importar btn-procesar" type="button"
+      [disabled]="!archivoImportacion() || importando()"
+      (click)="procesarImportacion()">
+      {{ importando() ? 'Procesando...' : 'Importar egresados' }}
+    </button>
+
+    <p class="formatos-ayuda">Formatos soportados: .csv, .xls, .xlsx — Tamaño máximo: 10 MB</p>
+  </div>
+</div>
+
+@if (mostrarModalEdicion() && egresadoSeleccionado(); as seleccionado) {
+  <app-egresado-modal
+    titulo="Editar Egresado"
+    [egresado]="seleccionado"
+    (guardar)="onGuardarEdicion($event)"
+    (cerrar)="cerrarModalEdicion()"
+  />
+}
+
+@if (egresadoPendienteEliminacion(); as pendiente) {
+  <app-confirm-dialog
+    titulo="Eliminar egresado"
+    [mensaje]="'Se eliminará a ' + pendiente.nombres + ' ' + pendiente.apellidos + '.'"
+    (confirmar)="confirmarEliminacion()"
+    (cancelar)="cancelarEliminacion()"
+  />
+}

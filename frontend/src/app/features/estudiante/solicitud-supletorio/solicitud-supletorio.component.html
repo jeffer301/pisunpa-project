@@ -1,0 +1,87 @@
+<div class="contenedor">
+  <h2>Solicitud de Supletorio</h2>
+  <p class="subtitulo">Universidad del Pacífico — Buenaventura</p>
+
+  @if (excedeLimite()) {
+    <div class="aviso-advertencia">
+      Su solicitud excede el límite permitido de {{ diasLimite }} días para la presentación de supletorios,
+      por lo tanto, entrará a revisión especial por parte de la administración.
+    </div>
+  }
+
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+
+    <div class="campo">
+      <label for="fechaParcial">Fecha del parcial *</label>
+      <input id="fechaParcial" type="date" formControlName="fechaParcial" />
+      @if (campoInvalido('fechaParcial')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="profesor">Profesor *</label>
+      <input id="profesor" formControlName="profesor" placeholder="Nombre del profesor" />
+      @if (campoInvalido('profesor')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="asignatura">Asignatura *</label>
+      <input id="asignatura" formControlName="asignatura" placeholder="Nombre de la asignatura" />
+      @if (campoInvalido('asignatura')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="grupoAsignatura">Grupo de la asignatura *</label>
+      <input id="grupoAsignatura" formControlName="grupoAsignatura" placeholder="Ej: Grupo A" />
+      @if (campoInvalido('grupoAsignatura')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="idPrograma">Programa *</label>
+      <select id="idPrograma" formControlName="idPrograma">
+        <option [value]="null" disabled>Seleccione un programa</option>
+        @for (p of programas; track p.id) {
+          <option [value]="p.id">{{ p.nombre }}</option>
+        }
+      </select>
+      @if (campoInvalido('idPrograma')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="descripcion">Descripción *</label>
+      <textarea id="descripcion" formControlName="descripcion" rows="4"
+        placeholder="Describa los hechos de la solicitud"></textarea>
+      @if (campoInvalido('descripcion')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="anexos">Anexos de los hechos</label>
+      <input id="anexos" type="file" multiple (change)="onArchivosSeleccionados($event)" />
+      @if (archivosSeleccionados().length > 0) {
+        <ul class="lista-archivos">
+          @for (archivo of archivosSeleccionados(); track archivo.name; let i = $index) {
+            <li>
+              <span>{{ archivo.name }}</span>
+              <button type="button" class="btn-quitar" (click)="eliminarArchivo(i)">Quitar</button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <button type="submit" [disabled]="formulario.invalid || guardando()">
+      {{ guardando() ? 'Enviando...' : 'Enviar solicitud' }}
+    </button>
+  </form>
+</div>
