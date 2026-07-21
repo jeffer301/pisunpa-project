@@ -29,7 +29,7 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', default='django-insecure-cambia-esto-en-pr
 
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['0.0.0.0','localhost', '127.0.0.1'])
 
 
 # ---------------------------------------------------------------------------

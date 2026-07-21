@@ -22,3 +22,5 @@ django-import-export>=3.3,<4.0
 # TAREAS ASINCRONAS Y COLAS DE MENSAJES
 celery>=5.4.0
 redis>=5.0.0
+
+#
