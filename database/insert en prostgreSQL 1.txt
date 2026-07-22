@@ -1,0 +1,195 @@
+
+-- ---------------------------------------------------------------------------
+-- 1.  Seguridad, actores y estructura académica
+-- ---------------------------------------------------------------------------
+
+-- Tabla: programas_academicos
+INSERT INTO programas_academicos (id, nombre, codigo, nivel, modalidad, sede, activo) VALUES
+('1111', 'Ingeniería de Sistemas', 'ING-SIS-01', 'pregrado', 'presencial', 'Sede Principal', true),
+('1112', 'Administración de Empresas', 'ADM-EMP-01', 'pregrado', 'virtual', 'Sede Norte', true);
+
+-- Tabla: usuarios
+INSERT INTO usuarios (id, email, password_hash, nombres, apellidos, tipo_documento, numero_documento, telefono, estado) VALUES
+('2221', 'admin@universidad.edu.co', 'CGT$$1234', 'Carlos', 'Administrador', 'CC', '1000000001', '3000000001', 'activo'),
+('2222', 'juan.perez@email.com', 'HYT456%%', 'Juan', 'Pérez', 'CC', '1000000002', '3000000002', 'activo'),
+('2223', 'maria.gomez@email.com', 'JHK098"%', 'María', 'Gómez', 'CC', '1000000003', '3000000003', 'activo');
+
+-- Tabla: roles
+INSERT INTO roles (id, codigo, nombre, descripcion) VALUES
+('3331', 'ADMIN', 'Administrador del Sistema', 'Acceso total a la plataforma'),
+('3332', 'EGRESADO', 'Egresado', 'Perfil de egresado registrado'),
+('3333', 'EMPRESA', 'Representante de Empresa', 'Gestión de vacantes y postulaciones');
+
+-- Tabla: permisos
+INSERT INTO permisos (id, codigo, modulo, descripcion) VALUES
+('4441', 'EGRESADO_VER', 'Gestion Egresados', 'Permite consultar egresados'),
+('4442', 'VACANTE_CREAR', 'Bolsa Empleo', 'Permite publicar nuevas vacantes');
+
+-- Tabla: usuario_roles
+INSERT INTO usuario_roles (usuario_id, rol_id, asignado_por) VALUES
+('2221', '3331', '2221'),
+('2222', '3332', '2221');
+
+-- Tabla: rol_permisos
+INSERT INTO rol_permisos (rol_id, permiso_id) VALUES
+('3331', '4441'),
+('3331', '4442');
+
+-- ---------------------------------------------------------------------------
+-- 2. Modulo: Gestión de egresados
+-- ---------------------------------------------------------------------------
+
+-- Tabla: egresados
+INSERT INTO egresados (
+    id, usuario_id, programa_id, codigo_estudiante, codigo_egresado, 
+    fecha_grado, numero_acta, numero_diploma, promedio_acumulado, 
+    modalidad_estudio, jornada, estado_validacion, validado_por, validado_at, 
+    visibilidad, acepta_directorio, acepta_contacto_empresas
+) VALUES (
+    '5551', '2222', 
+    '1111', 'EST-2018-01', 'EGR-2023-01', 
+    '2023-06-15', 'ACTA-101', 'DIP-101', 4.35, 
+    'presencial', 'diurna', 'validado', '2221', now(), 
+    'publico', true, true
+);
+
+-- Tabla: preferencias_comunicacion
+INSERT INTO preferencias_comunicacion (egresado_id, recibe_email, recibe_sms, recibe_whatsapp, temas_interes) VALUES
+('5551', true, false, true, ARRAY['Empleabilidad', 'Eventos', 'Capacitaciones']);
+
+-- Tabla: contactos_emergencia
+INSERT INTO contactos_emergencia (id, egresado_id, nombre_completo, parentesco, telefono, email) VALUES
+('6661', '5551', 'Marta Pérez', 'Madre', '3100000001', 'marta@email.com');
+
+-- Tabla: competencias
+INSERT INTO competencias (id, nombre, categoria, descripcion, activa) VALUES
+('7771', 'PostgreSQL', 'Tecnología', 'Bases de datos relacionales', true),
+('7772', 'Liderazgo', 'Soft Skills', 'Gestión de equipos', true);
+
+-- Tabla: egresado_competencias
+INSERT INTO egresado_competencias (egresado_id, competencia_id, nivel, anios_experiencia, verificada) VALUES
+('5551', '7771', 4, 2.5, true);
+
+-- Tabla: idiomas
+INSERT INTO idiomas (id, nombre) VALUES
+('8881', 'Inglés'),
+('8882', 'Alemán');
+
+-- Tabla: egresado_idiomas
+INSERT INTO egresado_idiomas (egresado_id, idioma_id, nivel_lectura, nivel_escritura, nivel_conversacion, certificacion) VALUES
+('5551', '8881', 'Avanzado', 'Avanzado', 'Intermedio', 'TOEFL B2');
+
+-- Tabla: estudios_posteriores
+INSERT INTO estudios_posteriores (
+    id, egresado_id, nivel, programa, institucion, ciudad, pais, modalidad, estado, fecha_inicio, titulo_obtenido
+) VALUES (
+    '9991', '5551', 
+    'Especialización', 'Ingeniería del Software', 'Universidad Nacional', 'Bogotá', 'Colombia', 'Virtual', 'finalizado', '2023-08-01', 'Especialista en Software'
+);
+
+-- Tabla: redes_profesionales
+INSERT INTO redes_profesionales (id, egresado_id, plataforma, url, nombre_usuario, visibilidad) VALUES
+('aaa1', '5551', 'LinkedIn', 'https://linkedin.com/in/juanperez', 'juanperez', 'publico');
+
+-- Tabla: documentos_egresado
+INSERT INTO documentos_egresado (
+    id, egresado_id, categoria, nombre_archivo, almacenamiento_url, tipo_mime, tamano_bytes, visibilidad
+) VALUES (
+    'bbb1', '5551', 
+    'Hoja de Vida', 'CV_Juan_Perez.pdf', 'https://storage.s3.amazonaws.com/cvs/cv_101.pdf', 'application/pdf', 204800, 'publico'
+);
+
+-- ---------------------------------------------------------------------------
+-- 3. Modulo: Seguimiento laboral y académico
+-- ---------------------------------------------------------------------------
+
+-- Tabla: sectores_economicos
+INSERT INTO sectores_economicos (id, codigo, nombre) VALUES
+('ccc1', 'SEC-01', 'Tecnología y Telecomunicaciones'),
+('ccc2', 'SEC-02', 'Educación');
+
+-- Tabla: organizaciones
+INSERT INTO organizaciones (id, nombre, nit, sector_id, ciudad, pais, sitio_web) VALUES
+('ddd1', 'Tech Solutions S.A.S.', '900123456-1', 'ccc1', 'Cali', 'Colombia', 'https://techsolutions.com');
+
+-- Tabla: experiencias_laborales
+INSERT INTO experiencias_laborales (
+    id, egresado_id, organizacion_id, cargo, fecha_ingreso, es_actual, modalidad, contrato, ciudad
+) VALUES (
+    'eee1', '5551', 
+    'ddd1', 'Desarrollador Backend', '2023-07-01', true, 'remoto', 'indefinido', 'Cali'
+);
+
+-- Tabla: seguimientos_egresado
+INSERT INTO seguimientos_egresado (id, egresado_id, registrado_por, situacion, buscando_empleo, trabaja_en_area_formacion, satisfaccion_laboral) VALUES
+('fff1', '5551', '2221', 'empleado', false, true, 5);
+
+-- ---------------------------------------------------------------------------
+-- 4. Modulo: Bolsa de empleo
+-- ---------------------------------------------------------------------------
+
+-- Tabla: empresas
+INSERT INTO empresas (id, organizacion_id, usuario_responsable_id, descripcion, estado_validacion, validada_por, validada_at) VALUES
+('90a1', 'ddd1', '2223', 'Empresa líder en software', 'validado', '2221', now());
+
+-- Tabla: vacantes
+INSERT INTO vacantes (
+    id, empresa_id, titulo, descripcion, cargo, tipo_contrato, modalidad, 
+    ciudad, fecha_cierre, estado, creada_por
+) VALUES (
+    '90b1', '690a1', 
+    'Desarrollador SQL Junior', 'Buscamos desarrollador con conocimientos en PostgreSQL.', 
+    'Desarrollador Junior', 'indefinido', 'hibrido', 'Cali', '2026-12-31', 'publicada', '2223'
+);
+
+-- Tabla: vacante_competencias
+INSERT INTO vacante_competencias (vacante_id, competencia_id, nivel_requerido, obligatoria) VALUES
+('890b1', '7771', 3, true);
+
+-- Tabla: postulaciones
+INSERT INTO postulaciones (id, vacante_id, egresado_id, estado, mensaje_presentacion, cv_documento_id) VALUES
+('000c1', '543b1', '5551', 'enviada', 'Hola, estoy muy interesado en la postulación.', 'nhrt1');
+
+-- Tabla: postulacion_historial
+INSERT INTO postulacion_historial (id, postulacion_id, estado, comentario, cambiado_por) VALUES
+('890d1', '67890c1', 'enviada', 'Postulación iniciada por el egresado.', '22222');
+
+-- ---------------------------------------------------------------------------
+-- 5. Encuestas, auditoría y módulo de supletorios
+-- ---------------------------------------------------------------------------
+
+-- Tabla: encuestas
+INSERT INTO encuestas (id, titulo, descripcion, activa_desde, creada_por) VALUES
+('4b5c6d', 'Encuesta de Impacto Laboral 2026', 'Medición del impacto de egresados en el mercado laboral.', now(), '222221');
+
+-- Tabla: preguntas_encuesta
+INSERT INTO preguntas_encuesta (id, encuesta_id, texto, tipo, opciones, obligatoria, orden) VALUES
+('2f3a4b5c6d7e', '1e2f3a4b5c6d', '¿En cuánto tiempo consiguió su primer empleo?', 'seleccion_unica', '["Menos de 3 meses", "3 a 6 meses", "Más de 6 meses"]'::jsonb, true, 1);
+
+-- Tabla: respuestas_encuesta
+INSERT INTO respuestas_encuesta (id, encuesta_id, egresado_id) VALUES
+('3a4b5c6d7e8f', 'a4b5c6d', '5551');
+
+-- Tabla: respuestas_pregunta
+INSERT INTO respuestas_pregunta (id, respuesta_encuesta_id, pregunta_id, valor) VALUES
+('d4e5f6a7', 'c3d4e5f6', 'b2c3d4e5', '"Menos de 3 meses"'::jsonb);
+
+-- Tabla: asignaturas
+INSERT INTO asignaturas (id, programa_id, codigo, nombre, creditos) VALUES
+('e5f6a7b8', '111111', 'BD-201', 'Bases de Datos Avanzadas', 3);
+
+-- Tabla: solicitudes_supletorio
+INSERT INTO solicitudes_supletorio (
+    id, estudiante_id, asignatura_id, periodo_academico, motivo, estado
+) VALUES (
+    'f6a7b8c9', '22222', 
+    'e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b', '2026-1', 'Incapacidad médica', 'solicitado'
+);
+
+-- Tabla: consentimientos_datos
+INSERT INTO consentimientos_datos (id, usuario_id, tipo, version_politica, aceptado, ip) VALUES
+('01010101', '222222', 'Tratamiento de Datos Personales', 'v2.0', true, '192.168.1.100'::inet);
+
+-- Tabla: auditoria
+INSERT INTO auditoria (usuario_id, accion, entidad, entidad_id, valores_nuevos, ip) VALUES
+('222221', 'INSERT', 'usuarios', '222222', '{"email": "juan.perez@email.com"}'::jsonb, '127.0.0.1'::inet);
