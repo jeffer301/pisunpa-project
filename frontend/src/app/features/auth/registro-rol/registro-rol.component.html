@@ -1,0 +1,84 @@
+<div class="contenedor">
+  <h2>Registro</h2>
+  <p class="subtitulo">Universidad del Pacífico — Buenaventura</p>
+
+  @if (error()) {
+    <div class="error-msg">{{ error() }}</div>
+  }
+
+  <form [formGroup]="formulario" (ngSubmit)="registrar()">
+
+    <div class="campo">
+      <label>Tipo de usuario *</label>
+      <div class="campo-radio">
+        <label><input type="radio" formControlName="tipo_usuario" value="estudiante" /> Estudiante</label>
+        <label><input type="radio" formControlName="tipo_usuario" value="egresado" /> Egresado</label>
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="email">Correo electrónico *</label>
+      <input id="email" type="email" formControlName="email" />
+    </div>
+
+    <div class="campo">
+      <label for="first_name">Nombres *</label>
+      <input id="first_name" formControlName="first_name" />
+    </div>
+
+    <div class="campo">
+      <label for="last_name">Apellidos *</label>
+      <input id="last_name" formControlName="last_name" />
+    </div>
+
+    <div class="campo">
+      <label for="documento">Documento *</label>
+      <input id="documento" formControlName="documento" />
+    </div>
+
+    <div class="campo">
+      <label for="telefono">Teléfono</label>
+      <input id="telefono" formControlName="telefono" />
+    </div>
+
+    <div class="campo">
+      <label for="password">Contraseña *</label>
+      <input id="password" type="password" formControlName="password" />
+    </div>
+
+    <div class="campo">
+      <label for="password2">Confirmar contraseña *</label>
+      <input id="password2" type="password" formControlName="password2" />
+    </div>
+
+    @if (formulario.get('tipo_usuario')?.value === 'egresado') {
+      <fieldset>
+        <legend>Datos de egresado</legend>
+
+        <div class="campo">
+          <label for="programa_id">Programa *</label>
+          <select id="programa_id" formControlName="programa_id">
+            <option value="">Seleccione un programa</option>
+            @for (p of programas; track p.id) {
+              <option [value]="p.id">{{ p.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="direccion_residencia">Dirección</label>
+          <input id="direccion_residencia" formControlName="direccion_residencia" />
+        </div>
+
+        <div class="campo">
+          <label for="biografia">Biografía</label>
+          <textarea id="biografia" formControlName="biografia" rows="3"></textarea>
+        </div>
+      </fieldset>
+    }
+
+    <button type="submit" [disabled]="formulario.invalid || guardando()">
+      {{ guardando() ? 'Registrando...' : 'Registrarse' }}
+    </button>
+  </form>
+</div>

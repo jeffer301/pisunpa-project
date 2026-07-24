@@ -22,6 +22,10 @@ const rolesEstudiante = ['estudiante', 'egresado'] as Rol[];
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  {
+    path: 'registro',
+    loadComponent: () => import('./features/auth/registro-rol/registro-rol.component').then(m => m.RegistroRolComponent),
+  },
   { path: 'registro-egresado', component: RegistroManualComponent },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
