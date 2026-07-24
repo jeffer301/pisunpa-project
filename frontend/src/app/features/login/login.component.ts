@@ -42,21 +42,16 @@ import { AuthService } from '../../core/auth/auth.service';
       display: block;
     }
 
-    /* ===== MAIN LAYOUT CONTAINER ===== */
     .main-layout {
-      position: relative;
+      position: fixed;
+      inset: 0;
       z-index: 2;
       display: flex;
-      width: 100%;
-      height: 100vh;
-      max-width: 100%;
-      margin: 0 auto;
-      padding: 1.5rem 2rem 1.5rem 0;
       align-items: center;
-      justify-content: flex-start;
-      gap: 0;
+      justify-content: center;
+      padding: 1.5rem 2rem 1.5rem 0;
       box-sizing: border-box;
-      overflow: hidden;
+      overflow-y: auto;
     }
 
     /* ===== LEFT SECTION ===== */
