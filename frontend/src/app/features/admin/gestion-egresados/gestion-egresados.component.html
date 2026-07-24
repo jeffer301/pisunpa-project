@@ -17,6 +17,12 @@
         <option [value]="p.id">{{ p.nombre }}</option>
       }
     </select>
+    <select aria-label="Filtrar por estado" [value]="filtroEstado()"
+      (change)="filtroEstado.set($any($event.target).value)">
+      <option value="todos">Todos los estados</option>
+      <option value="pendientes">Pendientes</option>
+      <option value="validados">Validados</option>
+    </select>
     @if (hayFiltrosActivos()) {
       <button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
     }
@@ -32,24 +38,35 @@
         <th>Programa</th>
         <th>¿Trabaja?</th>
         <th>Empresa</th>
+        <th>Estado</th>
         <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
       @for (e of egresadosFiltrados(); track e.id) {
         <tr>
-          <td>{{ e.nombres }} {{ e.apellidos }}</td>
-          <td>{{ nombrePrograma(e.idPrograma) }}</td>
-          <td>{{ e.trabajaActualmente ? 'Sí' : 'No' }}</td>
-          <td>{{ e.trabajaActualmente ? e.empresa : '—' }}</td>
+          <td>{{ e.usuario?.first_name }} {{ e.usuario?.last_name }}</td>
+          <td>{{ nombrePrograma(e.programa?.id ?? '') }}</td>
+          <td>{{ e.trabaja_actualmente ? 'Sí' : 'No' }}</td>
+          <td>{{ getCurrentEmpresa(e) }}</td>
+          <td>
+            @if (e.validado) {
+              <span class="badge badge-validado">Validado</span>
+            } @else {
+              <span class="badge badge-pendiente">Pendiente</span>
+            }
+          </td>
           <td class="acciones">
             <button class="btn-editar" (click)="abrirEditar(e)">Editar</button>
             <button class="btn-eliminar" (click)="solicitarEliminacion(e)">Eliminar</button>
+            @if (!e.validado) {
+              <button class="btn-validar" (click)="validarEgresado(e)">Validar</button>
+            }
           </td>
         </tr>
       } @empty {
         <tr>
-          <td colspan="5" class="vacio">
+          <td colspan="6" class="vacio">
             @if (hayFiltrosActivos()) {
               No se encontraron egresados con los filtros aplicados.
             } @else {
@@ -117,7 +134,7 @@
 @if (egresadoPendienteEliminacion(); as pendiente) {
   <app-confirm-dialog
     titulo="Eliminar egresado"
-    [mensaje]="'Se eliminará a ' + pendiente.nombres + ' ' + pendiente.apellidos + '.'"
+    [mensaje]="'Se eliminará a ' + (pendiente.usuario?.first_name ?? '') + ' ' + (pendiente.usuario?.last_name ?? '') + '.'"
     (confirmar)="confirmarEliminacion()"
     (cancelar)="cancelarEliminacion()"
   />

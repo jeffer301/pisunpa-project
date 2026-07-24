@@ -144,6 +144,38 @@ import { EgresadoModalComponent } from '../../egresados/egresado-modal/egresado-
       font-size: 0.8rem;
       color: #888;
     }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .badge-pendiente {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .badge-validado {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .btn-validar {
+      background: #27ae60;
+      color: #fff;
+      border: none;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .btn-validar:hover {
+      background: #219a52;
+    }
   `],
 })
 export class GestionEgresadosComponent {
@@ -165,18 +197,22 @@ export class GestionEgresadosComponent {
   readonly arrastrandoImportacion = signal(false);
   readonly importando = signal(false);
 
-  private mapaProgramas = new Map<number, string>();
+  private mapaProgramas = new Map<string, string>();
+
+  readonly filtroEstado = signal<string>('todos');
 
   readonly egresadosFiltrados = computed(() => this.egresados().filter(e => {
     const consulta = this.filtroNombre().trim().toLocaleLowerCase();
-    const nombre = `${e.nombres} ${e.apellidos}`.toLocaleLowerCase();
+    const nombre = `${e.usuario?.first_name ?? ''} ${e.usuario?.last_name ?? ''}`.toLocaleLowerCase();
     if (consulta && !nombre.includes(consulta)) return false;
-    if (this.filtroPrograma() && e.idPrograma !== this.filtroPrograma()) return false;
+    if (this.filtroPrograma() && e.programa?.id !== String(this.filtroPrograma())) return false;
+    if (this.filtroEstado() === 'pendientes' && e.validado) return false;
+    if (this.filtroEstado() === 'validados' && !e.validado) return false;
     return true;
   }));
 
   readonly hayFiltrosActivos = computed(() =>
-    Boolean(this.filtroNombre().trim() || this.filtroPrograma())
+    Boolean(this.filtroNombre().trim() || this.filtroPrograma() || this.filtroEstado() !== 'todos')
   );
 
   ngOnInit(): void {
@@ -187,13 +223,33 @@ export class GestionEgresadosComponent {
     this.egresadosService.getEgresados().subscribe(e => this.egresados.set(e));
   }
 
-  nombrePrograma(id: number): string {
+  nombrePrograma(id: string): string {
     return this.mapaProgramas.get(id) ?? '—';
+  }
+
+  getCurrentEmpresa(egresado: Egresado): string {
+    const currentJob = egresado.experiencias?.find(e => e.cargo_actual);
+    return currentJob?.empresa ?? '—';
   }
 
   limpiarFiltros(): void {
     this.filtroNombre.set('');
     this.filtroPrograma.set(0);
+    this.filtroEstado.set('todos');
+  }
+
+  validarEgresado(egresado: Egresado): void {
+    this.egresadosService.validarEgresado(egresado.id).subscribe({
+      next: () => {
+        this.egresados.update(lista =>
+          lista.map(e => e.id === egresado.id ? { ...e, validado: true } : e)
+        );
+        this.feedback.show('Egresado validado exitosamente.');
+      },
+      error: () => {
+        this.feedback.show('Error al validar egresado.', 'error');
+      }
+    });
   }
 
   onFiltroPrograma(valor: string | number): void {
@@ -211,7 +267,7 @@ export class GestionEgresadosComponent {
   }
 
   onGuardarEdicion(egresado: Egresado): void {
-    this.egresadosService.actualizarEgresado(egresado).subscribe(() => {
+    this.egresadosService.actualizarEgresado(egresado.id, egresado).subscribe(() => {
       this.egresados.update(lista => lista.map(e => e.id === egresado.id ? egresado : e));
       this.cerrarModalEdicion();
       this.feedback.show('Egresado actualizado.');
