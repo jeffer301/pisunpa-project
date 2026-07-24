@@ -63,39 +63,33 @@ export class EgresadoModalComponent implements OnInit {
     const e = this.egresado();
 
     this.formulario = this.fb.group({
-      nombres: [e?.nombres ?? '', Validators.required],
-      apellidos: [e?.apellidos ?? '', Validators.required],
-      direccion: [e?.direccion ?? '', Validators.required],
-      edad: [e?.edad ?? null, [Validators.required, Validators.min(18)]],
-      fechaGraduacion: [e ? this.formatDate(e.fechaGraduacion) : '', Validators.required],
-      idPrograma: [e?.idPrograma ?? 1, Validators.required],
-      idDepartamento: [e?.idDepartamento ?? 1, Validators.required],
-      idCiudad: [e?.idCiudad ?? 1, Validators.required],
-      trabajaActualmente: [e?.trabajaActualmente ?? true, Validators.required],
-      empresa: [e?.empresa ?? ''],
+      tipo_documento: [e?.tipo_documento ?? 'CC', Validators.required],
+      numero_documento: [e?.numero_documento ?? '', Validators.required],
+      fecha_nacimiento: [e?.fecha_nacimiento ?? ''],
+      telefono_celular: [e?.telefono_celular ?? ''],
+      direccion_residencia: [e?.direccion_residencia ?? '', Validators.required],
+      biografia: [e?.biografia ?? ''],
+      trabaja_actualmente: [e?.trabaja_actualmente ?? false, Validators.required],
+      programa_id: [e?.programa?.id ?? '', Validators.required],
+      departamento_id: [e?.departamento?.id ?? '', Validators.required],
+      ciudad_id: [e?.ciudad?.id ?? '', Validators.required],
     });
 
     this.egresadosService.getProgramas().subscribe(p => this.programas = p);
     this.egresadosService.getDepartamentos().subscribe(d => this.departamentos = d);
-    this.egresadosService.getCiudadesByDepartamento(this.formulario.get('idDepartamento')!.value)
-      .subscribe(c => this.ciudades = c);
 
-    this.formulario.get('idDepartamento')!.valueChanges.subscribe(id => {
-      this.egresadosService.getCiudadesByDepartamento(id).subscribe(c => {
-        this.ciudades = c;
-        this.formulario.get('idCiudad')!.setValue(c.length ? c[0].id : null);
-      });
-    });
+    if (this.formulario.get('departamento_id')!.value) {
+      this.egresadosService.getCiudadesByDepartamento(this.formulario.get('departamento_id')!.value)
+        .subscribe(c => this.ciudades = c);
+    }
 
-    this.formulario.get('trabajaActualmente')!.valueChanges.subscribe(trabaja => {
-      const empresaCtrl = this.formulario.get('empresa')!;
-      if (trabaja) {
-        empresaCtrl.setValidators([Validators.required]);
-      } else {
-        empresaCtrl.clearValidators();
-        empresaCtrl.setValue('');
+    this.formulario.get('departamento_id')!.valueChanges.subscribe(id => {
+      if (id) {
+        this.egresadosService.getCiudadesByDepartamento(id).subscribe(c => {
+          this.ciudades = c;
+          this.formulario.get('ciudad_id')!.setValue(c.length ? c[0].id : null);
+        });
       }
-      empresaCtrl.updateValueAndValidity();
     });
   }
 
@@ -108,28 +102,25 @@ export class EgresadoModalComponent implements OnInit {
     const val = this.formulario.value;
     const e = this.egresado();
 
-    this.guardar.emit({
-      id: e?.id ?? 0,
-      nombres: val.nombres,
-      apellidos: val.apellidos,
-      direccion: val.direccion,
-      edad: val.edad,
-      fechaGraduacion: new Date(val.fechaGraduacion),
-      idPrograma: val.idPrograma,
-      idDepartamento: val.idDepartamento,
-      idCiudad: val.idCiudad,
-      trabajaActualmente: val.trabajaActualmente,
-      empresa: val.trabajaActualmente ? val.empresa : '',
-    });
+    if (e) {
+      this.guardar.emit({
+        ...e,
+        tipo_documento: val.tipo_documento,
+        numero_documento: val.numero_documento,
+        fecha_nacimiento: val.fecha_nacimiento,
+        telefono_celular: val.telefono_celular,
+        direccion_residencia: val.direccion_residencia,
+        biografia: val.biografia,
+        trabaja_actualmente: val.trabaja_actualmente,
+        programa: this.programas.find(p => p.id === val.programa_id) ?? null,
+        departamento: this.departamentos.find(d => d.id === val.departamento_id) ?? null,
+        ciudad: this.ciudades.find(c => c.id === val.ciudad_id) ?? null,
+      });
+    }
   }
 
   campoInvalido(campo: string): boolean {
     const ctrl = this.formulario.get(campo)!;
     return ctrl.invalid && ctrl.touched;
-  }
-
-  private formatDate(fecha: Date): string {
-    const d = new Date(fecha);
-    return d.toISOString().split('T')[0];
   }
 }

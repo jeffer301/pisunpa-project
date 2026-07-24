@@ -15,7 +15,7 @@ export const roleGuard: CanActivateFn = (route) => {
 
   const rolActual = authService.rolActual();
 
-  if (rolActual && rolesPermitidos.includes(rolActual)) {
+  if (rolActual && rolesPermitidos.includes(rolActual as Rol)) {
     return true;
   }
 

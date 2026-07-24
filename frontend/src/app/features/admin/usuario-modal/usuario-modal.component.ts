@@ -2,7 +2,6 @@ import { Component, ChangeDetectionStrategy, input, output, OnInit, inject } fro
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Usuario } from '../../../models/usuario.model';
-import { Rol, ROL_LABELS } from '../../../core/auth/role.model';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 
 @Component({
@@ -38,15 +37,6 @@ import { ModalComponent } from '../../../shared/components/modal/modal.component
     .btn-guardar:hover {
       background: #163d8f;
     }
-    .campo-check {
-      margin-top: 0.5rem;
-    }
-    .campo-check label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-    }
   `],
   templateUrl: './usuario-modal.component.html',
 })
@@ -56,21 +46,23 @@ export class UsuarioModalComponent implements OnInit {
   titulo = input.required<string>();
   usuario = input<Usuario | null>(null);
   guardando = input(false);
-  guardar = output<Omit<Usuario, 'id'> | Usuario>();
+  guardar = output<Partial<Usuario> & { password?: string; password2?: string }>();
   cerrar = output<void>();
 
   formulario!: FormGroup;
-  roles: { value: Rol; label: string }[] = Object.entries(ROL_LABELS).map(
-    ([value, label]) => ({ value: value as Rol, label })
-  );
 
   ngOnInit(): void {
     const u = this.usuario();
     this.formulario = this.fb.group({
-      nombre: [u?.nombre ?? '', Validators.required],
+      username: [u?.username ?? '', Validators.required],
+      first_name: [u?.first_name ?? '', Validators.required],
+      last_name: [u?.last_name ?? '', Validators.required],
       email: [u?.email ?? '', [Validators.required, Validators.email]],
-      rol: [u?.rol ?? 'egresado', Validators.required],
-      activo: [u?.activo ?? true],
+      documento: [u?.documento ?? '', Validators.required],
+      telefono: [u?.telefono ?? ''],
+      rol: [u?.rol ?? 'estudiante', Validators.required],
+      password: ['', u ? [] : [Validators.required, Validators.minLength(6)]],
+      password2: ['', u ? [] : [Validators.required]],
     });
   }
 
@@ -84,7 +76,7 @@ export class UsuarioModalComponent implements OnInit {
     const u = this.usuario();
 
     if (u) {
-      this.guardar.emit({ ...u, ...val });
+      this.guardar.emit({ ...u, ...val, password: undefined, password2: undefined });
     } else {
       this.guardar.emit(val);
     }

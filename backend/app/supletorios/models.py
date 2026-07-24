@@ -1,5 +1,9 @@
+import uuid
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
+
+from app.egresados.models import Programa
 
 
 class EstadoSupletorio(models.TextChoices):
@@ -15,8 +19,12 @@ class EstadoSupletorio(models.TextChoices):
 
 class Supletorio(models.Model):
     DIAS_LIMITE = 5
-
-    # Estudiante: campos planos hasta que exista el modelo Usuario (módulo de Duvan)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario = models.ForeignKey(
+            settings.AUTH_USER_MODEL, 
+            on_delete=models.CASCADE, 
+            related_name='supletorios'
+        )
     estudiante_nombre = models.CharField(max_length=150)
     estudiante_email = models.EmailField()
 
@@ -27,7 +35,9 @@ class Supletorio(models.Model):
     asignatura = models.CharField(max_length=150)
     grupo = models.CharField(max_length=50)
 
-    id_programa = models.IntegerField()
+    programa = models.ForeignKey(
+        Programa, on_delete=models.PROTECT, null=True, blank=True
+    )
     programa_nombre = models.CharField(max_length=150, blank=True)
 
     descripcion = models.TextField()
@@ -48,6 +58,7 @@ class Supletorio(models.Model):
 
 
 class AnexoSupletorio(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     supletorio = models.ForeignKey(Supletorio, related_name='anexos', on_delete=models.CASCADE)
     archivo = models.FileField(upload_to='anexos_supletorios/')
     subido_en = models.DateTimeField(auto_now_add=True)

@@ -1,5 +1,5 @@
 export interface Ciudad {
-  id: number;
+  id: string;
   nombre: string;
-  idDepartamento: number;
+  idDepartamento: string;
 }

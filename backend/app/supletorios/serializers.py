@@ -6,7 +6,7 @@ from .models import Supletorio, AnexoSupletorio, EstadoSupletorio
 class SupletorioCreateSerializer(serializers.ModelSerializer):
     fechaParcial = serializers.DateField(source='fecha_parcial')
     grupoAsignatura = serializers.CharField(source='grupo')
-    idPrograma = serializers.IntegerField(source='id_programa')
+    idPrograma = serializers.UUIDField(source='programa_id')
     anexos = serializers.ListField(
         child=serializers.FileField(), write_only=True, required=False
     )
@@ -18,24 +18,26 @@ class SupletorioCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         anexos_data = validated_data.pop('anexos', [])
-        usuario = self.context['request'].user
+        request = self.context['request']
+        usuario = request.user
 
-        fecha_parcial = validated_data['fecha_parcial']
-        dias = (timezone.localdate() - fecha_parcial).days
-        estado_inicial = (
-            EstadoSupletorio.EN_REVISION if dias > Supletorio.DIAS_LIMITE
-            else EstadoSupletorio.PENDIENTE
-        )
+        from app.egresados.models import Programa
+        programa = Programa.objects.get(pk=validated_data.pop('programa_id'))
+        validated_data['programa'] = programa
+        validated_data['programa_nombre'] = programa.nombre
 
         supletorio = Supletorio.objects.create(
+            usuario=usuario,
             estudiante_nombre=usuario.get_full_name() or usuario.get_username(),
             estudiante_email=usuario.email,
-            estado=estado_inicial,
+            estado=EstadoSupletorio.PENDIENTE,
             **validated_data,
         )
 
         for archivo in anexos_data:
-            AnexoSupletorio.objects.create(supletorio=supletorio, archivo=archivo)
+            AnexoSupletorio.objects.create(
+                supletorio=supletorio, archivo=archivo
+            )
 
         return supletorio
 

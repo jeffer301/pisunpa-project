@@ -32,7 +32,7 @@ export class EgresadosComponent implements OnInit {
   readonly ciudades = signal<Ciudad[]>([]);
 
   readonly filtroNombre = signal('');
-  readonly filtroPrograma = signal(0);
+  readonly filtroPrograma = signal('');
   readonly filtroLaboral = signal<'todos' | 'trabaja' | 'no_trabaja'>('todos');
   readonly filtroPendiente = signal<'ninguno' | 'sin-empleo' | 'sin-empresa'>('ninguno');
 
@@ -42,13 +42,11 @@ export class EgresadosComponent implements OnInit {
 
   readonly egresadosFiltrados = computed(() => this.egresados().filter((egresado) => {
     const consulta = this.filtroNombre().trim().toLocaleLowerCase();
-    const nombre = `${egresado.nombres} ${egresado.apellidos}`.toLocaleLowerCase();
+    const nombre = `${egresado.usuario?.first_name ?? ''} ${egresado.usuario?.last_name ?? ''}`.toLocaleLowerCase();
     if (consulta && !nombre.includes(consulta)) return false;
-    if (this.filtroPrograma() && egresado.idPrograma !== this.filtroPrograma()) return false;
-    if (this.filtroLaboral() === 'trabaja' && !egresado.trabajaActualmente) return false;
-    if (this.filtroLaboral() === 'no_trabaja' && egresado.trabajaActualmente) return false;
-    if (this.filtroPendiente() === 'sin-empleo') return !egresado.trabajaActualmente;
-    if (this.filtroPendiente() === 'sin-empresa') return egresado.trabajaActualmente && !egresado.empresa.trim();
+    if (this.filtroPrograma() && egresado.programa?.id !== this.filtroPrograma()) return false;
+    if (this.filtroLaboral() === 'trabaja' && !egresado.trabaja_actualmente) return false;
+    if (this.filtroLaboral() === 'no_trabaja' && egresado.trabaja_actualmente) return false;
     return true;
   }));
 
@@ -56,42 +54,15 @@ export class EgresadosComponent implements OnInit {
     this.filtroNombre().trim() || this.filtroPrograma() || this.filtroLaboral() !== 'todos' || this.filtroPendiente() !== 'ninguno'
   ));
 
-  private mapaProgramas = new Map<number, string>();
-  private mapaCiudades = new Map<number, string>();
-  private mapaDepartamentos = new Map<number, string>();
-
   ngOnInit(): void {
-    this.egresadosService.getProgramas().subscribe(p => {
-      this.programas.set(p);
-      p.forEach(prog => this.mapaProgramas.set(prog.id, prog.nombre));
-    });
-    this.egresadosService.getDepartamentos().subscribe(d => {
-      this.departamentos.set(d);
-      d.forEach(dep => this.mapaDepartamentos.set(dep.id, dep.nombre));
-    });
-    this.egresadosService.getCiudades().subscribe(c => {
-      this.ciudades.set(c);
-      c.forEach(ciudad => this.mapaCiudades.set(ciudad.id, ciudad.nombre));
-    });
-    this.egresadosService.getEgresados().subscribe(e => {
-      this.egresados.set(e);
-    });
+    this.egresadosService.getProgramas().subscribe(p => this.programas.set(p));
+    this.egresadosService.getDepartamentos().subscribe(d => this.departamentos.set(d));
+    this.egresadosService.getCiudades().subscribe(c => this.ciudades.set(c));
+    this.egresadosService.getEgresados().subscribe(e => this.egresados.set(e));
     this.route.queryParamMap.subscribe(params => {
       const pendiente = params.get('pendiente');
       this.filtroPendiente.set(pendiente === 'sin-empleo' || pendiente === 'sin-empresa' ? pendiente : 'ninguno');
     });
-  }
-
-  nombrePrograma(id: number): string {
-    return this.mapaProgramas.get(id) ?? '—';
-  }
-
-  nombreCiudad(id: number): string {
-    return this.mapaCiudades.get(id) ?? '—';
-  }
-
-  nombreDepartamento(id: number): string {
-    return this.mapaDepartamentos.get(id) ?? '—';
   }
 
   onFiltroNombre(valor: string): void {
@@ -99,20 +70,16 @@ export class EgresadosComponent implements OnInit {
   }
 
   onFiltroPrograma(valor: string | number): void {
-    this.filtroPrograma.set(Number(valor));
+    this.filtroPrograma.set(String(valor));
   }
 
   onFiltroLaboral(valor: string): void {
     this.filtroLaboral.set(valor as 'todos' | 'trabaja' | 'no_trabaja');
   }
 
-  aplicarPendiente(pendiente: 'sin-empleo' | 'sin-empresa'): void {
-    this.filtroPendiente.set(pendiente);
-  }
-
   limpiarFiltros(): void {
     this.filtroNombre.set('');
-    this.filtroPrograma.set(0);
+    this.filtroPrograma.set('');
     this.filtroLaboral.set('todos');
     this.filtroPendiente.set('ninguno');
     this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
@@ -147,7 +114,7 @@ export class EgresadosComponent implements OnInit {
   }
 
   onGuardarEdicion(egresado: Egresado): void {
-    this.egresadosService.actualizarEgresado(egresado).subscribe(() => {
+    this.egresadosService.actualizarEgresado(egresado.id, egresado).subscribe(() => {
       this.egresados.update(list =>
         list.map(e => e.id === egresado.id ? egresado : e)
       );

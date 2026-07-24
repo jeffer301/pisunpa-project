@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 env = environ.Env(
     DEBUG=(bool, True),
-    USE_SQLITE=(bool, True),  # ⚠️ True mientras no haya Postgres real conectado
+    USE_SQLITE=(bool, False),  # ⚠️ True mientras no haya Postgres real conectado
 )
 
 # Busca el .env en la raíz del repo (mismo nivel que docker-compose.yml)

@@ -233,12 +233,12 @@ export class DashboardComponent implements OnInit {
   egresados = signal<Egresado[]>([]);
   ciudades = signal<Ciudad[]>([]);
   programas = signal<Programa[]>([]);
-  programaSeleccionado = signal<number | null>(null);
+  programaSeleccionado = signal<string | null>(null);
 
   egresadosFiltrados = computed(() => {
     const programa = this.programaSeleccionado();
     if (programa === null) return this.egresados();
-    return this.egresados().filter(e => e.idPrograma === programa);
+    return this.egresados().filter(e => e.programa?.id === programa);
   });
 
   totalEgresados = computed(() => this.egresadosFiltrados().length);
@@ -246,19 +246,19 @@ export class DashboardComponent implements OnInit {
   tasaEmpleabilidad = computed(() => {
     const total = this.egresadosFiltrados().length;
     if (total === 0) return '0%';
-    const trabajando = this.egresadosFiltrados().filter(e => e.trabajaActualmente).length;
+    const trabajando = this.egresadosFiltrados().filter(e => e.trabaja_actualmente).length;
     return `${((trabajando / total) * 100).toFixed(1)}%`;
   });
 
   empleabilidadDetalle = computed(() => {
     const total = this.egresadosFiltrados().length;
     if (total === 0) return '';
-    const trabajando = this.egresadosFiltrados().filter(e => e.trabajaActualmente).length;
+    const trabajando = this.egresadosFiltrados().filter(e => e.trabaja_actualmente).length;
     return `${trabajando} de ${total} egresados`;
   });
 
   egresadosActivos = computed(() => {
-    return this.egresadosFiltrados().filter(e => e.trabajaActualmente).length;
+    return this.egresadosFiltrados().filter(e => e.trabaja_actualmente).length;
   });
 
   activosDetalle = computed(() => {
@@ -269,30 +269,31 @@ export class DashboardComponent implements OnInit {
   });
 
   distribucionCiudades = computed<CityStat[]>(() => {
-    const conteo = new Map<number, number>();
+    const conteo = new Map<string, number>();
     this.egresadosFiltrados().forEach(e => {
-      conteo.set(e.idCiudad, (conteo.get(e.idCiudad) || 0) + 1);
+      if (e.ciudad?.id) {
+        conteo.set(e.ciudad.id, (conteo.get(e.ciudad.id) || 0) + 1);
+      }
     });
 
-    const ciudadMap = new Map(this.ciudades().map(c => [c.id, c.nombre]));
     const maxCount = Math.max(...[...conteo.values()], 1);
 
     return [...conteo.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([id, count]) => ({
-        nombre: ciudadMap.get(id) ?? 'Desconocido',
+        nombre: this.ciudades().find(c => c.id === id)?.nombre ?? 'Desconocido',
         count,
         porcentaje: (count / maxCount) * 100,
       }));
   });
 
   sinEmpleo = computed(() =>
-    this.egresadosFiltrados().filter(e => !e.trabajaActualmente).length
+    this.egresadosFiltrados().filter(e => !e.trabaja_actualmente).length
   );
 
   sinEmpresa = computed(() =>
-    this.egresadosFiltrados().filter(e => e.trabajaActualmente && !e.empresa.trim()).length
+    this.egresadosFiltrados().filter(e => e.trabaja_actualmente && !e.direccion_residencia?.trim()).length
   );
 
   verPendiente(pendiente: 'sin-empleo' | 'sin-empresa'): void {
@@ -302,7 +303,7 @@ export class DashboardComponent implements OnInit {
   cambiarPrograma(event: Event): void {
     const select = event.target as HTMLSelectElement;
     const value = select.value;
-    this.programaSeleccionado.set(value === 'todos' ? null : Number(value));
+    this.programaSeleccionado.set(value === 'todos' ? null : value);
   }
 
   ngOnInit(): void {

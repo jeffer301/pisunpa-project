@@ -22,7 +22,7 @@
     </div>
     <div class="user-info">
       <span class="user-label">
-        👤 {{ authService.usuarioActivo()!.nombre }} ({{ rolLabel() }})
+        👤 {{ authService.usuarioActivo()!.first_name }} {{ authService.usuarioActivo()!.last_name }} ({{ rolLabel() }})
       </span>
       <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
     </div>

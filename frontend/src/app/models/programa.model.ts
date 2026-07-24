@@ -1,4 +1,4 @@
 export interface Programa {
-  id: number;
+  id: string;
   nombre: string;
 }

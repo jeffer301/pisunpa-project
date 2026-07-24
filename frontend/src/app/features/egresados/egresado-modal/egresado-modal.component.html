@@ -2,71 +2,84 @@
   <form [formGroup]="formulario" (ngSubmit)="onSubmit()">
 
     <div class="campo">
-      <label for="nombres">Nombres *</label>
-      <input id="nombres" formControlName="nombres" />
-      @if (campoInvalido('nombres')) {
+      <label for="tipo_documento">Tipo de documento *</label>
+      <select id="tipo_documento" formControlName="tipo_documento">
+        <option value="CC">Cédula de Ciudadanía</option>
+        <option value="TI">Tarjeta de Identidad</option>
+        <option value="CE">Cédula de Extranjería</option>
+        <option value="PAS">Pasaporte</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="numero_documento">Número de documento *</label>
+      <input id="numero_documento" formControlName="numero_documento" />
+      @if (campoInvalido('numero_documento')) {
         <span class="error">Campo obligatorio.</span>
       }
     </div>
 
     <div class="campo">
-      <label for="apellidos">Apellidos *</label>
-      <input id="apellidos" formControlName="apellidos" />
-      @if (campoInvalido('apellidos')) {
+      <label for="fecha_nacimiento">Fecha de nacimiento</label>
+      <input id="fecha_nacimiento" type="date" formControlName="fecha_nacimiento" />
+    </div>
+
+    <div class="campo">
+      <label for="telefono_celular">Teléfono celular</label>
+      <input id="telefono_celular" formControlName="telefono_celular" />
+    </div>
+
+    <div class="campo">
+      <label for="direccion_residencia">Dirección de residencia *</label>
+      <input id="direccion_residencia" formControlName="direccion_residencia" />
+      @if (campoInvalido('direccion_residencia')) {
         <span class="error">Campo obligatorio.</span>
       }
     </div>
 
     <div class="campo">
-      <label for="direccion">Dirección *</label>
-      <input id="direccion" formControlName="direccion" />
-      @if (campoInvalido('direccion')) {
-        <span class="error">Campo obligatorio.</span>
-      }
+      <label for="biografia">Biografía</label>
+      <textarea id="biografia" formControlName="biografia" rows="3"></textarea>
     </div>
 
     <div class="campo">
-      <label for="edad">Edad *</label>
-      <input id="edad" type="number" formControlName="edad" />
-      @if (campoInvalido('edad')) {
-        <span class="error">Edad mínima 18 años.</span>
-      }
-    </div>
-
-    <div class="campo">
-      <label for="fechaGraduacion">Fecha de Graduación *</label>
-      <input id="fechaGraduacion" type="date" formControlName="fechaGraduacion" />
-      @if (campoInvalido('fechaGraduacion')) {
-        <span class="error">Campo obligatorio.</span>
-      }
-    </div>
-
-    <div class="campo">
-      <label for="idPrograma">Programa *</label>
-      <select id="idPrograma" formControlName="idPrograma">
+      <label for="programa_id">Programa *</label>
+      <select id="programa_id" formControlName="programa_id">
+        <option value="">Seleccione un programa</option>
         @for (p of programas; track p.id) {
           <option [value]="p.id">{{ p.nombre }}</option>
         }
       </select>
+      @if (campoInvalido('programa_id')) {
+        <span class="error">Campo obligatorio.</span>
+      }
     </div>
 
     <fieldset>
       <legend>Ubicación</legend>
       <div class="campo">
-        <label for="idDepartamento">Departamento *</label>
-        <select id="idDepartamento" formControlName="idDepartamento">
+        <label for="departamento_id">Departamento *</label>
+        <select id="departamento_id" formControlName="departamento_id">
+          <option value="">Seleccione un departamento</option>
           @for (d of departamentos; track d.id) {
             <option [value]="d.id">{{ d.nombre }}</option>
           }
         </select>
+        @if (campoInvalido('departamento_id')) {
+          <span class="error">Campo obligatorio.</span>
+        }
       </div>
       <div class="campo">
-        <label for="idCiudad">Ciudad *</label>
-        <select id="idCiudad" formControlName="idCiudad">
+        <label for="ciudad_id">Ciudad *</label>
+        <select id="ciudad_id" formControlName="ciudad_id">
+          <option value="">Seleccione una ciudad</option>
           @for (c of ciudades; track c.id) {
             <option [value]="c.id">{{ c.nombre }}</option>
           }
         </select>
+        @if (campoInvalido('ciudad_id')) {
+          <span class="error">Campo obligatorio.</span>
+        }
       </div>
     </fieldset>
 
@@ -74,18 +87,9 @@
       <legend>Situación Laboral</legend>
       <div class="campo-radio">
         <label>¿Trabaja actualmente? *</label>
-        <label><input type="radio" formControlName="trabajaActualmente" [value]="true" /> Sí</label>
-        <label><input type="radio" formControlName="trabajaActualmente" [value]="false" /> No</label>
+        <label><input type="radio" formControlName="trabaja_actualmente" [value]="true" /> Sí</label>
+        <label><input type="radio" formControlName="trabaja_actualmente" [value]="false" /> No</label>
       </div>
-      @if (formulario.get('trabajaActualmente')!.value) {
-        <div class="campo">
-          <label for="empresa">Empresa *</label>
-          <input id="empresa" formControlName="empresa" />
-          @if (campoInvalido('empresa')) {
-            <span class="error">Campo obligatorio cuando trabaja.</span>
-          }
-        </div>
-      }
     </fieldset>
 
     <div class="acciones-form">

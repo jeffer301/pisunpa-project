@@ -21,7 +21,7 @@
     />
 
     <select aria-label="Filtrar por programa" (change)="onFiltroPrograma($any($event.target).value)">
-      <option value="0">Todos los programas</option>
+      <option value="">Todos los programas</option>
       @for (p of programas(); track p.id) {
         <option [value]="p.id">{{ p.nombre }}</option>
       }
@@ -47,7 +47,6 @@
         <th>Programa</th>
         <th>Ubicación</th>
         <th>¿Trabaja?</th>
-        <th>Empresa</th>
         @if (authService.tienePermiso('escribir')) {
           <th>Acciones</th>
         }
@@ -56,11 +55,10 @@
     <tbody>
       @for (e of egresadosFiltrados(); track e.id) {
         <tr>
-          <td>{{ e.nombres }} {{ e.apellidos }}</td>
-          <td>{{ nombrePrograma(e.idPrograma) }}</td>
-          <td>{{ nombreCiudad(e.idCiudad) }} — {{ nombreDepartamento(e.idDepartamento) }}</td>
-          <td>{{ e.trabajaActualmente ? 'Sí' : 'No' }}</td>
-          <td>{{ e.trabajaActualmente ? e.empresa : '—' }}</td>
+          <td>{{ e.usuario?.first_name }} {{ e.usuario?.last_name }}</td>
+          <td>{{ e.programa?.nombre ?? '—' }}</td>
+          <td>{{ e.ciudad?.nombre ?? '—' }} — {{ e.departamento?.nombre ?? '—' }}</td>
+          <td>{{ e.trabaja_actualmente ? 'Sí' : 'No' }}</td>
           @if (authService.tienePermiso('escribir')) {
             <td class="acciones">
               <button class="btn-editar" (click)="abrirEditar(e)">Editar</button>
@@ -70,7 +68,7 @@
         </tr>
       } @empty {
         <tr>
-          <td [attr.colspan]="authService.tienePermiso('escribir') ? 6 : 5" class="vacio">
+          <td [attr.colspan]="authService.tienePermiso('escribir') ? 5 : 4" class="vacio">
             @if (hayFiltrosActivos()) {
               No se encontraron egresados con los filtros aplicados.
             } @else {
@@ -96,7 +94,7 @@
 @if (egresadoPendienteEliminacion(); as pendiente) {
   <app-confirm-dialog
     titulo="Eliminar egresado"
-    [mensaje]="'Se eliminará a ' + pendiente.nombres + ' ' + pendiente.apellidos + '.'"
+    [mensaje]="'Se eliminará a ' + (pendiente.usuario?.first_name ?? '') + ' ' + (pendiente.usuario?.last_name ?? '') + '.'"
     (confirmar)="confirmarEliminacion()"
     (cancelar)="cancelarEliminacion()"
   />

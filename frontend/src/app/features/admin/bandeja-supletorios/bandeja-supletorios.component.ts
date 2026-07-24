@@ -9,7 +9,7 @@ export type EstadoSolicitud = 'pendiente' | 'aprobada' | 'rechazada';
 export type EstadoPago = 'pendiente' | 'comprobante_subido' | 'pagado';
 
 export interface SolicitudSupletorio {
-  id: number;
+  id: string;
   estudiante: string;
   email: string;
   programa: string;

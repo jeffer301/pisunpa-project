@@ -242,9 +242,9 @@ import { AuthService } from '../../core/auth/auth.service';
         <button
           type="submit"
           class="btn-login"
-          [disabled]="loginForm.invalid"
+          [disabled]="loginForm.invalid || cargando()"
         >
-          Iniciar Sesión
+          {{ cargando() ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
         </button>
       </form>
 
@@ -269,6 +269,7 @@ export class LoginComponent {
   email = '';
   password = '';
   errorMensaje = signal('');
+  cargando = signal(false);
 
   onSubmit(): void {
     this.errorMensaje.set('');
@@ -278,11 +279,28 @@ export class LoginComponent {
       return;
     }
 
-    const exito = this.authService.login(this.email, this.password);
-    if (exito) {
-      this.router.navigate(['/dashboard']);
-    } else {
-      this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
-    }
+    this.cargando.set(true);
+
+    this.authService.login(this.email, this.password).subscribe({
+      next: () => {
+        this.authService.cargarPerfil().subscribe({
+          next: () => {
+            this.router.navigate(['/dashboard']);
+          },
+          error: () => {
+            this.cargando.set(false);
+            this.errorMensaje.set('Error al cargar el perfil.');
+          }
+        });
+      },
+      error: (err) => {
+        this.cargando.set(false);
+        if (err.status === 401) {
+          this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
+        } else {
+          this.errorMensaje.set('Error de conexión. Inténtalo más tarde.');
+        }
+      }
+    });
   }
 }

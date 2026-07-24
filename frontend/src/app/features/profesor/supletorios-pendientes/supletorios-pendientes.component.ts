@@ -3,17 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
-import { SupletorioService } from '../../../services/supletorio.service';
-
-interface SupletorioPendiente {
-  id: number;
-  estudiante: string;
-  programa: string;
-  asignatura: string;
-  grupo: string;
-  fechaParcial: string;
-  estado: 'listo' | 'realizado';
-}
+import { SupletorioService, SupletorioPendiente } from '../../../services/supletorio.service';
 
 @Component({
   selector: 'app-supletorios-pendientes',

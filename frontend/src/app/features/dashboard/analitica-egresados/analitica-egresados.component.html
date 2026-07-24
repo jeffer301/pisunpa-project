@@ -54,14 +54,14 @@
   <div class="chart-title">Distribución Salarial Estimada</div>
   @if (rangosSalariales().length > 0) {
     <div class="bar-list">
-      @for (rango of rangosSalariales(); track rango.label) {
+      @for (rango of rangosSalariales(); track rango.nombre) {
         <div class="bar-row">
-          <span class="bar-label">{{ rango.label }}</span>
+          <span class="bar-label">{{ rango.nombre }}</span>
           <div class="bar-track">
             <div class="bar-fill salario" [style.width.%]="rango.porcentaje"></div>
           </div>
           <span class="bar-count">{{ rango.count }}</span>
-          <span class="bar-pct">{{ ((rango.count / egresados.length) * 100).toFixed(0) }}%</span>
+          <span class="bar-pct">{{ ((rango.count / totalEgresados()) * 100).toFixed(0) }}%</span>
         </div>
       }
     </div>

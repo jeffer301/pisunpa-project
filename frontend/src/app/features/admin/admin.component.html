@@ -28,8 +28,8 @@
       <tr>
         <th>Nombre</th>
         <th>Email</th>
+        <th>Documento</th>
         <th>Rol</th>
-        <th>Estado</th>
         @if (puedeGestionar) {
           <th>Acciones</th>
         }
@@ -38,14 +38,10 @@
     <tbody>
       @for (u of usuariosFiltrados(); track u.id) {
         <tr>
-          <td>{{ u.nombre }}</td>
+          <td>{{ u.first_name }} {{ u.last_name }}</td>
           <td>{{ u.email }}</td>
-          <td><span class="rol-badge">{{ rolLabels[u.rol] }}</span></td>
-          <td>
-            <span class="estado-badge" [class.activo]="u.activo" [class.inactivo]="!u.activo">
-              {{ u.activo ? 'Activo' : 'Inactivo' }}
-            </span>
-          </td>
+          <td>{{ u.documento }}</td>
+          <td><span class="rol-badge">{{ u.rol || 'Sin rol' }}</span></td>
           @if (puedeGestionar) {
             <td class="acciones">
               <button class="btn-editar" (click)="abrirEditar(u)">Editar</button>
@@ -75,5 +71,5 @@
 </div>
 
 @if (usuarioPendienteEliminacion(); as pendiente) {
-  <app-confirm-dialog titulo="Eliminar usuario" [mensaje]="'Se eliminará a ' + pendiente.nombre + '.'" (confirmar)="confirmarEliminacion()" (cancelar)="cancelarEliminacion()" />
+  <app-confirm-dialog titulo="Eliminar usuario" [mensaje]="'Se eliminará a ' + pendiente.first_name + ' ' + pendiente.last_name + '.'" (confirmar)="confirmarEliminacion()" (cancelar)="cancelarEliminacion()" />
 }

@@ -11,14 +11,6 @@ interface SectorStats {
   porcentaje: number;
 }
 
-interface RangoSalarial {
-  label: string;
-  min: number;
-  max: number | null;
-  count: number;
-  porcentaje: number;
-}
-
 @Component({
   selector: 'app-analitica-egresados',
   standalone: true,
@@ -161,73 +153,51 @@ export class AnaliticaEgresadosComponent implements OnInit {
   readonly egresados = signal<Egresado[]>([]);
   readonly programas = signal<Programa[]>([]);
 
-  private mapaProgramas = new Map<number, string>();
-
   readonly totalEgresados = computed(() => this.egresados().length);
 
   readonly tasaEmpleabilidad = computed(() => {
     const total = this.egresados().length;
     if (total === 0) return '0%';
-    const trabajando = this.egresados().filter(e => e.trabajaActualmente).length;
+    const trabajando = this.egresados().filter(e => e.trabaja_actualmente).length;
     return `${((trabajando / total) * 100).toFixed(1)}%`;
   });
 
   readonly empleabilidadDetalle = computed(() => {
     const total = this.egresados().length;
     if (total === 0) return '';
-    const trabajando = this.egresados().filter(e => e.trabajaActualmente).length;
+    const trabajando = this.egresados().filter(e => e.trabaja_actualmente).length;
     return `${trabajando} de ${total} egresados`;
   });
 
   readonly tasaNoEmpleo = computed(() => {
     const total = this.egresados().length;
     if (total === 0) return '0%';
-    const sinEmpleo = this.egresados().filter(e => !e.trabajaActualmente).length;
+    const sinEmpleo = this.egresados().filter(e => !e.trabaja_actualmente).length;
     return `${((sinEmpleo / total) * 100).toFixed(1)}%`;
   });
 
   readonly noEmpleoDetalle = computed(() => {
     const total = this.egresados().length;
     if (total === 0) return '';
-    const sinEmpleo = this.egresados().filter(e => !e.trabajaActualmente).length;
+    const sinEmpleo = this.egresados().filter(e => !e.trabaja_actualmente).length;
     return `${sinEmpleo} egresados sin empleo`;
   });
 
   readonly distribucionProgramas = computed<SectorStats[]>(() => {
-    const conteo = new Map<number, number>();
+    const conteo = new Map<string, number>();
     this.egresados().forEach(e => {
-      conteo.set(e.idPrograma, (conteo.get(e.idPrograma) || 0) + 1);
+      if (e.programa?.id) {
+        conteo.set(e.programa.id, (conteo.get(e.programa.id) || 0) + 1);
+      }
     });
     const maxCount = Math.max(...[...conteo.values()], 1);
     return [...conteo.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([id, count]) => ({
-        nombre: this.mapaProgramas.get(id) ?? 'Desconocido',
+        nombre: this.programas().find(p => p.id === id)?.nombre ?? 'Desconocido',
         count,
         porcentaje: (count / maxCount) * 100,
       }));
-  });
-
-  readonly rangosSalariales = computed<RangoSalarial[]>(() => {
-    const total = this.egresados().length;
-    const trabajando = this.egresados().filter(e => e.trabajaActualmente);
-    const rangoBase = [
-      { label: '< $1.000.000', min: 0, max: 1000000 },
-      { label: '$1.000.000 - $2.000.000', min: 1000000, max: 2000000 },
-      { label: '$2.000.000 - $3.500.000', min: 2000000, max: 3500000 },
-      { label: '$3.500.000 - $5.000.000', min: 3500000, max: 5000000 },
-      { label: '> $5.000.000', min: 5000000, max: null },
-    ];
-
-    const distribucion = [0.08, 0.22, 0.35, 0.25, 0.10];
-    const counts = distribucion.map(pct => Math.round(trabajando.length * pct));
-    const maxCount = Math.max(...counts, 1);
-
-    return rangoBase.map((r, i) => ({
-      ...r,
-      count: counts[i],
-      porcentaje: (counts[i] / maxCount) * 100,
-    }));
   });
 
   readonly sectoresLaborales = computed<SectorStats[]>(() => {
@@ -240,20 +210,8 @@ export class AnaliticaEgresadosComponent implements OnInit {
       'Otros': 0,
     };
 
-    const empresasTecnologia = ['tech', 'software', 'digital', 'sistemas', 'datos'];
-    const empresasSalud = ['salud', 'hospital', 'clínica', 'médic', 'farmac'];
-    const empresasEducacion = ['universidad', 'colegio', 'educación', 'academ'];
-    const empresasFinanzas = ['banco', 'financ', 'seguro', 'bolsa'];
-    const empresasConstruccion = ['construc', 'ingeniería civil', 'arquitect', 'obra'];
-
-    this.egresados().filter(e => e.trabajaActualmente).forEach(e => {
-      const emp = e.empresa.toLowerCase();
-      if (empresasTecnologia.some(k => emp.includes(k))) sectores['Tecnología']++;
-      else if (empresasSalud.some(k => emp.includes(k))) sectores['Salud']++;
-      else if (empresasEducacion.some(k => emp.includes(k))) sectores['Educación']++;
-      else if (empresasFinanzas.some(k => emp.includes(k))) sectores['Finanzas']++;
-      else if (empresasConstruccion.some(k => emp.includes(k))) sectores['Construcción']++;
-      else sectores['Otros']++;
+    this.egresados().filter(e => e.trabaja_actualmente).forEach(e => {
+      sectores['Otros']++;
     });
 
     const maxCount = Math.max(...Object.values(sectores), 1);
@@ -267,11 +225,27 @@ export class AnaliticaEgresadosComponent implements OnInit {
       }));
   });
 
-  ngOnInit(): void {
-    this.egresadosService.getProgramas().subscribe(p => {
-      this.programas.set(p);
-      p.forEach(prog => this.mapaProgramas.set(prog.id, prog.nombre));
+  readonly rangosSalariales = computed<SectorStats[]>(() => {
+    const rangos: Record<string, number> = {};
+
+    this.egresados().filter(e => e.trabaja_actualmente).forEach(e => {
+      const exp = e.experiencias?.find(x => x.cargo_actual);
+      const rango = exp?.rango_salarial || 'No especificado';
+      rangos[rango] = (rangos[rango] || 0) + 1;
     });
+
+    const maxCount = Math.max(...Object.values(rangos), 1);
+    return Object.entries(rangos)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, count]) => ({
+        nombre: label,
+        count,
+        porcentaje: (count / maxCount) * 100,
+      }));
+  });
+
+  ngOnInit(): void {
+    this.egresadosService.getProgramas().subscribe(p => this.programas.set(p));
     this.egresadosService.getEgresados().subscribe(e => this.egresados.set(e));
   }
 }

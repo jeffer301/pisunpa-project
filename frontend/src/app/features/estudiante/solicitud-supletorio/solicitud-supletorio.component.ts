@@ -104,7 +104,7 @@ export class SolicitudSupletorioComponent implements OnInit {
       profesor: ['', Validators.required],
       asignatura: ['', Validators.required],
       grupoAsignatura: ['', Validators.required],
-      idPrograma: [null, Validators.required],
+      idPrograma: [null as string | null, Validators.required],
       descripcion: ['', Validators.required],
     });
 

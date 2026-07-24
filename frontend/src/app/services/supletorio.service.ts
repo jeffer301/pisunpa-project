@@ -2,9 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SolicitudSupletorio } from '../features/admin/bandeja-supletorios/bandeja-supletorios.component';
+import { environment } from '../../environments/environment';
 
 export interface SupletorioPendiente {
-  id: number;
+  id: string;
   estudiante: string;
   programa: string;
   asignatura: string;
@@ -15,18 +16,16 @@ export interface SupletorioPendiente {
 
 @Injectable({ providedIn: 'root' })
 export class SupletorioService {
-
   private http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/supletorios';
+  private readonly apiUrl = `${environment.apiUrl}/supletorios`;
 
   // --- Estudiante ---
-
   crearSolicitud(datos: {
     fechaParcial: string;
     profesor: string;
     asignatura: string;
     grupoAsignatura: string;
-    idPrograma: number;
+    idPrograma: string;
     descripcion: string;
     anexos: File[];
   }): Observable<SolicitudSupletorio> {
@@ -49,30 +48,28 @@ export class SupletorioService {
   }
 
   // --- Admin ---
-
   getBandeja(): Observable<SolicitudSupletorio[]> {
     return this.http.get<SolicitudSupletorio[]>(`${this.apiUrl}/bandeja/`);
   }
 
-  aprobar(id: number): Observable<SolicitudSupletorio> {
+  aprobar(id: string): Observable<SolicitudSupletorio> {
     return this.http.post<SolicitudSupletorio>(`${this.apiUrl}/bandeja/${id}/aprobar/`, {});
   }
 
-  rechazar(id: number): Observable<SolicitudSupletorio> {
+  rechazar(id: string): Observable<SolicitudSupletorio> {
     return this.http.post<SolicitudSupletorio>(`${this.apiUrl}/bandeja/${id}/rechazar/`, {});
   }
 
-  confirmarPago(id: number): Observable<SolicitudSupletorio> {
+  confirmarPago(id: string): Observable<SolicitudSupletorio> {
     return this.http.post<SolicitudSupletorio>(`${this.apiUrl}/bandeja/${id}/confirmar-pago/`, {});
   }
 
   // --- Profesor ---
-
   getPendientes(): Observable<SupletorioPendiente[]> {
     return this.http.get<SupletorioPendiente[]>(`${this.apiUrl}/pendientes/`);
   }
 
-  marcarRealizado(id: number): Observable<SupletorioPendiente> {
+  marcarRealizado(id: string): Observable<SupletorioPendiente> {
     return this.http.post<SupletorioPendiente>(`${this.apiUrl}/pendientes/${id}/realizado/`, {});
   }
 }
