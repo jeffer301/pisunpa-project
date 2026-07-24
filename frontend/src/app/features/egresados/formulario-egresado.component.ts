@@ -22,44 +22,49 @@ export class FormularioEgresadoComponent implements OnInit {
   programas: Programa[] = [];
   departamentos: Departamento[] = [];
   ciudades: Ciudad[] = [];
+  usuariosDisponibles: any[] = [];
+  usuarioSeleccionado: any = null;
   mensajeExito = signal('');
   guardando = signal(false);
 
   ngOnInit(): void {
     this.formulario = this.fb.group({
-      nombres: ['', Validators.required],
-      apellidos: ['', Validators.required],
-      direccion: ['', Validators.required],
-      edad: [null, [Validators.required, Validators.min(18)]],
-      fechaGraduacion: ['', Validators.required],
-      idPrograma: [1, Validators.required],
-      idDepartamento: [1, Validators.required],
-      idCiudad: [2, Validators.required],
-      trabajaActualmente: [true, Validators.required],
-      empresa: [''],
+      tipo_documento: ['CC', Validators.required],
+      numero_documento: ['', Validators.required],
+      fecha_nacimiento: [''],
+      telefono_celular: [''],
+      direccion_residencia: ['', Validators.required],
+      biografia: [''],
+      trabaja_actualmente: [false, Validators.required],
+      programa_id: ['', Validators.required],
+      departamento_id: ['', Validators.required],
+      ciudad_id: ['', Validators.required],
+      usuario_id: [''],
     });
 
     this.egresadosService.getProgramas().subscribe(p => this.programas = p);
     this.egresadosService.getDepartamentos().subscribe(d => this.departamentos = d);
-    this.egresadosService.getCiudadesByDepartamento(1).subscribe(c => this.ciudades = c);
+    this.egresadosService.getUsuariosDisponibles().subscribe(u => this.usuariosDisponibles = u);
 
-    this.formulario.get('idDepartamento')!.valueChanges.subscribe(id => {
-      this.egresadosService.getCiudadesByDepartamento(id).subscribe(c => {
-        this.ciudades = c;
-        this.formulario.get('idCiudad')!.setValue(c.length ? c[0].id : null);
-      });
-    });
-
-    this.formulario.get('trabajaActualmente')!.valueChanges.subscribe(trabaja => {
-      const empresaCtrl = this.formulario.get('empresa')!;
-      if (trabaja) {
-        empresaCtrl.setValidators([Validators.required]);
-      } else {
-        empresaCtrl.clearValidators();
-        empresaCtrl.setValue('');
+    this.formulario.get('departamento_id')!.valueChanges.subscribe(id => {
+      if (id) {
+        this.egresadosService.getCiudadesByDepartamento(id).subscribe(c => {
+          this.ciudades = c;
+          this.formulario.get('ciudad_id')!.setValue(c.length ? c[0].id : null);
+        });
       }
-      empresaCtrl.updateValueAndValidity();
     });
+  }
+
+  onUsuarioSeleccionado(usuarioId: string): void {
+    const usuario = this.usuariosDisponibles.find(u => u.id === usuarioId);
+    if (usuario) {
+      this.usuarioSeleccionado = usuario;
+      this.formulario.patchValue({
+        numero_documento: usuario.documento,
+        telefono_celular: usuario.telefono,
+      });
+    }
   }
 
   guardar(): void {
@@ -71,21 +76,21 @@ export class FormularioEgresadoComponent implements OnInit {
     this.guardando.set(true);
     const val = this.formulario.value;
     this.egresadosService.guardarEgresado({
-      nombres: val.nombres,
-      apellidos: val.apellidos,
-      direccion: val.direccion,
-      edad: val.edad,
-      fechaGraduacion: new Date(val.fechaGraduacion),
-      idPrograma: val.idPrograma,
-      idDepartamento: val.idDepartamento,
-      idCiudad: val.idCiudad,
-      trabajaActualmente: val.trabajaActualmente,
-      empresa: val.trabajaActualmente ? val.empresa : '',
-    }).subscribe({
+      tipo_documento: val.tipo_documento,
+      numero_documento: val.numero_documento,
+      fecha_nacimiento: val.fecha_nacimiento || null,
+      telefono_celular: val.telefono_celular,
+      direccion_residencia: val.direccion_residencia,
+      biografia: val.biografia,
+      trabaja_actualmente: val.trabaja_actualmente,
+      programa_id: val.programa_id || undefined,
+      departamento_id: val.departamento_id || undefined,
+      ciudad_id: val.ciudad_id || undefined,
+      usuario_id: val.usuario_id || undefined,
+    } as any).subscribe({
       next: () => {
         this.mensajeExito.set('Egresado guardado exitosamente.');
-        this.formulario.reset({ idPrograma: 1, idDepartamento: 1, trabajaActualmente: true });
-        this.egresadosService.getCiudadesByDepartamento(1).subscribe(c => this.ciudades = c);
+        this.formulario.reset({ tipo_documento: 'CC', trabaja_actualmente: false });
         this.guardando.set(false);
         setTimeout(() => this.mensajeExito.set(''), 3000);
       },
