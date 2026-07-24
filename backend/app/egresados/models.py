@@ -45,7 +45,8 @@ class PerfilEgresado(models.Model):
     direccion_residencia = models.CharField(max_length=255, blank=True)
     biografia = models.TextField(blank=True)
     trabaja_actualmente = models.BooleanField(default=False)
-    
+    validado = models.BooleanField(default=False)
+
     # Relación con catálogos (con UUID)
     programa = models.ForeignKey(Programa, on_delete=models.PROTECT, null=True, blank=True)
     departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True)
