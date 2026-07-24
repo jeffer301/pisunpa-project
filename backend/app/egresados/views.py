@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import get_user_model
+from django.db import transaction
 
 from .models import Departamento, Ciudad, Programa, PerfilEgresado
 from .serializers import (
@@ -10,6 +12,8 @@ from .serializers import (
     PerfilEgresadoReadSerializer, PerfilEgresadoWriteSerializer
 )
 from .services import EgresadoService
+
+User = get_user_model()
 
 # Se preservan las clases de consulta pública que implementó su compañero
 class ProgramaListView(generics.ListAPIView):
@@ -43,6 +47,29 @@ class PerfilEgresadoViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve', 'mi_perfil']:
             return PerfilEgresadoReadSerializer
         return PerfilEgresadoWriteSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        is_admin = getattr(user, 'rol', None) and getattr(
+            user.rol, 'nombre', ''
+        ) in ('administrador', 'director', 'secretario')
+
+        if is_admin:
+            from app.usuarios.models import Rol
+            num_doc = serializer.validated_data.get(
+                'numero_documento', ''
+            )
+            rol_egresado = Rol.objects.get(nombre='egresado')
+            nuevo_usuario = User.objects.create_user(
+                username=f"egresado_{num_doc}",
+                email=f"egresado_{num_doc}@pisunpa.local",
+                password='cambiar123',
+                documento=num_doc,
+                rol=rol_egresado,
+            )
+            serializer.save(usuario=nuevo_usuario)
+        else:
+            serializer.save(usuario=user)
 
     @action(detail=False, methods=['get', 'put', 'patch'], permission_classes=[IsAuthenticated])
     def mi_perfil(self, request):
@@ -82,3 +109,39 @@ class PerfilEgresadoViewSet(viewsets.ModelViewSet):
             "mensaje": "Proceso de importación en segundo plano iniciado exitosamente.",
             "task_id": tarea_id
         }, status=status.HTTP_202_ACCEPTED)
+
+    @action(
+        detail=True, methods=['post'],
+        permission_classes=[IsAuthenticated]
+    )
+    def validar(self, request, pk=None):
+        perfil = self.get_object()
+        user = request.user
+
+        is_admin = getattr(user, 'rol', None) and getattr(
+            user.rol, 'nombre', ''
+        ) in ('administrador', 'director', 'secretario')
+        if not is_admin:
+            return Response(
+                {'detail': 'Solo administradores pueden validar egresados.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if perfil.validado:
+            return Response(
+                {'detail': 'Este egresado ya está validado.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from app.usuarios.models import Rol
+        with transaction.atomic():
+            perfil.validado = True
+            perfil.save(update_fields=['validado'])
+
+            rol_egresado = Rol.objects.get(nombre='egresado')
+            perfil.usuario.rol = rol_egresado
+            perfil.usuario.save(update_fields=['rol'])
+
+        return Response(
+            {'detail': 'Egresado validado exitosamente.'}
+        )
