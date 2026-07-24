@@ -41,6 +41,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--color-page);
   color: #1a1a1a;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 .navbar {
@@ -191,8 +196,7 @@ button[type="submit"]:hover {
   background: #c0392b;
 }
 
-/* Formulario */
-form {
+form:not(.login-form) {
   background: #fff;
   padding: 1.5rem;
   border-radius: 8px;
