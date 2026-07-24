@@ -81,6 +81,7 @@ class PerfilEgresadoWriteSerializer(serializers.ModelSerializer):
     programa_id = serializers.UUIDField(write_only=True, required=False)
     departamento_id = serializers.UUIDField(write_only=True, required=False)
     ciudad_id = serializers.UUIDField(write_only=True, required=False)
+    usuario_id = serializers.UUIDField(write_only=True, required=False)
 
     class Meta:
         model = PerfilEgresado
@@ -90,5 +91,5 @@ class PerfilEgresadoWriteSerializer(serializers.ModelSerializer):
             'trabaja_actualmente', 'programa_id', 'departamento_id', 'ciudad_id',
             'contacto_emergencia_nombre', 'contacto_emergencia_parentesco',
             'contacto_emergencia_telefono', 'contacto_emergencia_email',
-            'validado',
+            'validado', 'usuario_id',
         ]

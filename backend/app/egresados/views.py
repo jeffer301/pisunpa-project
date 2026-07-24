@@ -55,19 +55,23 @@ class PerfilEgresadoViewSet(viewsets.ModelViewSet):
         ) in ('administrador', 'director', 'secretario')
 
         if is_admin:
-            from app.usuarios.models import Rol
-            num_doc = serializer.validated_data.get(
-                'numero_documento', ''
-            )
-            rol_egresado = Rol.objects.get(nombre='egresado')
-            nuevo_usuario = User.objects.create_user(
-                username=f"egresado_{num_doc}",
-                email=f"egresado_{num_doc}@pisunpa.local",
-                password='cambiar123',
-                documento=num_doc,
-                rol=rol_egresado,
-            )
-            serializer.save(usuario=nuevo_usuario)
+            usuario_id = serializer.validated_data.get('usuario_id')
+            if usuario_id:
+                usuario = User.objects.get(id=usuario_id)
+            else:
+                from app.usuarios.models import Rol
+                num_doc = serializer.validated_data.get(
+                    'numero_documento', ''
+                )
+                rol_egresado = Rol.objects.get(nombre='egresado')
+                usuario = User.objects.create_user(
+                    username=f"egresado_{num_doc}",
+                    email=f"egresado_{num_doc}@pisunpa.local",
+                    password='cambiar123',
+                    documento=num_doc,
+                    rol=rol_egresado,
+                )
+            serializer.save(usuario=usuario)
         else:
             serializer.save(usuario=user)
 
