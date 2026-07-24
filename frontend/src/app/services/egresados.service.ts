@@ -1,84 +1,65 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Egresado } from '../models/egresado.model';
 import { Programa } from '../models/programa.model';
 import { Departamento } from '../models/departamento.model';
 import { Ciudad } from '../models/ciudad.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class EgresadosService {
-
   private http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/egresados';
+  private readonly apiUrl = environment.apiUrl;
 
-  // --- Egresados: sigue en mock, sin tocar ---
-  private egresados: Egresado[] = [
-    {
-      id: 1, nombres: 'Juan', apellidos: 'Pérez López',
-      direccion: 'Cra 10 #5-20', edad: 28, fechaGraduacion: new Date('2022-06-15'),
-      idPrograma: 1, idDepartamento: 1, idCiudad: 1,
-      trabajaActualmente: true, empresa: 'TechSoft'
-    },
-    {
-      id: 2, nombres: 'María', apellidos: 'García Ruiz',
-      direccion: 'Calle 8 #3-12', edad: 32, fechaGraduacion: new Date('2020-11-20'),
-      idPrograma: 3, idDepartamento: 5, idCiudad: 7,
-      trabajaActualmente: true, empresa: 'Bufé Legal MG'
-    },
-    {
-      id: 3, nombres: 'Carlos', apellidos: 'López Martínez',
-      direccion: 'Av 6N #45-10', edad: 35, fechaGraduacion: new Date('2018-03-10'),
-      idPrograma: 2, idDepartamento: 2, idCiudad: 4,
-      trabajaActualmente: false, empresa: ''
-    },
-  ];
-  private nextId = 4;
-
-  // --- Catálogos: ahora conectados al backend real ---
-
+  // --- Catálogos (públicos) ---
   getDepartamentos(): Observable<Departamento[]> {
-    return this.http.get<Departamento[]>(`${this.apiUrl}/departamentos/`);
+    return this.http.get<Departamento[]>(`${this.apiUrl}/egresados/departamentos/`);
   }
 
   getCiudades(): Observable<Ciudad[]> {
-    return this.http.get<Ciudad[]>(`${this.apiUrl}/ciudades/`);
+    return this.http.get<Ciudad[]>(`${this.apiUrl}/egresados/ciudades/`);
   }
 
-  getCiudadesByDepartamento(idDepartamento: number): Observable<Ciudad[]> {
+  getCiudadesByDepartamento(idDepartamento: string): Observable<Ciudad[]> {
     const params = new HttpParams().set('idDepartamento', idDepartamento);
-    return this.http.get<Ciudad[]>(`${this.apiUrl}/ciudades/`, { params });
+    return this.http.get<Ciudad[]>(`${this.apiUrl}/egresados/ciudades/`, { params });
   }
 
   getProgramas(): Observable<Programa[]> {
-    return this.http.get<Programa[]>(`${this.apiUrl}/programas/`);
+    return this.http.get<Programa[]>(`${this.apiUrl}/egresados/programas/`);
   }
 
-  // --- Egresados: sin tocar, sigue en memoria ---
-
+  // --- Egresados (perfiles) ---
   getEgresados(): Observable<Egresado[]> {
-    return of(this.egresados);
+    return this.http.get<Egresado[]>(`${this.apiUrl}/egresados/perfilegresado/`);
   }
 
-  getEgresadoById(id: number): Observable<Egresado | undefined> {
-    return of(this.egresados.find(e => e.id === id));
+  getEgresadoById(id: string): Observable<Egresado> {
+    return this.http.get<Egresado>(`${this.apiUrl}/egresados/perfilegresado/${id}/`);
   }
 
-  guardarEgresado(egresado: Omit<Egresado, 'id'>): Observable<Egresado> {
-    const nuevo: Egresado = { ...egresado, id: this.nextId++ };
-    this.egresados.push(nuevo);
-    return of(nuevo);
+  getMiPerfil(): Observable<Egresado> {
+    return this.http.get<Egresado>(`${this.apiUrl}/egresados/perfilegresado/mi_perfil/`);
   }
 
-  actualizarEgresado(egresado: Egresado): Observable<Egresado> {
-    const idx = this.egresados.findIndex(e => e.id === egresado.id);
-    if (idx >= 0) this.egresados[idx] = egresado;
-    return of(egresado);
+  guardarEgresado(egresado: Partial<Egresado>): Observable<Egresado> {
+    return this.http.post<Egresado>(`${this.apiUrl}/egresados/perfilegresado/`, egresado);
   }
 
-  eliminarEgresado(id: number): Observable<boolean> {
-    const idx = this.egresados.findIndex(e => e.id === id);
-    if (idx >= 0) this.egresados.splice(idx, 1);
-    return of(idx >= 0);
+  actualizarEgresado(id: string, egresado: Partial<Egresado>): Observable<Egresado> {
+    return this.http.put<Egresado>(`${this.apiUrl}/egresados/perfilegresado/${id}/`, egresado);
+  }
+
+  eliminarEgresado(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/egresados/perfilegresado/${id}/`);
+  }
+
+  validarEgresado(id: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/egresados/perfilegresado/${id}/validar/`, {});
+  }
+
+  getUsuariosDisponibles(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/usuarios/disponibles/`);
   }
 }
