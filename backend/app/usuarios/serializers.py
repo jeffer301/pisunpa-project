@@ -4,7 +4,10 @@ from .services import UsuarioService
 
 Usuario = get_user_model()
 
+
 class UsuarioSerializer(serializers.ModelSerializer):
+    rol = serializers.SerializerMethodField()
+
     class Meta:
         model = Usuario
         fields = (
@@ -19,6 +22,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "rol"
         )
         read_only_fields = ("id",)
+
+    def get_rol(self, obj):
+        if obj.rol:
+            return obj.rol.nombre
+        return None
 
 
 class RegistroSerializer(serializers.ModelSerializer):
@@ -46,7 +54,7 @@ class RegistroSerializer(serializers.ModelSerializer):
                 {"password": "Las contraseñas no coinciden"}
             )
         return attrs
-    
+
     def validate_email(self, value):
         if Usuario.objects.filter(email=value).exists():
             raise serializers.ValidationError(
@@ -62,8 +70,14 @@ class RegistroSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        # Removemos la confirmación de contraseña requerida solo a nivel del serializador
         validated_data.pop("password2")
-        
-        # Delegamos la persistencia e instanciación a la capa de servicios
         return UsuarioService.registrar_usuario(validated_data)
+
+
+class UsuariosDisponiblesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = [
+            'id', 'email', 'first_name',
+            'last_name', 'documento', 'telefono',
+        ]
