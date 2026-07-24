@@ -91,10 +91,10 @@ class RegistroConRolSerializer(serializers.Serializer):
     )
     programa_id = serializers.UUIDField(required=False)
     direccion_residencia = serializers.CharField(
-        max_length=255, required=False, default=''
+        max_length=255, required=False, default='', allow_blank=True
     )
     biografia = serializers.CharField(
-        required=False, default=''
+        required=False, default='', allow_blank=True
     )
 
     def validate_email(self, value):
