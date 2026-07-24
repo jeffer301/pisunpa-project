@@ -1,3 +1,5 @@
+from django.db import transaction
+from rest_framework import status
 from rest_framework.permissions import (
     AllowAny,
     BasePermission,
@@ -7,13 +9,64 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from app.egresados.models import PerfilEgresado
+from app.egresados.models import PerfilEgresado, Programa
 from .models import Usuario
 from .serializers import (
+    RegistroConRolSerializer,
     RegistroSerializer,
     UsuariosDisponiblesSerializer,
     UsuarioSerializer,
 )
+
+
+class RegistroConRolView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = RegistroConRolSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        with transaction.atomic():
+            usuario = Usuario(
+                username=data["email"],
+                email=data["email"],
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                documento=data["documento"],
+                telefono=data.get("telefono", ""),
+            )
+            usuario.set_password(data["password"])
+            usuario.save()
+
+            if data["tipo_usuario"] == "egresado":
+                programa = Programa.objects.get(
+                    id=data["programa_id"]
+                )
+                PerfilEgresado.objects.create(
+                    usuario=usuario,
+                    tipo_documento="CC",
+                    numero_documento=data["documento"],
+                    telefono_celular=data.get("telefono", ""),
+                    direccion_residencia=data.get(
+                        "direccion_residencia", ""
+                    ),
+                    biografia=data.get("biografia", ""),
+                    programa=programa,
+                    validado=False,
+                )
+
+        return Response(
+            {
+                "mensaje": (
+                    "Registro como egresado pendiente de "
+                    "validación."
+                    if data["tipo_usuario"] == "egresado"
+                    else "Registro exitoso."
+                )
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class RegistroView(generics.CreateAPIView):

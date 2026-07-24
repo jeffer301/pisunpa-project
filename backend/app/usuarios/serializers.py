@@ -74,6 +74,56 @@ class RegistroSerializer(serializers.ModelSerializer):
         return UsuarioService.registrar_usuario(validated_data)
 
 
+class RegistroConRolSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        write_only=True, min_length=8
+    )
+    password2 = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    documento = serializers.CharField(max_length=20)
+    telefono = serializers.CharField(
+        max_length=20, required=False, default=''
+    )
+    tipo_usuario = serializers.ChoiceField(
+        choices=['egresado', 'estudiante']
+    )
+    programa_id = serializers.UUIDField(required=False)
+    direccion_residencia = serializers.CharField(
+        max_length=255, required=False, default=''
+    )
+    biografia = serializers.CharField(
+        required=False, default=''
+    )
+
+    def validate_email(self, value):
+        if Usuario.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                "Ya existe un usuario con este correo."
+            )
+        return value
+
+    def validate_documento(self, value):
+        if Usuario.objects.filter(documento=value).exists():
+            raise serializers.ValidationError(
+                "Ya existe un usuario con este documento."
+            )
+        return value
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password2"]:
+            raise serializers.ValidationError(
+                {"password": "Las contraseñas no coinciden"}
+            )
+        if attrs["tipo_usuario"] == "egresado":
+            if not attrs.get("programa_id"):
+                raise serializers.ValidationError(
+                    {"programa_id": "El programa es requerido para egresados."}
+                )
+        return attrs
+
+
 class UsuariosDisponiblesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
