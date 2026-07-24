@@ -85,9 +85,10 @@ class PerfilEgresadoWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = PerfilEgresado
         fields = [
-            'tipo_documento', 'numero_documento', 'fecha_nacimiento', 
-            'telefono_celular', 'direccion_residencia', 'biografia', 
+            'tipo_documento', 'numero_documento', 'fecha_nacimiento',
+            'telefono_celular', 'direccion_residencia', 'biografia',
             'trabaja_actualmente', 'programa_id', 'departamento_id', 'ciudad_id',
             'contacto_emergencia_nombre', 'contacto_emergencia_parentesco',
-            'contacto_emergencia_telefono', 'contacto_emergencia_email'
+            'contacto_emergencia_telefono', 'contacto_emergencia_email',
+            'validado',
         ]
