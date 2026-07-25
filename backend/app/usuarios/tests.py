@@ -36,7 +36,7 @@ class CustomLoginBlockTest(TestCase):
             {"email": "test@test.com", "password": "testpass123"},
             format="json",
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
 
     def test_rechazado_user_blocked(self):
         self.user.estado = "rechazado"
@@ -46,4 +46,4 @@ class CustomLoginBlockTest(TestCase):
             {"email": "test@test.com", "password": "testpass123"},
             format="json",
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)

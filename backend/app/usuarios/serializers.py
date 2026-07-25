@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .services import UsuarioService
 
@@ -139,11 +140,11 @@ class CustomTokenObtainSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         user = self.user
         if user.estado == 'pendiente_aprobacion':
-            raise serializers.ValidationError(
+            raise PermissionDenied(
                 "Tu cuenta está pendiente de aprobación por el director/administrador."
             )
         if user.estado == 'rechazado':
-            raise serializers.ValidationError(
+            raise PermissionDenied(
                 "Tu cuenta ha sido rechazada."
             )
         return data
