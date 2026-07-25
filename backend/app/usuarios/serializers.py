@@ -135,6 +135,30 @@ class UsuariosDisponiblesSerializer(serializers.ModelSerializer):
         ]
 
 
+class RegistroDocenteSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    password2 = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    documento_identidad = serializers.CharField(max_length=20)
+
+    def validate_email(self, value):
+        if Usuario.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Ya existe un usuario con este correo.")
+        return value
+
+    def validate_documento_identidad(self, value):
+        if Usuario.objects.filter(documento_identidad=value).exists():
+            raise serializers.ValidationError("Ya existe un usuario con este documento.")
+        return value
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password2"]:
+            raise serializers.ValidationError({"password": "Las contraseñas no coinciden"})
+        return attrs
+
+
 class CustomTokenObtainSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)

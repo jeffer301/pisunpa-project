@@ -11,10 +11,11 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from app.egresados.models import PerfilEgresado, Programa
-from .models import Usuario
+from .models import Rol, Usuario
 from .serializers import (
     CustomTokenObtainSerializer,
     RegistroConRolSerializer,
+    RegistroDocenteSerializer,
     RegistroSerializer,
     UsuariosDisponiblesSerializer,
     UsuarioSerializer,
@@ -119,3 +120,31 @@ class UsuariosDisponiblesView(generics.ListAPIView):
             'usuario_id', flat=True
         )
         return Usuario.objects.exclude(id__in=usuario_ids_con_perfil)
+
+
+class RegistroDocenteView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = RegistroDocenteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        with transaction.atomic():
+            usuario = Usuario(
+                username=data["email"],
+                email=data["email"],
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                documento=data["documento_identidad"],
+                documento_identidad=data["documento_identidad"],
+            )
+            usuario.set_password(data["password"])
+            usuario.rol = Rol.objects.get(nombre='profesor')
+            usuario.estado = 'aprobado'
+            usuario.save()
+
+        return Response(
+            {"mensaje": "Registro exitoso. Ya puedes iniciar sesión."},
+            status=status.HTTP_201_CREATED,
+        )
