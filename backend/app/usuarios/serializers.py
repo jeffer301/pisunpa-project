@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from .models import Notificacion
 from .services import UsuarioService
 
 Usuario = get_user_model()
@@ -188,3 +189,12 @@ class CustomTokenObtainSerializer(TokenObtainPairSerializer):
                 "Tu cuenta ha sido rechazada."
             )
         return data
+
+
+class NotificacionSerializer(serializers.ModelSerializer):
+    supletorio_id = serializers.UUIDField(source='supletorio.id', read_only=True, default=None)
+
+    class Meta:
+        model = Notificacion
+        fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'creado_en']
+        read_only_fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'creado_en']

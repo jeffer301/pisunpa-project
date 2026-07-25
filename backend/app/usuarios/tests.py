@@ -130,3 +130,45 @@ class NotificacionServiceTest(TestCase):
         NotificacionService.marcar_como_leida(str(n1.id), self.user)
         qs = NotificacionService.obtener_notificaciones(self.user, solo_no_leidas=True)
         self.assertEqual(qs.count(), 1)
+
+
+class NotificacionEndpointTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = Usuario.objects.create_user(
+            username='api@test.com', email='api@test.com',
+            password='test1234', documento='222', estado='aprobado'
+        )
+        self.client.force_authenticate(user=self.user)
+        self.notif = NotificacionService.crear(
+            self.user, 'Test', 'Mensaje', 'solicitud_creada'
+        )
+
+    def test_list_notifications(self):
+        response = self.client.get('/api/usuarios/notificaciones/')
+        self.assertEqual(response.status_code, 200)
+        if isinstance(response.data, dict):
+            self.assertEqual(len(response.data['results']), 1)
+        else:
+            self.assertEqual(len(response.data), 1)
+
+    def test_contar_no_leidas(self):
+        response = self.client.get('/api/usuarios/notificaciones/contar-no-leidas/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 1)
+
+    def test_marcar_leida(self):
+        response = self.client.patch(f'/api/usuarios/notificaciones/{self.notif.id}/leer/')
+        self.assertEqual(response.status_code, 200)
+        self.notif.refresh_from_db()
+        self.assertTrue(self.notif.leido)
+
+    def test_leer_todas(self):
+        response = self.client.post('/api/usuarios/notificaciones/leer-todas/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Notificacion.objects.filter(usuario=self.user, leido=False).count(), 0)
+
+    def test_unauthenticated_returns_401(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get('/api/usuarios/notificaciones/')
+        self.assertEqual(response.status_code, 401)

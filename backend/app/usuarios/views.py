@@ -11,10 +11,12 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from app.egresados.models import PerfilEgresado, Programa
-from .models import Rol, Usuario
+from .models import Notificacion, Rol, Usuario
+from .notification_service import NotificacionService
 from .serializers import (
     CustomTokenObtainSerializer,
     EstudiantePendienteSerializer,
+    NotificacionSerializer,
     RegistroConRolSerializer,
     RegistroDocenteSerializer,
     RegistroSerializer,
@@ -195,3 +197,30 @@ class RechazarEstudianteView(APIView):
         usuario.estado = 'rechazado'
         usuario.save()
         return Response({"mensaje": "Estudiante rechazado"})
+
+
+class NotificacionListView(generics.ListAPIView):
+    serializer_class = NotificacionSerializer
+
+    def get_queryset(self):
+        return NotificacionService.obtener_notificaciones(self.request.user)
+
+
+class NotificacionContarNoLeidasView(APIView):
+    def get(self, request):
+        count = NotificacionService.contar_no_leidas(request.user)
+        return Response({'count': count})
+
+
+class NotificacionMarcarLeidaView(APIView):
+    def patch(self, request, pk):
+        updated = NotificacionService.marcar_como_leida(pk, request.user)
+        if not updated:
+            return Response({'detail': 'Notificación no encontrada'}, status=404)
+        return Response({'detail': 'Marcada como leída'})
+
+
+class NotificacionLeerTodasView(APIView):
+    def post(self, request):
+        Notificacion.objects.filter(usuario=request.user, leido=False).update(leido=True)
+        return Response({'detail': 'Todas marcadas como leídas'})
