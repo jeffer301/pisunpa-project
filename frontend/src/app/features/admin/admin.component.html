@@ -9,6 +9,15 @@
     }
   </div>
 
+  <nav class="admin-nav">
+    <a routerLink="/admin/estudiantes-pendientes" routerLinkActive="active">
+      Estudiantes Pendientes
+    </a>
+    <a routerLink="/admin/asignacion-profesores" routerLinkActive="active">
+      Asignación Profesores
+    </a>
+  </nav>
+
   <div class="filtros management-toolbar">
     <input type="search" aria-label="Buscar usuarios" placeholder="Buscar por nombre o email" [value]="filtroBusqueda()" (input)="filtroBusqueda.set($any($event.target).value)" />
     <select aria-label="Filtrar por estado" [value]="filtroEstado()" (change)="filtroEstado.set($any($event.target).value)">

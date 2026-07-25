@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { UsuariosService } from '../../services/usuarios.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ROL_LABELS } from '../../core/auth/role.model';
@@ -11,8 +12,28 @@ import { FeedbackService } from '../../shared/services/feedback.service';
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, UsuarioModalComponent, ConfirmDialogComponent],
+  imports: [CommonModule, RouterModule, UsuarioModalComponent, ConfirmDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    .admin-nav {
+      display: flex;
+      gap: 1.25rem;
+      margin: 1rem 0;
+    }
+    .admin-nav a {
+      color: #4a5568;
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.25rem 0;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .admin-nav a:hover,
+    .admin-nav a.active {
+      color: #0a2463;
+      border-bottom-color: #3da5d9;
+    }
+  `],
   templateUrl: './admin.component.html',
 })
 export class AdminComponent {
