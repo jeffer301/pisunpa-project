@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/cor
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -98,6 +99,15 @@ import { AuthService } from '../../core/auth/auth.service';
       text-align: left;
     }
 
+    .aviso-advertencia {
+      background: #fff3cd;
+      color: #856404;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      border: 1px solid #ffc107;
+    }
+
     .btn-login {
       width: 100%;
       padding: 0.75rem;
@@ -190,6 +200,12 @@ import { AuthService } from '../../core/auth/auth.service';
         <div class="login-error">{{ errorMensaje() }}</div>
       }
 
+      @if (mensajeAdvertencia()) {
+        <div class="aviso-advertencia">
+          {{ mensajeAdvertencia() }}
+        </div>
+      }
+
       <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
         <div class="form-group">
           <label for="email">Correo Electrónico</label>
@@ -242,9 +258,9 @@ import { AuthService } from '../../core/auth/auth.service';
         <button
           type="submit"
           class="btn-login"
-          [disabled]="loginForm.invalid"
+          [disabled]="loginForm.invalid || cargando()"
         >
-          Iniciar Sesión
+          {{ cargando() ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
         </button>
       </form>
 
@@ -269,20 +285,36 @@ export class LoginComponent {
   email = '';
   password = '';
   errorMensaje = signal('');
+  mensajeAdvertencia = signal('');
+  cargando = signal(false);
 
   onSubmit(): void {
     this.errorMensaje.set('');
+    this.mensajeAdvertencia.set('');
 
     if (!this.email || !this.password) {
       this.errorMensaje.set('Complete todos los campos.');
       return;
     }
 
-    const exito = this.authService.login(this.email, this.password);
-    if (exito) {
-      this.router.navigate(['/dashboard']);
-    } else {
-      this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
-    }
+    this.cargando.set(true);
+    this.authService.login(this.email, this.password).pipe(
+      finalize(() => this.cargando.set(false))
+    ).subscribe({
+      next: (exito) => {
+        if (exito) {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
+        }
+      },
+      error: (err) => {
+        if (err.status === 403 || (err.error && typeof err.error === 'string')) {
+          this.mensajeAdvertencia.set(err.error || 'Acceso denegado');
+        } else {
+          this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
+        }
+      },
+    });
   }
 }
