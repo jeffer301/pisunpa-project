@@ -15,6 +15,7 @@ import { PortalEgresadoComponent } from './features/portal-egresado/portal-egres
 import { RegistroManualComponent } from './features/registro-manual/registro-manual.component';
 import { RegistroDocenteComponent } from './features/registro-docente/registro-docente.component';
 import { RegistroEstudianteComponent } from './features/registro-estudiante/registro-estudiante.component';
+import { EstudiantesPendientesComponent } from './features/admin/estudiantes-pendientes/estudiantes-pendientes.component';
 import { authGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { Rol } from './core/auth/role.model';
@@ -37,6 +38,7 @@ export const routes: Routes = [
   { path: 'egresado/perfil', component: PortalEgresadoComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesEstudiante } },
   { path: 'admin/bandeja-supletorios', component: BandejaSupletoriosComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'profesor/supletorios-pendientes', component: SupletoriosPendientesComponent, canActivate: [authGuard, roleGuard], data: { roles: ['profesor'] as Rol[] } },
+  { path: 'admin/estudiantes-pendientes', component: EstudiantesPendientesComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'admin/gestion-egresados', component: GestionEgresadosComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'dashboard/analitica-egresados', component: AnaliticaEgresadosComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'dashboard/objetivos-proyecto', component: ObjetivosProyectoComponent, canActivate: [authGuard] },
