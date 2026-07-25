@@ -3,11 +3,12 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService } from './core/auth/auth.service';
 import { ROL_LABELS, Rol } from './core/auth/role.model';
 import { FeedbackBannerComponent } from './shared/components/feedback-banner/feedback-banner.component';
+import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FeedbackBannerComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FeedbackBannerComponent, NotificationBellComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })
