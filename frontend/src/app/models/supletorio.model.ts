@@ -21,6 +21,8 @@ export interface SolicitudSupletorio {
   estadoSolicitud: 'pendiente' | 'aprobada' | 'rechazada';
   estadoPago: 'pendiente' | 'comprobante_subido' | 'pagado';
   comprobanteNombre: string | null;
+  fechaExamen?: string;
+  nota?: number;
 }
 
 export interface MiSolicitudSupletorio {
@@ -33,4 +35,18 @@ export interface MiSolicitudSupletorio {
   fechaSolicitud: string;
   estado: EstadoSupletorio;
   comprobanteNombre: string | null;
+  fechaExamen?: string;
+  nota?: number;
+}
+
+export interface SupletorioPendiente {
+  id: string;
+  estudiante: string;
+  programa: string;
+  asignatura: string;
+  grupo: string;
+  fechaParcial: string;
+  estado: 'listo' | 'realizado' | 'agendado';
+  fechaExamen?: string;
+  nota?: number;
 }
