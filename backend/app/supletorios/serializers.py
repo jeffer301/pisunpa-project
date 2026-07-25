@@ -108,3 +108,31 @@ class SupletorioMiSolicitudSerializer(serializers.ModelSerializer):
 
     def get_comprobanteNombre(self, obj):
         return obj.comprobante_pago.name.split('/')[-1] if obj.comprobante_pago else None
+
+
+from datetime import date
+from app.usuarios.notification_service import NotificacionService
+from app.usuarios.models import Usuario
+from .business_days import dias_habiles_entre
+
+
+class AgendarExamenSerializer(serializers.Serializer):
+    fecha_examen_supletorio = serializers.DateField()
+
+    def validate_fecha_examen_supletorio(self, value):
+        if value < date.today():
+            raise serializers.ValidationError("La fecha no puede ser en el pasado.")
+        return value
+
+    def validate(self, attrs):
+        supletorio = self.context['supletorio']
+        if supletorio.estado != EstadoSupletorio.NOTIFICADO_PROFESOR:
+            raise serializers.ValidationError("Solo se pueden agendar supletorios notificados al profesor.")
+        desde = supletorio.actualizado_en.date()
+        hasta = attrs['fecha_examen_supletorio']
+        dias = dias_habiles_entre(desde, hasta)
+        if dias > 10:
+            raise serializers.ValidationError(
+                f"La fecha excede los 10 días hábiles permitidos ({dias} días desde la confirmación)."
+            )
+        return attrs

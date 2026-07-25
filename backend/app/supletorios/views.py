@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,8 +12,11 @@ from .serializers import (
     SupletorioBandejaSerializer,
     SupletorioPendienteSerializer,
     SupletorioMiSolicitudSerializer,
+    AgendarExamenSerializer,
 )
 from .utils import enviar_correo
+from app.usuarios.notification_service import NotificacionService
+from app.usuarios.models import Usuario
 
 
 # --- Estudiante: crear solicitud ---
@@ -111,3 +115,40 @@ class MisSolicitudesView(generics.ListAPIView):
         return Supletorio.objects.filter(
             usuario=self.request.user
         ).order_by('-creado_en')
+
+
+class AgendarExamenView(APIView):
+    def patch(self, request, pk):
+        supletorio = get_object_or_404(Supletorio, pk=pk)
+        serializer = AgendarExamenSerializer(
+            data=request.data,
+            context={'supletorio': supletorio}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        supletorio.fecha_examen_supletorio = serializer.validated_data['fecha_examen_supletorio']
+        supletorio.fecha_programacion = timezone.now()
+        supletorio.programado_por = request.user
+        supletorio.estado = EstadoSupletorio.AGENDADO
+        supletorio.save()
+
+        admins = Usuario.objects.filter(rol__nombre='administrador', estado='aprobado')
+        for admin in admins:
+            NotificacionService.crear(
+                usuario=admin,
+                titulo='Examen supletorio agendado',
+                mensaje=f'El examen de {supletorio.estudiante_nombre} ({supletorio.asignatura}) fue agendado para el {supletorio.fecha_examen_supletorio}.',
+                tipo='examen_agendado',
+                supletorio=supletorio,
+            )
+
+        estudiante = supletorio.usuario
+        NotificacionService.crear(
+            usuario=estudiante,
+            titulo='Tu examen supletorio fue agendado',
+            mensaje=f'Tu examen de {supletorio.asignatura} fue programado para el {supletorio.fecha_examen_supletorio}.',
+            tipo='examen_agendado',
+            supletorio=supletorio,
+        )
+
+        return Response({'detail': 'Examen agendado correctamente'})

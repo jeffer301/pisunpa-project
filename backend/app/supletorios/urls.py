@@ -9,6 +9,7 @@ from .views import (
     SupletoriosPendientesListView,
     MarcarRealizadoView,
     MisSolicitudesView,
+    AgendarExamenView,
 )
 
 urlpatterns = [
@@ -21,4 +22,5 @@ urlpatterns = [
     path('bandeja/<int:pk>/confirmar-pago/', ConfirmarPagoView.as_view()),
     path('pendientes/', SupletoriosPendientesListView.as_view()),
     path('pendientes/<int:pk>/realizado/', MarcarRealizadoView.as_view()),
+    path('pendientes/<uuid:pk>/agendar/', AgendarExamenView.as_view()),
 ]

@@ -1,5 +1,9 @@
-from datetime import date
+from datetime import date, timedelta
 from django.test import TestCase
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+from app.usuarios.models import Rol
+from .models import Supletorio, EstadoSupletorio
 from .business_days import es_dia_habil, dias_habiles_entre, agregar_dias_habiles
 
 
@@ -48,3 +52,53 @@ class AgregarDiasHabilesTest(TestCase):
         # Fri Jul 18 + 1 = next Mon Jul 21 (skip weekend)
         result = agregar_dias_habiles(date(2025, 7, 18), 1)
         self.assertEqual(result, date(2025, 7, 21))
+
+
+User = get_user_model()
+
+
+class AgendarExamenViewTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.rol_prof = Rol.objects.create(nombre='profesor')
+        self.profesor = User.objects.create_user(
+            username='prof@test.com', email='prof@test.com',
+            password='test1234', documento='333', estado='aprobado',
+            rol=self.rol_prof
+        )
+        self.supletorio = Supletorio.objects.create(
+            usuario=self.profesor,
+            estudiante_nombre='Juan',
+            estudiante_email='juan@test.com',
+            fecha_parcial=date(2025, 6, 1),
+            profesor='Profesor Test',
+            asignatura='Matemáticas',
+            grupo='A',
+            descripcion='Test',
+            estado=EstadoSupletorio.NOTIFICADO_PROFESOR,
+        )
+        self.client.force_authenticate(user=self.profesor)
+
+    def test_agendar_exito(self):
+        fecha = date.today() + timedelta(days=3)
+        while not es_dia_habil(fecha):
+            fecha += timedelta(days=1)
+        response = self.client.patch(
+            f'/api/supletorios/pendientes/{self.supletorio.id}/agendar/',
+            {'fecha_examen_supletorio': fecha.isoformat()},
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.supletorio.refresh_from_db()
+        self.assertEqual(str(self.supletorio.fecha_examen_supletorio), fecha.isoformat())
+        self.assertEqual(self.supletorio.estado, EstadoSupletorio.AGENDADO)
+
+    def test_agendar_estado_invalido(self):
+        self.supletorio.estado = EstadoSupletorio.PENDIENTE
+        self.supletorio.save()
+        response = self.client.patch(
+            f'/api/supletorios/pendientes/{self.supletorio.id}/agendar/',
+            {'fecha_examen_supletorio': date.today().isoformat()},
+            format='json'
+        )
+        self.assertEqual(response.status_code, 400)

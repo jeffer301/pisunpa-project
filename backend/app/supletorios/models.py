@@ -15,6 +15,7 @@ class EstadoSupletorio(models.TextChoices):
     COMPROBANTE_SUBIDO = 'comprobante_subido', 'Comprobante subido'
     NOTIFICADO_PROFESOR = 'notificado_profesor', 'Notificado al profesor'
     REALIZADO = 'realizado', 'Realizado'
+    AGENDADO = 'agendado', 'Agendado'
 
 
 class Supletorio(models.Model):
