@@ -34,6 +34,14 @@
               <span class="detalle-valor">{{ sol.fechaParcial }}</span>
             </div>
             <div class="detalle-item">
+              <span class="detalle-label">Fecha examen</span>
+              <span class="detalle-valor">{{ sol.fechaExamen || '—' }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="detalle-label">Nota</span>
+              <span class="detalle-valor">{{ sol.nota ?? '—' }}</span>
+            </div>
+            <div class="detalle-item">
               <span class="detalle-label">Fecha de solicitud</span>
               <span class="detalle-valor">{{ sol.fechaSolicitud }}</span>
             </div>
