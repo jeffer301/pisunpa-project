@@ -1,6 +1,52 @@
 <div class="contenedor">
-  <h2>Pago de Supletorio</h2>
+  <h2>Mis Supletorios</h2>
   <p class="subtitulo">Universidad del Pacífico — Buenaventura</p>
+
+  <div class="seccion-mis-solicitudes">
+    <h3>Mis solicitudes</h3>
+
+    @if (cargando()) {
+      <p class="mensaje-vacio">Cargando solicitudes...</p>
+    } @else if (solicitudes().length === 0) {
+      <p class="mensaje-vacio">No tiene solicitudes de supletorio registradas.</p>
+    } @else {
+      @for (sol of solicitudes(); track sol.id) {
+        <div class="tarjeta-solicitud">
+          <div class="solicitud-cabecera">
+            <span class="solicitud-asignatura">{{ sol.asignatura }}</span>
+            <span class="solicitud-estado" [class]="claseEstado(sol.estado)">{{ labelEstado(sol.estado) }}</span>
+          </div>
+          <div class="solicitud-detalles">
+            <div class="detalle-item">
+              <span class="detalle-label">Profesor</span>
+              <span class="detalle-valor">{{ sol.profesor }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="detalle-label">Grupo</span>
+              <span class="detalle-valor">{{ sol.grupo }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="detalle-label">Programa</span>
+              <span class="detalle-valor">{{ sol.programa }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="detalle-label">Fecha del parcial</span>
+              <span class="detalle-valor">{{ sol.fechaParcial }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="detalle-label">Fecha de solicitud</span>
+              <span class="detalle-valor">{{ sol.fechaSolicitud }}</span>
+            </div>
+          </div>
+          @if (sol.comprobanteNombre) {
+            <div class="solicitud-comprobante">
+              Comprobante: {{ sol.comprobanteNombre }}
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
 
   <div class="seccion-tutorial">
     <h3>Cómo descargar tu recibo de pago</h3>

@@ -24,6 +24,20 @@ class Programa(models.Model):
     def __str__(self):
         return self.nombre
 
+
+class Asignatura(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=150)
+    programa = models.ForeignKey(
+        Programa, on_delete=models.CASCADE, related_name='asignaturas', null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
 class PerfilEgresado(models.Model):
     TIPO_DOC_CHOICES = [
         ('CC', 'Cédula de Ciudadanía'),

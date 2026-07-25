@@ -6,9 +6,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from .models import Departamento, Ciudad, Programa, PerfilEgresado
+from .models import Departamento, Ciudad, Programa, Asignatura, PerfilEgresado
 from .serializers import (
-    DepartamentoSerializer, CiudadSerializer, ProgramaSerializer,
+    DepartamentoSerializer, CiudadSerializer, ProgramaSerializer, AsignaturaSerializer,
     PerfilEgresadoReadSerializer, PerfilEgresadoWriteSerializer
 )
 from .services import EgresadoService
@@ -19,6 +19,12 @@ User = get_user_model()
 class ProgramaListView(generics.ListAPIView):
     queryset = Programa.objects.all()
     serializer_class = ProgramaSerializer
+    permission_classes = [AllowAny]
+
+
+class AsignaturaListView(generics.ListAPIView):
+    queryset = Asignatura.objects.all()
+    serializer_class = AsignaturaSerializer
     permission_classes = [AllowAny]
 
 class DepartamentoListView(generics.ListAPIView):

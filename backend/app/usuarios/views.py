@@ -14,6 +14,7 @@ from app.egresados.models import PerfilEgresado, Programa
 from .models import Rol, Usuario
 from .serializers import (
     CustomTokenObtainSerializer,
+    EstudiantePendienteSerializer,
     RegistroConRolSerializer,
     RegistroDocenteSerializer,
     RegistroSerializer,
@@ -154,3 +155,43 @@ class RegistroDocenteView(APIView):
             {"mensaje": "Registro exitoso. Ya puedes iniciar sesión."},
             status=status.HTTP_201_CREATED,
         )
+
+
+class EstudiantesPendientesView(generics.ListAPIView):
+    serializer_class = EstudiantePendienteSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(estado='pendiente_aprobacion').order_by('-creado')
+
+
+class AprobarEstudianteView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def patch(self, request, pk):
+        try:
+            usuario = Usuario.objects.get(pk=pk)
+        except Usuario.DoesNotExist:
+            return Response(
+                {"error": "Usuario no encontrado"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        usuario.estado = 'aprobado'
+        usuario.save()
+        return Response({"mensaje": "Estudiante aprobado correctamente"})
+
+
+class RechazarEstudianteView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def patch(self, request, pk):
+        try:
+            usuario = Usuario.objects.get(pk=pk)
+        except Usuario.DoesNotExist:
+            return Response(
+                {"error": "Usuario no encontrado"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        usuario.estado = 'rechazado'
+        usuario.save()
+        return Response({"mensaje": "Estudiante rechazado"})

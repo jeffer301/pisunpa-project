@@ -88,3 +88,23 @@ class SupletorioPendienteSerializer(serializers.ModelSerializer):
 
     def get_estado(self, obj):
         return 'realizado' if obj.estado == EstadoSupletorio.REALIZADO else 'listo'
+
+
+class SupletorioMiSolicitudSerializer(serializers.ModelSerializer):
+    """Resumen de solicitud para el estudiante que la creó."""
+    fechaParcial = serializers.DateField(source='fecha_parcial')
+    fechaSolicitud = serializers.DateField(source='fecha_solicitud')
+    programa = serializers.CharField(source='programa_nombre')
+    estado = serializers.SerializerMethodField()
+    comprobanteNombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Supletorio
+        fields = ['id', 'asignatura', 'profesor', 'grupo', 'programa',
+                  'fechaParcial', 'fechaSolicitud', 'estado', 'comprobanteNombre']
+
+    def get_estado(self, obj):
+        return obj.estado
+
+    def get_comprobanteNombre(self, obj):
+        return obj.comprobante_pago.name.split('/')[-1] if obj.comprobante_pago else None

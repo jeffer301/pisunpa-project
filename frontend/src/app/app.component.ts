@@ -20,6 +20,13 @@ export class AppComponent {
     return usuario ? ROL_LABELS[usuario.rol] : '';
   });
 
+  nombreUsuario = computed(() => {
+    const u = this.authService.usuarioActivo();
+    if (!u) return '';
+    if (u.nombre) return u.nombre;
+    return [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
+  });
+
   readonly esEstudiante = computed(() => this.authService.tieneRol('estudiante', 'egresado'));
   readonly esProfesor = computed(() => this.authService.tieneRol('profesor'));
   readonly esAdmin = computed(() => this.authService.tieneRol('administrador', 'director', 'secretario'));

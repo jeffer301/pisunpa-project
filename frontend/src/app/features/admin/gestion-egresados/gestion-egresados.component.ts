@@ -165,7 +165,7 @@ export class GestionEgresadosComponent {
   readonly arrastrandoImportacion = signal(false);
   readonly importando = signal(false);
 
-  private mapaProgramas = new Map<number, string>();
+  private mapaProgramas = new Map<string, string>();
 
   readonly egresadosFiltrados = computed(() => this.egresados().filter(e => {
     const consulta = this.filtroNombre().trim().toLocaleLowerCase();
@@ -188,7 +188,7 @@ export class GestionEgresadosComponent {
   }
 
   nombrePrograma(id: number): string {
-    return this.mapaProgramas.get(id) ?? '—';
+    return this.mapaProgramas.get(String(id)) ?? '—';
   }
 
   limpiarFiltros(): void {

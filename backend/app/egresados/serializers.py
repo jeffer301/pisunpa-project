@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
-    Departamento, Ciudad, Programa, PerfilEgresado,
+    Departamento, Ciudad, Programa, Asignatura, PerfilEgresado,
     ExperienciaLaboral, EstudioPosterior, RedProfesional, DocumentoAdjunto
 )
 
@@ -27,6 +27,12 @@ class CiudadSerializer(serializers.ModelSerializer):
 class ProgramaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Programa
+        fields = ['id', 'nombre']
+
+
+class AsignaturaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Asignatura
         fields = ['id', 'nombre']
 
 # --- Satélites ---

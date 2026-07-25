@@ -161,7 +161,7 @@ export class AnaliticaEgresadosComponent implements OnInit {
   readonly egresados = signal<Egresado[]>([]);
   readonly programas = signal<Programa[]>([]);
 
-  private mapaProgramas = new Map<number, string>();
+  private mapaProgramas = new Map<string, string>();
 
   readonly totalEgresados = computed(() => this.egresados().length);
 
@@ -202,7 +202,7 @@ export class AnaliticaEgresadosComponent implements OnInit {
     return [...conteo.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([id, count]) => ({
-        nombre: this.mapaProgramas.get(id) ?? 'Desconocido',
+        nombre: this.mapaProgramas.get(String(id)) ?? 'Desconocido',
         count,
         porcentaje: (count / maxCount) * 100,
       }));

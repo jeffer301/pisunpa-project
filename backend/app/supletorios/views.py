@@ -10,6 +10,7 @@ from .serializers import (
     SupletorioCreateSerializer,
     SupletorioBandejaSerializer,
     SupletorioPendienteSerializer,
+    SupletorioMiSolicitudSerializer,
 )
 from .utils import enviar_correo
 
@@ -100,3 +101,13 @@ class MarcarRealizadoView(APIView):
             f'El supletorio de {supletorio.estudiante_nombre} ({supletorio.asignatura}) fue marcado como realizado.',
         )
         return Response(SupletorioPendienteSerializer(supletorio).data)
+
+
+# --- Estudiante: ver sus propias solicitudes ---
+class MisSolicitudesView(generics.ListAPIView):
+    serializer_class = SupletorioMiSolicitudSerializer
+
+    def get_queryset(self):
+        return Supletorio.objects.filter(
+            usuario=self.request.user
+        ).order_by('-creado_en')

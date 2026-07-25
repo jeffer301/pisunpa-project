@@ -1,25 +1,12 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { SupletorioService } from '../../../services/supletorio.service';
+import { SolicitudSupletorio } from '../../../models/supletorio.model';
 
 export type EstadoSolicitud = 'pendiente' | 'aprobada' | 'rechazada';
 export type EstadoPago = 'pendiente' | 'comprobante_subido' | 'pagado';
-
-export interface SolicitudSupletorio {
-  id: number;
-  estudiante: string;
-  email: string;
-  programa: string;
-  asignatura: string;
-  profesor: string;
-  grupo: string;
-  descripcion: string;
-  fechaParcial: string;
-  estadoSolicitud: EstadoSolicitud;
-  estadoPago: EstadoPago;
-  comprobanteNombre: string | null;
-}
 
 @Component({
   selector: 'app-bandeja-supletorios',
@@ -142,10 +129,19 @@ export interface SolicitudSupletorio {
       color: #999;
       font-size: 0.85rem;
     }
+
+    .mensaje-vacio {
+      text-align: center;
+      padding: 2rem;
+      color: #718096;
+      background: #f7fafc;
+      border-radius: 8px;
+    }
   `],
 })
-export class BandejaSupletoriosComponent {
+export class BandejaSupletoriosComponent implements OnInit {
 
+  private supletorioService = inject(SupletorioService);
   readonly feedbackService = inject(FeedbackService);
 
   readonly filtroBusqueda = signal('');
@@ -154,32 +150,8 @@ export class BandejaSupletoriosComponent {
   readonly solicitudPendienteAccion = signal<{ solicitud: SolicitudSupletorio; accion: 'aprobar' | 'rechazar' } | null>(null);
   readonly solicitudPendientePago = signal<SolicitudSupletorio | null>(null);
 
-  readonly solicitudes = signal<SolicitudSupletorio[]>([
-    {
-      id: 1, estudiante: 'Ana García López', email: 'ana.garcia@unipacifica.edu.co',
-      programa: 'Ingeniería de Sistemas', asignatura: 'Cálculo Integral', profesor: 'Dr. Carlos Méndez',
-      grupo: 'A', descripcion: 'No presentó el parcial 2 por razones médicas.', fechaParcial: '2026-07-10',
-      estadoSolicitud: 'pendiente', estadoPago: 'pendiente', comprobanteNombre: null,
-    },
-    {
-      id: 2, estudiante: 'Luis Rodríguez Pérez', email: 'luis.rodriguez@unipacifica.edu.co',
-      programa: 'Derecho', asignatura: 'D Constitucional', profesor: 'Dra. María Fernanda Rojas',
-      grupo: 'B', descripcion: 'Conflicto de horario con examen de otra materia.', fechaParcial: '2026-07-08',
-      estadoSolicitud: 'aprobada', estadoPago: 'comprobante_subido', comprobanteNombre: 'comprobante_pago.pdf',
-    },
-    {
-      id: 3, estudiante: 'Camila Torres Ruiz', email: 'camila.torres@unipacifica.edu.co',
-      programa: 'Administración de Empresas', asignatura: 'Contabilidad General', profesor: 'Ing. Roberto Sánchez',
-      grupo: 'A', descripcion: 'Solicita supletorio por enfermedad.', fechaParcial: '2026-07-12',
-      estadoSolicitud: 'aprobada', estadoPago: 'pagado', comprobanteNombre: 'pago_comprobante.jpg',
-    },
-    {
-      id: 4, estudiante: 'Sebastián Moreno Díaz', email: 'sebastian.moreno@unipacifica.edu.co',
-      programa: 'Ingeniería Civil', asignatura: 'Mecánica de Suelos', profesor: 'Dr. Andrés Velasco',
-      grupo: 'C', descripcion: 'No asistió por viaje familiar.', fechaParcial: '2026-07-05',
-      estadoSolicitud: 'rechazada', estadoPago: 'pendiente', comprobanteNombre: null,
-    },
-  ]);
+  readonly solicitudes = signal<SolicitudSupletorio[]>([]);
+  readonly cargando = signal(true);
 
   readonly solicitudesFiltradas = computed(() => this.solicitudes().filter(s => {
     const consulta = this.filtroBusqueda().trim().toLocaleLowerCase();
@@ -195,6 +167,24 @@ export class BandejaSupletoriosComponent {
   readonly hayFiltrosActivos = computed(() =>
     Boolean(this.filtroBusqueda().trim() || this.filtroEstadoSolicitud() !== 'todos' || this.filtroEstadoPago() !== 'todos')
   );
+
+  ngOnInit(): void {
+    this.cargarSolicitudes();
+  }
+
+  cargarSolicitudes(): void {
+    this.cargando.set(true);
+    this.supletorioService.getMisSolicitudes().subscribe({
+      next: (solicitudes) => {
+        this.solicitudes.set(solicitudes);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.cargando.set(false);
+        this.feedbackService.show('Error al cargar las solicitudes.', 'error');
+      },
+    });
+  }
 
   limpiarFiltros(): void {
     this.filtroBusqueda.set('');
@@ -214,12 +204,24 @@ export class BandejaSupletoriosComponent {
     const pendiente = this.solicitudPendienteAccion();
     if (!pendiente) return;
 
-    const nuevoEstado: EstadoSolicitud = pendiente.accion === 'aprobar' ? 'aprobada' : 'rechazada';
-    this.solicitudes.update(lista =>
-      lista.map(s => s.id === pendiente.solicitud.id ? { ...s, estadoSolicitud: nuevoEstado } : s)
-    );
-    this.feedbackService.show(`Solicitud ${nuevoEstado}.`);
-    this.cancelarAccion();
+    const accion$ = pendiente.accion === 'aprobar'
+      ? this.supletorioService.aprobarSupletorio(pendiente.solicitud.id)
+      : this.supletorioService.rechazarSupletorio(pendiente.solicitud.id);
+
+    accion$.subscribe({
+      next: () => {
+        const nuevoEstado: EstadoSolicitud = pendiente.accion === 'aprobar' ? 'aprobada' : 'rechazada';
+        this.solicitudes.update(lista =>
+          lista.map(s => s.id === pendiente.solicitud.id ? { ...s, estadoSolicitud: nuevoEstado } : s)
+        );
+        this.feedbackService.show(`Solicitud ${nuevoEstado}.`);
+        this.cancelarAccion();
+      },
+      error: () => {
+        this.feedbackService.show('Error al procesar la acción. Intente de nuevo.', 'error');
+        this.cancelarAccion();
+      },
+    });
   }
 
   solicitarConfirmarPago(solicitud: SolicitudSupletorio): void {
@@ -234,11 +236,19 @@ export class BandejaSupletoriosComponent {
     const solicitud = this.solicitudPendientePago();
     if (!solicitud) return;
 
-    this.solicitudes.update(lista =>
-      lista.map(s => s.id === solicitud.id ? { ...s, estadoPago: 'pagado' } : s)
-    );
-    this.feedbackService.show('Pago confirmado.');
-    this.cancelarConfirmarPago();
+    this.supletorioService.confirmarPago(solicitud.id).subscribe({
+      next: () => {
+        this.solicitudes.update(lista =>
+          lista.map(s => s.id === solicitud.id ? { ...s, estadoPago: 'pagado' } : s)
+        );
+        this.feedbackService.show('Pago confirmado.');
+        this.cancelarConfirmarPago();
+      },
+      error: () => {
+        this.feedbackService.show('Error al confirmar el pago. Intente de nuevo.', 'error');
+        this.cancelarConfirmarPago();
+      },
+    });
   }
 
   textoAccionAprobarRechazar(): { titulo: string; mensaje: string } {

@@ -1,4 +1,4 @@
-export interface Programa {
+export interface Asignatura {
   id: string;
   nombre: string;
 }

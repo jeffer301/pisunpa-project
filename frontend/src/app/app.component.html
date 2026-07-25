@@ -1,6 +1,7 @@
-@if (authService.usuarioActivo()) {
-  <nav class="navbar">
-    <a class="brand" routerLink="/dashboard">pisunpa.com</a>
+<nav class="navbar">
+  <a class="brand" routerLink="/dashboard">pisunpa.com</a>
+
+  @if (authService.usuarioActivo()) {
     <div class="nav-links">
       @if (esEstudiante()) {
         <a routerLink="/egresado/perfil" routerLinkActive="active">Mi Portal</a>
@@ -22,12 +23,17 @@
     </div>
     <div class="user-info">
       <span class="user-label">
-        👤 {{ authService.usuarioActivo()!.nombre }} ({{ rolLabel() }})
+        👤 {{ nombreUsuario() }} ({{ rolLabel() }})
       </span>
       <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
     </div>
-  </nav>
-}
+  } @else {
+    <div class="nav-links"></div>
+    <div class="user-info">
+      <a class="btn-login-nav" routerLink="/login">Iniciar Sesión</a>
+    </div>
+  }
+</nav>
 
 <main class="contenido">
   <app-feedback-banner />

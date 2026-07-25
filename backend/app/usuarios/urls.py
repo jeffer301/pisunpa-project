@@ -2,10 +2,13 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
+    AprobarEstudianteView,
     CustomTokenObtainPairView,
+    EstudiantesPendientesView,
     RegistroConRolView,
     RegistroDocenteView,
     RegistroView,
+    RechazarEstudianteView,
     PerfilView,
     UsuariosDisponiblesView,
 )
@@ -29,5 +32,20 @@ urlpatterns = [
         "disponibles/",
         UsuariosDisponiblesView.as_view(),
         name="usuarios-disponibles",
+    ),
+    path(
+        "estudiantes-pendientes/",
+        EstudiantesPendientesView.as_view(),
+        name="estudiantes-pendientes",
+    ),
+    path(
+        "usuarios/<uuid:pk>/aprobar/",
+        AprobarEstudianteView.as_view(),
+        name="aprobar-estudiante",
+    ),
+    path(
+        "usuarios/<uuid:pk>/rechazar/",
+        RechazarEstudianteView.as_view(),
+        name="rechazar-estudiante",
     ),
 ]

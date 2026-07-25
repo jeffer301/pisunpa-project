@@ -56,7 +56,7 @@ export class EgresadosComponent implements OnInit {
     this.filtroNombre().trim() || this.filtroPrograma() || this.filtroLaboral() !== 'todos' || this.filtroPendiente() !== 'ninguno'
   ));
 
-  private mapaProgramas = new Map<number, string>();
+  private mapaProgramas = new Map<string, string>();
   private mapaCiudades = new Map<number, string>();
   private mapaDepartamentos = new Map<number, string>();
 
@@ -83,7 +83,7 @@ export class EgresadosComponent implements OnInit {
   }
 
   nombrePrograma(id: number): string {
-    return this.mapaProgramas.get(id) ?? '—';
+    return this.mapaProgramas.get(String(id)) ?? '—';
   }
 
   nombreCiudad(id: number): string {

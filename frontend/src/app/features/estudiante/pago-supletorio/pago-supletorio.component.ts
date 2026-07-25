@@ -1,6 +1,8 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SupletorioService } from '../../../services/supletorio.service';
 import { FeedbackService } from '../../../shared/services/feedback.service';
+import { MiSolicitudSupletorio, EstadoSupletorio } from '../../../models/supletorio.model';
 
 @Component({
   selector: 'app-pago-supletorio',
@@ -9,6 +11,113 @@ import { FeedbackService } from '../../../shared/services/feedback.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pago-supletorio.component.html',
   styles: [`
+    .seccion-mis-solicitudes {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .seccion-mis-solicitudes h3 {
+      font-size: 1.1rem;
+      color: #0a2463;
+      margin-bottom: 1rem;
+    }
+
+    .mensaje-vacio {
+      color: #718096;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 1.5rem;
+      background: #f7fafc;
+      border-radius: 6px;
+    }
+
+    .tarjeta-solicitud {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      background: #f7fafc;
+    }
+
+    .solicitud-cabecera {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .solicitud-asignatura {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #1a202c;
+    }
+
+    .solicitud-estado {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+    }
+
+    .estado-pendiente {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .estado-aprobada {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .estado-rechazada {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .estado-pago {
+      background: #cce5ff;
+      color: #004085;
+    }
+
+    .estado-completado {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .solicitud-detalles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1rem;
+    }
+
+    .detalle-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detalle-label {
+      font-size: 0.75rem;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .detalle-valor {
+      font-size: 0.9rem;
+      color: #2d3748;
+    }
+
+    .solicitud-comprobante {
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.85rem;
+      color: #4a5568;
+    }
+
     .seccion-tutorial {
       background: #fff;
       border-radius: 8px;
@@ -228,15 +337,60 @@ import { FeedbackService } from '../../../shared/services/feedback.service';
     }
   `],
 })
-export class PagoSupletorioComponent {
+export class PagoSupletorioComponent implements OnInit {
 
+  private supletorioService = inject(SupletorioService);
   private feedbackService = inject(FeedbackService);
 
   archivoComprobante = signal<File | null>(null);
   arrastrando = signal(false);
   subiendo = signal(false);
+  solicitudes = signal<MiSolicitudSupletorio[]>([]);
+  cargando = signal(true);
+
+  readonly ESTADO_LABELS: Record<EstadoSupletorio, string> = {
+    pendiente: 'Pendiente de revisión',
+    en_revision: 'En revisión',
+    aprobada: 'Aprobada',
+    rechazada: 'Rechazada',
+    formato_pendiente: 'Pendiente de pago',
+    comprobante_subido: 'Comprobante subido',
+    notificado_profesor: 'Notificado al profesor',
+    realizado: 'Realizado',
+  };
+
+  readonly ESTADO_CLASES: Partial<Record<EstadoSupletorio, string>> = {
+    pendiente: 'estado-pendiente',
+    en_revision: 'estado-pendiente',
+    aprobada: 'estado-aprobada',
+    rechazada: 'estado-rechazada',
+    formato_pendiente: 'estado-pago',
+    comprobante_subido: 'estado-pago',
+    notificado_profesor: 'estado-completado',
+    realizado: 'estado-completado',
+  };
 
   readonly urlAcademusoft = 'https://www.unipacifico.edu.co/p/46/sistemas-y-tecnologia/academusoft';
+
+  ngOnInit(): void {
+    this.supletorioService.getMiSolicitudActiva().subscribe({
+      next: (solicitudes) => {
+        this.solicitudes.set(solicitudes);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.cargando.set(false);
+      },
+    });
+  }
+
+  labelEstado(estado: EstadoSupletorio): string {
+    return this.ESTADO_LABELS[estado] ?? estado;
+  }
+
+  claseEstado(estado: EstadoSupletorio): string {
+    return this.ESTADO_CLASES[estado] ?? '';
+  }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -300,10 +454,16 @@ export class PagoSupletorioComponent {
 
     this.subiendo.set(true);
 
-    setTimeout(() => {
-      this.feedbackService.show('Comprobante de pago enviado exitosamente.', 'success');
-      this.archivoComprobante.set(null);
-      this.subiendo.set(false);
-    }, 1500);
+    this.supletorioService.subirComprobantePago(archivo).subscribe({
+      next: () => {
+        this.feedbackService.show('Comprobante de pago enviado exitosamente.', 'success');
+        this.archivoComprobante.set(null);
+        this.subiendo.set(false);
+      },
+      error: () => {
+        this.feedbackService.show('Error al enviar el comprobante. Intente de nuevo.', 'error');
+        this.subiendo.set(false);
+      },
+    });
   }
 }

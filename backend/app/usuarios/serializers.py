@@ -162,6 +162,19 @@ class RegistroDocenteSerializer(serializers.Serializer):
         return attrs
 
 
+class EstudiantePendienteSerializer(serializers.ModelSerializer):
+    rol = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Usuario
+        fields = ['id', 'email', 'first_name', 'last_name', 'documento', 'documento_identidad', 'estado', 'creado']
+
+    def get_rol(self, obj):
+        if obj.rol:
+            return obj.rol.nombre
+        return None
+
+
 class CustomTokenObtainSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
