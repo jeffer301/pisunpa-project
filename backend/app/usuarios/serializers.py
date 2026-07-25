@@ -149,7 +149,7 @@ class RegistroDocenteSerializer(serializers.Serializer):
         return value
 
     def validate_documento_identidad(self, value):
-        if Usuario.objects.filter(documento_identidad=value).exists():
+        if Usuario.objects.filter(documento=value).exists():
             raise serializers.ValidationError("Ya existe un usuario con este documento.")
         return value
 
