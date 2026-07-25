@@ -37,9 +37,14 @@ class RegistroConRolView(APIView):
                 first_name=data["first_name"],
                 last_name=data["last_name"],
                 documento=data["documento"],
+                documento_identidad=data.get("documento_identidad", ""),
                 telefono=data.get("telefono", ""),
             )
             usuario.set_password(data["password"])
+
+            if data["tipo_usuario"] == "estudiante":
+                usuario.estado = "pendiente_aprobacion"
+
             usuario.save()
 
             if data["tipo_usuario"] == "egresado":
@@ -65,7 +70,8 @@ class RegistroConRolView(APIView):
                     "Registro como egresado pendiente de "
                     "validación."
                     if data["tipo_usuario"] == "egresado"
-                    else "Registro exitoso."
+                    else "Tu cuenta está pendiente de aprobación "
+                    "por el director/administrador."
                 )
             },
             status=status.HTTP_201_CREATED,

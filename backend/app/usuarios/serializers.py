@@ -85,6 +85,9 @@ class RegistroConRolSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
     documento = serializers.CharField(max_length=20)
+    documento_identidad = serializers.CharField(
+        max_length=20, required=False, default=''
+    )
     telefono = serializers.CharField(
         max_length=20, required=False, default=''
     )
