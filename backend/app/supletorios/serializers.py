@@ -51,11 +51,14 @@ class SupletorioBandejaSerializer(serializers.ModelSerializer):
     estadoSolicitud = serializers.SerializerMethodField()
     estadoPago = serializers.SerializerMethodField()
     comprobanteNombre = serializers.SerializerMethodField()
+    fechaExamen = serializers.DateField(source='fecha_examen_supletorio', default=None)
+    nota = serializers.IntegerField(default=None)
 
     class Meta:
         model = Supletorio
         fields = ['id', 'estudiante', 'email', 'programa', 'asignatura', 'profesor', 'grupo',
-                  'descripcion', 'fechaParcial', 'estadoSolicitud', 'estadoPago', 'comprobanteNombre']
+                  'descripcion', 'fechaParcial', 'estadoSolicitud', 'estadoPago', 'comprobanteNombre',
+                  'fechaExamen', 'nota']
 
     def get_estadoSolicitud(self, obj):
         if obj.estado in (EstadoSupletorio.PENDIENTE, EstadoSupletorio.EN_REVISION):

@@ -43,6 +43,8 @@
         <th>Estado Solicitud</th>
         <th>Soporte</th>
         <th>Estado Pago</th>
+        <th>Fecha Examen</th>
+        <th>Nota</th>
         <th>Acciones</th>
       </tr>
     </thead>
@@ -75,6 +77,8 @@
               {{ s.estadoPago === 'pendiente' ? 'Pendiente' : s.estadoPago === 'comprobante_subido' ? 'Comprobante subido' : 'Pagado' }}
             </span>
           </td>
+          <td>{{ s.fechaExamen || '—' }}</td>
+          <td>{{ s.nota ?? '—' }}</td>
           <td>
             <div class="acciones-solicitud">
               @if (s.estadoSolicitud === 'pendiente') {
@@ -89,7 +93,7 @@
         </tr>
       } @empty {
         <tr>
-          <td colspan="10" class="vacio">
+          <td colspan="12" class="vacio">
             @if (hayFiltrosActivos()) {
               No hay solicitudes que coincidan con los filtros.
             } @else {
