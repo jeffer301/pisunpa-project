@@ -2,6 +2,12 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+class EstadoUsuario(models.TextChoices):
+    PENDIENTE = 'pendiente_aprobacion', 'Pendiente de aprobación'
+    APROBADO = 'aprobado', 'Aprobado'
+    RECHAZADO = 'rechazado', 'Rechazado'
+
+
 class Rol(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(
@@ -29,6 +35,7 @@ class Usuario(AbstractUser):
         max_length=20,
         unique=True
     )
+    documento_identidad = models.CharField(max_length=20, blank=True, default='')
     telefono = models.CharField(
         max_length=20,
         blank=True
@@ -43,6 +50,11 @@ class Usuario(AbstractUser):
         on_delete=models.PROTECT,
         null=True,
         blank=True,
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=EstadoUsuario.choices,
+        default=EstadoUsuario.APROBADO,
     )
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
