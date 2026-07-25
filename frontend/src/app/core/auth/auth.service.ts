@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, switchMap } from 'rxjs';
 import { Usuario } from '../../models/usuario.model';
-import { Rol } from './role.model';
+import { Rol, normalizeRol } from './role.model';
 import { environment } from '../../../environments/environment';
 
 const ACCESS_KEY = 'pisunpa_access_token';
@@ -48,7 +48,13 @@ export class AuthService {
 
   obtenerPerfil(): Observable<boolean> {
     return this.http.get<Usuario>(`${environment.apiUrl}/usuarios/perfil/`).pipe(
-      tap(usuario => this._usuarioActivo.set(usuario)),
+      tap(usuario => {
+        const normalized: Usuario = {
+          ...usuario,
+          rol: normalizeRol(usuario.rol as unknown as string) ?? usuario.rol,
+        };
+        this._usuarioActivo.set(normalized);
+      }),
       switchMap(() => [true])
     );
   }

@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
-import { ROL_LABELS } from './core/auth/role.model';
+import { ROL_LABELS, Rol } from './core/auth/role.model';
 import { FeedbackBannerComponent } from './shared/components/feedback-banner/feedback-banner.component';
 
 @Component({
@@ -17,7 +17,8 @@ export class AppComponent {
 
   rolLabel = computed(() => {
     const usuario = this.authService.usuarioActivo();
-    return usuario ? ROL_LABELS[usuario.rol] : '';
+    if (!usuario) return '';
+    return ROL_LABELS[usuario.rol as Rol] ?? usuario.rol ?? '';
   });
 
   nombreUsuario = computed(() => {
