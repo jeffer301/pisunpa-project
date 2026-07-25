@@ -25,6 +25,18 @@ class SolicitudSupletorioCreateView(generics.CreateAPIView):
     serializer_class = SupletorioCreateSerializer
     parser_classes = [MultiPartParser, FormParser]
 
+    def perform_create(self, serializer):
+        supletorio = serializer.save()
+        admins = Usuario.objects.filter(rol__nombre='administrador', estado='aprobado')
+        for admin in admins:
+            NotificacionService.crear(
+                usuario=admin,
+                titulo='Nueva solicitud de supletorio',
+                mensaje=f'{supletorio.estudiante_nombre} solicitó un supletorio de {supletorio.asignatura}.',
+                tipo='solicitud_creada',
+                supletorio=supletorio,
+            )
+
 
 # --- Estudiante: subir comprobante de pago ---
 class SubirComprobanteView(APIView):
@@ -61,6 +73,15 @@ class AprobarSupletorioView(APIView):
         supletorio = get_object_or_404(Supletorio, pk=pk)
         supletorio.estado = EstadoSupletorio.FORMATO_PENDIENTE
         supletorio.save()
+
+        NotificacionService.crear(
+            usuario=supletorio.usuario,
+            titulo='Solicitud aprobada',
+            mensaje=f'Tu solicitud de supletorio de {supletorio.asignatura} fue aprobada. Ya puedes llenar el formato y realizar el pago.',
+            tipo='solicitud_aprobada',
+            supletorio=supletorio,
+        )
+
         enviar_correo(
             supletorio.estudiante_email,
             'Solicitud de supletorio aprobada',
@@ -74,6 +95,15 @@ class RechazarSupletorioView(APIView):
         supletorio = get_object_or_404(Supletorio, pk=pk)
         supletorio.estado = EstadoSupletorio.RECHAZADA
         supletorio.save()
+
+        NotificacionService.crear(
+            usuario=supletorio.usuario,
+            titulo='Solicitud rechazada',
+            mensaje=f'Tu solicitud de supletorio de {supletorio.asignatura} fue rechazada.',
+            tipo='solicitud_rechazada',
+            supletorio=supletorio,
+        )
+
         return Response(SupletorioBandejaSerializer(supletorio).data)
 
 
@@ -82,6 +112,15 @@ class ConfirmarPagoView(APIView):
         supletorio = get_object_or_404(Supletorio, pk=pk)
         supletorio.estado = EstadoSupletorio.NOTIFICADO_PROFESOR
         supletorio.save()
+
+        NotificacionService.crear(
+            usuario=supletorio.usuario,
+            titulo='Pago confirmado',
+            mensaje=f'El pago de tu supletorio de {supletorio.asignatura} fue confirmado. El profesor será notificado.',
+            tipo='pago_confirmado',
+            supletorio=supletorio,
+        )
+
         # El profesor aún no tiene email real (campo `profesor` es texto libre).
         # Cuando exista FK a Usuario, reemplazar destinatario por supletorio.profesor.email
         return Response(SupletorioBandejaSerializer(supletorio).data)
