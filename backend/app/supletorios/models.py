@@ -47,6 +47,17 @@ class Supletorio(models.Model):
 
     comprobante_pago = models.FileField(upload_to='comprobantes_pago/', null=True, blank=True)
 
+    fecha_examen_supletorio = models.DateField(null=True, blank=True)
+    nota = models.IntegerField(null=True, blank=True)
+    nota_observaciones = models.TextField(blank=True, default='')
+    fecha_programacion = models.DateTimeField(null=True, blank=True)
+    programado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='supletorios_programados'
+    )
+
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
