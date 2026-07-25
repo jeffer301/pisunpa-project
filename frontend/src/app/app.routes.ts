@@ -13,6 +13,7 @@ import { ObjetivosProyectoComponent } from './features/dashboard/objetivos-proye
 import { SupletoriosPendientesComponent } from './features/profesor/supletorios-pendientes/supletorios-pendientes.component';
 import { PortalEgresadoComponent } from './features/portal-egresado/portal-egresado.component';
 import { RegistroManualComponent } from './features/registro-manual/registro-manual.component';
+import { RegistroDocenteComponent } from './features/registro-docente/registro-docente.component';
 import { authGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { Rol } from './core/auth/role.model';
@@ -22,9 +23,10 @@ const rolesEstudiante = ['estudiante', 'egresado'] as Rol[];
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'registro/docente', component: RegistroDocenteComponent },
   { path: 'registro-egresado', component: RegistroManualComponent },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  { path: '', component: DashboardComponent },
+  { path: 'dashboard', component: DashboardComponent },
   { path: 'egresados', component: EgresadosComponent, canActivate: [authGuard] },
   { path: 'registrar', component: FormularioEgresadoComponent, canActivate: [authGuard] },
   { path: 'admin', component: AdminComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
