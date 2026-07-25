@@ -1,12 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { Egresado } from '../models/egresado.model';
 import { Programa } from '../models/programa.model';
+import { Asignatura } from '../models/asignatura.model';
+import { Usuario } from '../models/usuario.model';
 import { Departamento } from '../models/departamento.model';
 import { Ciudad } from '../models/ciudad.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class EgresadosService {
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
 
   private departamentos: Departamento[] = [
     { id: 1, nombre: 'Valle del Cauca' },
@@ -24,14 +30,6 @@ export class EgresadosService {
     { id: 5, nombre: 'Pasto', idDepartamento: 3 },
     { id: 6, nombre: 'Cartagena', idDepartamento: 4 },
     { id: 7, nombre: 'Medellín', idDepartamento: 5 },
-  ];
-
-  private programas: Programa[] = [
-    { id: 1, nombre: 'Ingeniería de Sistemas' },
-    { id: 2, nombre: 'Ingeniería Civil' },
-    { id: 3, nombre: 'Derecho' },
-    { id: 4, nombre: 'Medicina' },
-    { id: 5, nombre: 'Administración de Empresas' },
   ];
 
   private egresados: Egresado[] = [
@@ -71,7 +69,15 @@ export class EgresadosService {
   }
 
   getProgramas(): Observable<Programa[]> {
-    return of(this.programas);
+    return this.http.get<Programa[]>(`${this.apiUrl}/egresados/programas/`);
+  }
+
+  getAsignaturas(): Observable<Asignatura[]> {
+    return this.http.get<Asignatura[]>(`${this.apiUrl}/egresados/asignaturas/`);
+  }
+
+  getProfesoresPorAsignatura(asignaturaId: string): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(`${this.apiUrl}/egresados/profesores-por-asignatura/?asignatura_id=${asignaturaId}`);
   }
 
   getEgresados(): Observable<Egresado[]> {

@@ -2,8 +2,11 @@ import { Component, OnInit, ChangeDetectionStrategy, inject, signal, computed } 
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { EgresadosService } from '../../../services/egresados.service';
+import { SupletorioService } from '../../../services/supletorio.service';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { Programa } from '../../../models/programa.model';
+import { Asignatura } from '../../../models/asignatura.model';
+import { Usuario } from '../../../models/usuario.model';
 
 @Component({
   selector: 'app-solicitud-supletorio',
@@ -74,10 +77,13 @@ export class SolicitudSupletorioComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private egresadosService = inject(EgresadosService);
+  private supletorioService = inject(SupletorioService);
   private feedbackService = inject(FeedbackService);
 
   formulario!: FormGroup;
   programas: Programa[] = [];
+  asignaturas: Asignatura[] = [];
+  profesores = signal<Usuario[]>([]);
   guardando = signal(false);
   archivosSeleccionados = signal<File[]>([]);
   fechaActual = signal(new Date());
@@ -106,6 +112,7 @@ export class SolicitudSupletorioComponent implements OnInit {
     });
 
     this.egresadosService.getProgramas().subscribe(p => this.programas = p);
+    this.egresadosService.getAsignaturas().subscribe(a => this.asignaturas = a);
   }
 
   onArchivosSeleccionados(event: Event): void {
@@ -119,6 +126,18 @@ export class SolicitudSupletorioComponent implements OnInit {
     this.archivosSeleccionados.update(files => files.filter((_, i) => i !== index));
   }
 
+  onAsignaturaChange(asignaturaId: string): void {
+    this.formulario.patchValue({ profesor: '' });
+    if (!asignaturaId) {
+      this.profesores.set([]);
+      return;
+    }
+    this.egresadosService.getProfesoresPorAsignatura(asignaturaId).subscribe({
+      next: (profesores) => this.profesores.set(profesores),
+      error: () => this.profesores.set([])
+    });
+  }
+
   guardar(): void {
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
@@ -127,12 +146,31 @@ export class SolicitudSupletorioComponent implements OnInit {
 
     this.guardando.set(true);
 
-    setTimeout(() => {
-      this.feedbackService.show('Solicitud de supletorio enviada exitosamente.', 'success');
-      this.formulario.reset();
-      this.archivosSeleccionados.set([]);
-      this.guardando.set(false);
-    }, 1000);
+    const formData = new FormData();
+    const vals = this.formulario.value;
+    formData.append('fechaParcial', vals.fechaParcial);
+    formData.append('profesor', vals.profesor);
+    formData.append('asignatura', vals.asignatura);
+    formData.append('grupoAsignatura', vals.grupoAsignatura);
+    formData.append('idPrograma', String(vals.idPrograma));
+    formData.append('descripcion', vals.descripcion);
+
+    for (const archivo of this.archivosSeleccionados()) {
+      formData.append('anexos', archivo);
+    }
+
+    this.supletorioService.crearSolicitud(formData).subscribe({
+      next: () => {
+        this.feedbackService.show('Solicitud de supletorio enviada exitosamente.', 'success');
+        this.formulario.reset();
+        this.archivosSeleccionados.set([]);
+        this.guardando.set(false);
+      },
+      error: () => {
+        this.feedbackService.show('Error al enviar la solicitud. Intente de nuevo.', 'error');
+        this.guardando.set(false);
+      },
+    });
   }
 
   campoInvalido(campo: string): boolean {

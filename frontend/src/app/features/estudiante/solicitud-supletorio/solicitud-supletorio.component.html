@@ -21,7 +21,15 @@
 
     <div class="campo">
       <label for="profesor">Profesor *</label>
-      <input id="profesor" formControlName="profesor" placeholder="Nombre del profesor" />
+      <select id="profesor" formControlName="profesor">
+        <option [value]="''" disabled>Seleccione un profesor</option>
+        @for (p of profesores(); track p.id) {
+          <option [value]="p.first_name + ' ' + p.last_name">{{ p.first_name }} {{ p.last_name }}</option>
+        }
+      </select>
+      @if (profesores().length === 0 && formulario.get('asignatura')?.value) {
+        <span class="error">No hay profesores asignados a esta materia.</span>
+      }
       @if (campoInvalido('profesor')) {
         <span class="error">Campo obligatorio.</span>
       }
@@ -29,7 +37,12 @@
 
     <div class="campo">
       <label for="asignatura">Asignatura *</label>
-      <input id="asignatura" formControlName="asignatura" placeholder="Nombre de la asignatura" />
+      <select id="asignatura" formControlName="asignatura" (change)="onAsignaturaChange($any($event.target).value)">
+        <option [value]="null" disabled>Seleccione una asignatura</option>
+        @for (a of asignaturas; track a.id) {
+          <option [value]="a.id">{{ a.nombre }}</option>
+        }
+      </select>
       @if (campoInvalido('asignatura')) {
         <span class="error">Campo obligatorio.</span>
       }
