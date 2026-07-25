@@ -4,8 +4,7 @@
 
   @if (excedeLimite()) {
     <div class="aviso-advertencia">
-      Su solicitud excede el límite permitido de {{ diasLimite }} días para la presentación de supletorios,
-      por lo tanto, entrará a revisión especial por parte de la administración.
+      <p><strong>Advertencia:</strong> La fecha del parcial tiene {{ diasDesdeParcial() }} días hábiles de diferencia (límite: {{ Supletorio.DIAS_LIMITE }}). La solicitud será revisada por el administrador.</p>
     </div>
   }
 

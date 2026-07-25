@@ -7,6 +7,8 @@ import { FeedbackService } from '../../../shared/services/feedback.service';
 import { Programa } from '../../../models/programa.model';
 import { Asignatura } from '../../../models/asignatura.model';
 import { Usuario } from '../../../models/usuario.model';
+import { Supletorio } from '../../../models/supletorio.model';
+import { diasHabilesEntre } from '../../../core/utils/business-days';
 
 @Component({
   selector: 'app-solicitud-supletorio',
@@ -88,17 +90,25 @@ export class SolicitudSupletorioComponent implements OnInit {
   archivosSeleccionados = signal<File[]>([]);
   fechaActual = signal(new Date());
 
-  readonly diasLimite = 5;
+  readonly Supletorio = Supletorio;
 
-  excedeLimite = computed(() => {
-    const fechaParcialStr = this.formulario?.get('fechaParcial')?.value;
-    if (!fechaParcialStr) return false;
+  readonly excedeLimite = computed(() => {
+    const fp = this.formulario?.get('fechaParcial')?.value;
+    if (!fp) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaParcial = new Date(fp);
+    const diff = diasHabilesEntre(fechaParcial, hoy);
+    return diff > Supletorio.DIAS_LIMITE;
+  });
 
-    const fechaParcial = new Date(fechaParcialStr);
-    const hoy = this.fechaActual();
-    const diffMs = Math.abs(hoy.getTime() - fechaParcial.getTime());
-    const diffDias = diffMs / (1000 * 60 * 60 * 24);
-    return diffDias > this.diasLimite;
+  readonly diasDesdeParcial = computed(() => {
+    const fp = this.formulario?.get('fechaParcial')?.value;
+    if (!fp) return 0;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaParcial = new Date(fp);
+    return diasHabilesEntre(fechaParcial, hoy);
   });
 
   ngOnInit(): void {

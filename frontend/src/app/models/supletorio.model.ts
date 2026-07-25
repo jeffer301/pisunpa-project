@@ -1,3 +1,7 @@
+export namespace Supletorio {
+  export const DIAS_LIMITE = 5;
+}
+
 export type EstadoSupletorio =
   | 'pendiente'
   | 'en_revision'
