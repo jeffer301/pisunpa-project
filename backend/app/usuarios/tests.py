@@ -87,3 +87,46 @@ class CustomLoginBlockTest(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 403)
+
+
+from .models import Notificacion, Usuario, Rol
+from .notification_service import NotificacionService
+
+
+class NotificacionServiceTest(TestCase):
+    def setUp(self):
+        self.rol = Rol.objects.create(nombre='estudiante')
+        self.user = Usuario.objects.create_user(
+            username='test@test.com', email='test@test.com',
+            password='test1234', documento='111', estado='aprobado',
+            rol=self.rol
+        )
+
+    def test_crear_notificacion(self):
+        notif = NotificacionService.crear(
+            usuario=self.user,
+            titulo='Test',
+            mensaje='Mensaje de prueba',
+            tipo='solicitud_creada'
+        )
+        self.assertEqual(notif.titulo, 'Test')
+        self.assertFalse(notif.leido)
+
+    def test_contar_no_leidas(self):
+        NotificacionService.crear(self.user, 'N1', 'm1', 'solicitud_creada')
+        NotificacionService.crear(self.user, 'N2', 'm2', 'solicitud_aprobada')
+        self.assertEqual(NotificacionService.contar_no_leidas(self.user), 2)
+
+    def test_marcar_como_leida(self):
+        notif = NotificacionService.crear(self.user, 'N1', 'm1', 'solicitud_creada')
+        result = NotificacionService.marcar_como_leida(str(notif.id), self.user)
+        self.assertTrue(result)
+        notif.refresh_from_db()
+        self.assertTrue(notif.leido)
+
+    def test_obtener_solo_no_leidas(self):
+        n1 = NotificacionService.crear(self.user, 'N1', 'm1', 'solicitud_creada')
+        NotificacionService.crear(self.user, 'N2', 'm2', 'solicitud_aprobada')
+        NotificacionService.marcar_como_leida(str(n1.id), self.user)
+        qs = NotificacionService.obtener_notificaciones(self.user, solo_no_leidas=True)
+        self.assertEqual(qs.count(), 1)
