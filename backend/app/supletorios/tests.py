@@ -102,3 +102,53 @@ class AgendarExamenViewTest(TestCase):
             format='json'
         )
         self.assertEqual(response.status_code, 400)
+
+
+class CalificarExamenViewTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.rol_prof = Rol.objects.create(nombre='profesor')
+        self.profesor = User.objects.create_user(
+            username='prof2@test.com', email='prof2@test.com',
+            password='test1234', documento='444', estado='aprobado',
+            rol=self.rol_prof
+        )
+        self.supletorio = Supletorio.objects.create(
+            usuario=self.profesor,
+            estudiante_nombre='Maria',
+            estudiante_email='maria@test.com',
+            fecha_parcial=date(2025, 6, 1),
+            profesor='Profesor Test',
+            asignatura='Física',
+            grupo='B',
+            descripcion='Test',
+            estado=EstadoSupletorio.NOTIFICADO_PROFESOR,
+        )
+        self.client.force_authenticate(user=self.profesor)
+
+    def test_calificar_exito(self):
+        response = self.client.patch(
+            f'/api/supletorios/pendientes/{self.supletorio.id}/calificar/',
+            {'nota': 85, 'nota_observaciones': 'Buen desempeño'},
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.supletorio.refresh_from_db()
+        self.assertEqual(self.supletorio.nota, 85)
+        self.assertEqual(self.supletorio.estado, EstadoSupletorio.REALIZADO)
+
+    def test_calificar_nota_fuera_rango(self):
+        response = self.client.patch(
+            f'/api/supletorios/pendientes/{self.supletorio.id}/calificar/',
+            {'nota': 150},
+            format='json'
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_calificar_nota_negativa(self):
+        response = self.client.patch(
+            f'/api/supletorios/pendientes/{self.supletorio.id}/calificar/',
+            {'nota': -5},
+            format='json'
+        )
+        self.assertEqual(response.status_code, 400)

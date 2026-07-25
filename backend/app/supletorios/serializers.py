@@ -116,6 +116,17 @@ from app.usuarios.models import Usuario
 from .business_days import dias_habiles_entre
 
 
+class CalificarExamenSerializer(serializers.Serializer):
+    nota = serializers.IntegerField(min_value=0, max_value=100)
+    nota_observaciones = serializers.CharField(required=False, default='', allow_blank=True)
+
+    def validate(self, attrs):
+        supletorio = self.context['supletorio']
+        if supletorio.estado not in (EstadoSupletorio.NOTIFICADO_PROFESOR, EstadoSupletorio.AGENDADO):
+            raise serializers.ValidationError("Solo se pueden calificar supletorios notificados o agendados.")
+        return attrs
+
+
 class AgendarExamenSerializer(serializers.Serializer):
     fecha_examen_supletorio = serializers.DateField()
 

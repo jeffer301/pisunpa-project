@@ -10,6 +10,7 @@ from .views import (
     MarcarRealizadoView,
     MisSolicitudesView,
     AgendarExamenView,
+    CalificarExamenView,
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     path('pendientes/', SupletoriosPendientesListView.as_view()),
     path('pendientes/<int:pk>/realizado/', MarcarRealizadoView.as_view()),
     path('pendientes/<uuid:pk>/agendar/', AgendarExamenView.as_view()),
+    path('pendientes/<uuid:pk>/calificar/', CalificarExamenView.as_view()),
 ]

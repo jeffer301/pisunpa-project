@@ -13,6 +13,7 @@ from .serializers import (
     SupletorioPendienteSerializer,
     SupletorioMiSolicitudSerializer,
     AgendarExamenSerializer,
+    CalificarExamenSerializer,
 )
 from .utils import enviar_correo
 from app.usuarios.notification_service import NotificacionService
@@ -152,3 +153,39 @@ class AgendarExamenView(APIView):
         )
 
         return Response({'detail': 'Examen agendado correctamente'})
+
+
+class CalificarExamenView(APIView):
+    def patch(self, request, pk):
+        supletorio = get_object_or_404(Supletorio, pk=pk)
+        serializer = CalificarExamenSerializer(
+            data=request.data,
+            context={'supletorio': supletorio}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        supletorio.nota = serializer.validated_data['nota']
+        supletorio.nota_observaciones = serializer.validated_data.get('nota_observaciones', '')
+        supletorio.estado = EstadoSupletorio.REALIZADO
+        supletorio.save()
+
+        admins = Usuario.objects.filter(rol__nombre='administrador', estado='aprobado')
+        for admin in admins:
+            NotificacionService.crear(
+                usuario=admin,
+                titulo='Supletorio calificado',
+                mensaje=f'El supletorio de {supletorio.estudiante_nombre} ({supletorio.asignatura}) fue calificado con nota {supletorio.nota}.',
+                tipo='examen_calificado',
+                supletorio=supletorio,
+            )
+
+        estudiante = supletorio.usuario
+        NotificacionService.crear(
+            usuario=estudiante,
+            titulo='Tu supletorio fue calificado',
+            mensaje=f'Tu supletorio de {supletorio.asignatura} fue calificado. Nota: {supletorio.nota}.',
+            tipo='examen_calificado',
+            supletorio=supletorio,
+        )
+
+        return Response({'detail': 'Supletorio calificado correctamente'})
