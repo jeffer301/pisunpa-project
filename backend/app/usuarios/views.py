@@ -8,10 +8,12 @@ from rest_framework.permissions import (
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from app.egresados.models import PerfilEgresado, Programa
 from .models import Usuario
 from .serializers import (
+    CustomTokenObtainSerializer,
     RegistroConRolSerializer,
     RegistroSerializer,
     UsuariosDisponiblesSerializer,
@@ -91,6 +93,10 @@ class PerfilView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainSerializer
 
 
 class IsAdminUser(BasePermission):
