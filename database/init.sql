@@ -4,6 +4,9 @@
 --
 -- Este archivo se ejecuta automaticamente al crear por primera vez el volumen
 -- del servicio `database` de docker-compose.
+-- Se ejecuta dentro de una transaccion para reforzar la atomicidad del arranque.
+
+BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -415,6 +418,27 @@ CREATE TABLE asignaturas (
     UNIQUE (programa_id, codigo)
 );
 
+CREATE TABLE docentes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL UNIQUE REFERENCES usuarios(id) ON DELETE CASCADE,
+    codigo_docente VARCHAR(60),
+    activo BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE grupos_asignatura (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    asignatura_id UUID NOT NULL REFERENCES asignaturas(id) ON DELETE CASCADE,
+    docente_id UUID NOT NULL REFERENCES docentes(id) ON DELETE RESTRICT,
+    codigo_grupo VARCHAR(30) NOT NULL,
+    jornada VARCHAR(30) NOT NULL DEFAULT 'diurna',
+    activo BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (asignatura_id, codigo_grupo)
+);
+
 CREATE TABLE solicitudes_supletorio (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     estudiante_id UUID NOT NULL REFERENCES usuarios(id),
@@ -483,6 +507,8 @@ CREATE TRIGGER tr_experiencias_updated_at BEFORE UPDATE ON experiencias_laborale
 CREATE TRIGGER tr_empresas_updated_at BEFORE UPDATE ON empresas FOR EACH ROW EXECUTE FUNCTION establecer_updated_at();
 CREATE TRIGGER tr_vacantes_updated_at BEFORE UPDATE ON vacantes FOR EACH ROW EXECUTE FUNCTION establecer_updated_at();
 CREATE TRIGGER tr_supletorios_updated_at BEFORE UPDATE ON solicitudes_supletorio FOR EACH ROW EXECUTE FUNCTION establecer_updated_at();
+CREATE TRIGGER tr_docentes_updated_at BEFORE UPDATE ON docentes FOR EACH ROW EXECUTE FUNCTION establecer_updated_at();
+CREATE TRIGGER tr_grupos_asignatura_updated_at BEFORE UPDATE ON grupos_asignatura FOR EACH ROW EXECUTE FUNCTION establecer_updated_at();
 
 -- Roles iniciales del enunciado. No se crean usuarios ni datos simulados.
 INSERT INTO roles (codigo, nombre, descripcion) VALUES
@@ -505,3 +531,5 @@ COMMENT ON TABLE egresados IS 'Perfil maestro del graduado; integra los modulos 
 COMMENT ON TABLE seguimientos_egresado IS 'Fotografias historicas de la situacion laboral para indicadores institucionales.';
 COMMENT ON TABLE vacantes IS 'Ofertas laborales publicadas por empresas validadas.';
 COMMENT ON TABLE solicitudes_supletorio IS 'Solicitudes de examen supletorio; se incluye por ser un modulo existente del proyecto.';
+
+COMMIT;
