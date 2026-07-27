@@ -26,13 +26,18 @@ class SupletorioCreateSerializer(serializers.ModelSerializer):
         validated_data['programa'] = programa
         validated_data['programa_nombre'] = programa.nombre
 
-        supletorio = Supletorio.objects.create(
+        supletorio = Supletorio(
             usuario=usuario,
             estudiante_nombre=usuario.get_full_name() or usuario.get_username(),
             estudiante_email=usuario.email,
-            estado=EstadoSupletorio.PENDIENTE,
             **validated_data,
         )
+        supletorio.estado = (
+            EstadoSupletorio.EN_REVISION
+            if supletorio.excede_plazo()
+            else EstadoSupletorio.PENDIENTE
+        )
+        supletorio.save()
 
         for archivo in anexos_data:
             AnexoSupletorio.objects.create(
