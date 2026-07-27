@@ -29,6 +29,8 @@ export class FormularioEgresadoComponent implements OnInit {
 
   ngOnInit(): void {
     this.formulario = this.fb.group({
+      first_name: [''],
+      last_name: [''],
       tipo_documento: ['CC', Validators.required],
       numero_documento: ['', Validators.required],
       fecha_nacimiento: [''],
@@ -76,6 +78,8 @@ export class FormularioEgresadoComponent implements OnInit {
     this.guardando.set(true);
     const val = this.formulario.value;
     this.egresadosService.guardarEgresado({
+      first_name: val.first_name,
+      last_name: val.last_name,
       tipo_documento: val.tipo_documento,
       numero_documento: val.numero_documento,
       fecha_nacimiento: val.fecha_nacimiento || null,
