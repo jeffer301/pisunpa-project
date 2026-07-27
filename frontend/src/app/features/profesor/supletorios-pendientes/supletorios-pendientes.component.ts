@@ -67,8 +67,8 @@ import { SupletorioService, SupletorioPendiente } from '../../../services/suplet
           [titulo]="'Confirmar realización'"
           [mensaje]="'¿Marcar el supletorio de ' + supletorioPendiente()!.estudiante + ' como realizado?'"
           [confirmarLabel]="'Marcar Realizado'"
-          (confirmado)="marcarRealizado()"
-          (cancelado)="cancelarRealizado()"
+          (confirmar)="marcarRealizado()"
+          (cancelar)="cancelarRealizado()"
         />
       }
     </div>
