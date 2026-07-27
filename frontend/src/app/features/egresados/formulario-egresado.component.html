@@ -7,15 +7,36 @@
   }
 
   <form [formGroup]="formulario" (ngSubmit)="guardar()">
-
     <div class="campo">
       <label for="usuario_id">Seleccionar usuario existente</label>
-      <select id="usuario_id" formControlName="usuario_id" (change)="onUsuarioSeleccionado($any($event.target).value)">
+      <select
+        id="usuario_id"
+        formControlName="usuario_id"
+        (change)="onUsuarioSeleccionado($any($event.target).value)"
+      >
         <option value="">Crear nuevo usuario</option>
         @for (u of usuariosDisponibles; track u.id) {
-          <option [value]="u.id">{{ u.first_name }} {{ u.last_name }} — {{ u.email }}</option>
+          <option [value]="u.id">
+            {{ u.first_name }} {{ u.last_name }} — {{ u.email }}
+          </option>
         }
       </select>
+    </div>
+
+    <div class="campo">
+      <label for="first_name">Nombres *</label>
+      <input id="first_name" formControlName="first_name" />
+      @if (campoInvalido("first_name")) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="last_name">Apellidos *</label>
+      <input id="last_name" formControlName="last_name" />
+      @if (campoInvalido("last_name")) {
+        <span class="error">Campo obligatorio.</span>
+      }
     </div>
 
     <div class="campo">
@@ -31,14 +52,18 @@
     <div class="campo">
       <label for="numero_documento">Número de documento *</label>
       <input id="numero_documento" formControlName="numero_documento" />
-      @if (campoInvalido('numero_documento')) {
+      @if (campoInvalido("numero_documento")) {
         <span class="error">Campo obligatorio.</span>
       }
     </div>
 
     <div class="campo">
       <label for="fecha_nacimiento">Fecha de nacimiento</label>
-      <input id="fecha_nacimiento" type="date" formControlName="fecha_nacimiento" />
+      <input
+        id="fecha_nacimiento"
+        type="date"
+        formControlName="fecha_nacimiento"
+      />
     </div>
 
     <div class="campo">
@@ -49,7 +74,7 @@
     <div class="campo">
       <label for="direccion_residencia">Dirección de residencia *</label>
       <input id="direccion_residencia" formControlName="direccion_residencia" />
-      @if (campoInvalido('direccion_residencia')) {
+      @if (campoInvalido("direccion_residencia")) {
         <span class="error">Campo obligatorio.</span>
       }
     </div>
@@ -67,7 +92,7 @@
           <option [value]="p.id">{{ p.nombre }}</option>
         }
       </select>
-      @if (campoInvalido('programa_id')) {
+      @if (campoInvalido("programa_id")) {
         <span class="error">Campo obligatorio.</span>
       }
     </div>
@@ -83,7 +108,7 @@
             <option [value]="d.id">{{ d.nombre }}</option>
           }
         </select>
-        @if (campoInvalido('departamento_id')) {
+        @if (campoInvalido("departamento_id")) {
           <span class="error">Campo obligatorio.</span>
         }
       </div>
@@ -96,7 +121,7 @@
             <option [value]="c.id">{{ c.nombre }}</option>
           }
         </select>
-        @if (campoInvalido('ciudad_id')) {
+        @if (campoInvalido("ciudad_id")) {
           <span class="error">Campo obligatorio.</span>
         }
       </div>
@@ -107,13 +132,27 @@
 
       <div class="campo-radio">
         <label>¿Trabaja actualmente? *</label>
-        <label><input type="radio" formControlName="trabaja_actualmente" [value]="true" /> Sí</label>
-        <label><input type="radio" formControlName="trabaja_actualmente" [value]="false" /> No</label>
+        <label
+          ><input
+            type="radio"
+            formControlName="trabaja_actualmente"
+            [value]="true"
+          />
+          Sí</label
+        >
+        <label
+          ><input
+            type="radio"
+            formControlName="trabaja_actualmente"
+            [value]="false"
+          />
+          No</label
+        >
       </div>
     </fieldset>
 
     <button type="submit" [disabled]="formulario.invalid || guardando()">
-      {{ guardando() ? 'Guardando...' : 'Guardar' }}
+      {{ guardando() ? "Guardando..." : "Guardar" }}
     </button>
   </form>
 </div>
