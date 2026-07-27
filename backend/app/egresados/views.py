@@ -65,6 +65,8 @@ class PerfilEgresadoViewSet(viewsets.ModelViewSet):
                 )
                 rol_egresado = Rol.objects.get(nombre='egresado')
                 usuario = User.objects.create_user(
+                    first_name=self.request.data.get('first_name', ''),
+                    last_name=self.request.data.get('last_name', ''),
                     username=f"egresado_{num_doc}",
                     email=f"egresado_{num_doc}@pisunpa.local",
                     password='cambiar123',
