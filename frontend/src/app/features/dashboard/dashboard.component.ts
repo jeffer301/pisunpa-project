@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, signal, computed, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { EgresadosService } from '../../services/egresados.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { Ciudad } from '../../models/ciudad.model';
 import { Egresado } from '../../models/egresado.model';
 import { Programa } from '../../models/programa.model';
@@ -15,7 +16,7 @@ interface CityStat {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [StatCardComponent],
+  imports: [StatCardComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host { display: block; }
@@ -154,6 +155,30 @@ interface CityStat {
       outline: 3px solid #005fcc;
       outline-offset: 2px;
     }
+
+    .guest-cta {
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .guest-cta p {
+      color: #718096;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: #0a2463;
+      color: #fff;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .cta-btn:hover {
+      background: #1a3a7a;
+    }
   `],
   template: `
     <div class="dashboard-header">
@@ -207,28 +232,38 @@ interface CityStat {
 
     <div class="distribution-card">
       <div class="distribution-title">Pendientes de gestión</div>
-      @if (sinEmpleo() > 0 || sinEmpresa() > 0) {
-        <div class="pendientes-list">
-          @if (sinEmpleo() > 0) {
-            <button class="pendientes-btn" (click)="verPendiente('sin-empleo')">
-              {{ sinEmpleo() }} egresados sin empleo actual
-            </button>
-          }
-          @if (sinEmpresa() > 0) {
-            <button class="pendientes-btn" (click)="verPendiente('sin-empresa')">
-              {{ sinEmpresa() }} egresados sin empresa registrada
-            </button>
-          }
-        </div>
+      @if (estaAutenticado()) {
+        @if (sinEmpleo() > 0 || sinEmpresa() > 0) {
+          <div class="pendientes-list">
+            @if (sinEmpleo() > 0) {
+              <button class="pendientes-btn" (click)="verPendiente('sin-empleo')">
+                {{ sinEmpleo() }} egresados sin empleo actual
+              </button>
+            }
+            @if (sinEmpresa() > 0) {
+              <button class="pendientes-btn" (click)="verPendiente('sin-empresa')">
+                {{ sinEmpresa() }} egresados sin empresa registrada
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">No hay pendientes de gestión.</div>
+        }
       } @else {
-        <div class="empty-state">No hay pendientes de gestión.</div>
+        <div class="guest-cta">
+          <p>Inicia sesión para gestionar egresados y ver más detalles.</p>
+          <a routerLink="/login" class="cta-btn">Iniciar Sesión</a>
+        </div>
       }
     </div>
   `
 })
 export class DashboardComponent implements OnInit {
   private egresadosService = inject(EgresadosService);
+  private authService = inject(AuthService);
   private router = inject(Router);
+
+  estaAutenticado = computed(() => this.authService.estaAutenticado);
 
   egresados = signal<Egresado[]>([]);
   ciudades = signal<Ciudad[]>([]);
@@ -306,7 +341,11 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.egresadosService.getProgramas().subscribe(p => this.programas.set(p));
+    this.egresadosService.getProgramas().subscribe(p => {
+      const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const unique = [...new Map(p.map(prog => [normalize(prog.nombre), prog])).values()];
+      this.programas.set(unique);
+    });
     this.egresadosService.getEgresados().subscribe(e => this.egresados.set(e));
     this.egresadosService.getCiudades().subscribe(c => this.ciudades.set(c));
   }

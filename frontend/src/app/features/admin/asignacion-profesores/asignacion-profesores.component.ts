@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Asignatura } from '../../../models/asignatura.model';
 
@@ -210,23 +210,14 @@ export class AsignacionProfesoresComponent implements OnInit {
     this.cargarDatos();
   }
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('pisunpa_access_token');
-    return new HttpHeaders({ Authorization: `Bearer ${token}` });
-  }
-
   cargarDatos(): void {
     this.http.get<Asignatura[]>(`${environment.apiUrl}/egresados/asignaturas/`).subscribe({
       next: (data) => this.asignaturas.set(data)
     });
-    this.http.get<Profesor[]>(`${environment.apiUrl}/usuarios/disponibles/`, {
-      headers: this.getHeaders()
-    }).subscribe({
+    this.http.get<Profesor[]>(`${environment.apiUrl}/usuarios/disponibles/`).subscribe({
       next: (data) => this.profesores.set(data)
     });
-    this.http.get<AsignacionProfesor[]>(`${environment.apiUrl}/egresados/profesor-asignaturas/`, {
-      headers: this.getHeaders()
-    }).subscribe({
+    this.http.get<AsignacionProfesor[]>(`${environment.apiUrl}/egresados/profesor-asignaturas/`).subscribe({
       next: (data) => this.asignaciones.set(data)
     });
   }
@@ -240,7 +231,7 @@ export class AsignacionProfesoresComponent implements OnInit {
     this.http.post(`${environment.apiUrl}/egresados/profesor-asignaturas/create/`, {
       profesor_id: this.profesorSeleccionado,
       asignatura_id: this.asignaturaSeleccionada,
-    }, { headers: this.getHeaders() }).subscribe({
+    }).subscribe({
       next: (data) => {
         this.asignaciones.update(lista => [...lista, data as AsignacionProfesor]);
         this.mensajeExito.set('Asignaci&#243;n creada correctamente');
@@ -257,9 +248,7 @@ export class AsignacionProfesoresComponent implements OnInit {
   }
 
   eliminar(id: string): void {
-    this.http.delete(`${environment.apiUrl}/egresados/profesor-asignaturas/${id}/delete/`, {
-      headers: this.getHeaders()
-    }).subscribe({
+    this.http.delete(`${environment.apiUrl}/egresados/profesor-asignaturas/${id}/delete/`).subscribe({
       next: () => {
         this.asignaciones.update(lista => lista.filter(a => a.id !== id));
       }

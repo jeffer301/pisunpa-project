@@ -8,7 +8,7 @@ import { NotificationService } from '../../../core/services/notification.service
   template: `
     <div class="notif-wrapper">
       <button class="notif-bell" (click)="togglePanel()" aria-label="Notificaciones">
-        <span class="bell-icon">&#128276;</span>
+        <svg class="bell-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         @if (notifService.tieneNoLeidas()) {
           <span class="notif-badge">{{ notifService.noLeidas() }}</span>
         }
@@ -48,8 +48,9 @@ import { NotificationService } from '../../../core/services/notification.service
     .notif-bell {
       background: none; border: none; cursor: pointer;
       font-size: 1.3rem; position: relative; padding: 4px 8px;
-      color: var(--color-text, #333);
+      color: #fff; display: flex; align-items: center;
     }
+    .bell-icon { display: block; }
     .notif-badge {
       position: absolute; top: 0; right: 0;
       background: #e74c3c; color: white; border-radius: 50%;

@@ -2,6 +2,23 @@
 Django settings for core_project project.
 """
 
+# Monkey-patch: Python 3.14 + Django 5.0 incompatibility
+# copy.copy(super()) in BaseContext.__copy__ fails because threading.local
+# subclasses have no __dict__. Fixed by implementing __copy__ manually.
+import copy
+import django.template.context
+
+
+def _fixed_context_copy(self):
+    obj = self.__class__.__new__(self.__class__)
+    obj.__dict__.update(self.__dict__)
+    if hasattr(self, 'dicts'):
+        obj.dicts = self.dicts.copy()
+    return obj
+
+
+django.template.context.BaseContext.__copy__ = _fixed_context_copy
+
 from pathlib import Path
 from datetime import timedelta
 import environ

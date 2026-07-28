@@ -29,8 +29,11 @@
       <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
     </div>
   } @else {
-    <div class="nav-links"></div>
+    <div class="nav-links">
+      <a routerLink="/dashboard/objetivos-proyecto" routerLinkActive="active">Objetivos del Proyecto</a>
+    </div>
     <div class="user-info">
+      <a class="btn-register-nav" routerLink="/registro/estudiante">Registrarse</a>
       <a class="btn-login-nav" routerLink="/login">Iniciar Sesión</a>
     </div>
   }

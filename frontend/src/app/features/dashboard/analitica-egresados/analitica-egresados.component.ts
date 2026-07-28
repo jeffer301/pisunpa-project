@@ -269,8 +269,10 @@ export class AnaliticaEgresadosComponent implements OnInit {
 
   ngOnInit(): void {
     this.egresadosService.getProgramas().subscribe(p => {
-      this.programas.set(p);
-      p.forEach(prog => this.mapaProgramas.set(prog.id, prog.nombre));
+      const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const unique = [...new Map(p.map(prog => [normalize(prog.nombre), prog])).values()];
+      this.programas.set(unique);
+      unique.forEach(prog => this.mapaProgramas.set(prog.id, prog.nombre));
     });
     this.egresadosService.getEgresados().subscribe(e => this.egresados.set(e));
   }

@@ -318,6 +318,24 @@ legend {
   background: #e8eeff;
 }
 
+.btn-register-nav {
+  display: inline-block;
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.4);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-register-nav:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
 /* Admin table styles */
 .admin-header {
   display: flex;
@@ -354,6 +372,21 @@ legend {
 
 .btn-editar:hover {
   background: #2b8bbf;
+}
+
+.btn-promover {
+  background: #28a745;
+  color: #fff;
+  padding: 0.3rem 0.7rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.btn-promover:hover {
+  background: #218838;
 }
 
 .rol-badge {

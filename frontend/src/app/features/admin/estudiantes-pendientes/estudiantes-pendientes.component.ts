@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
 import { environment } from '../../../../environments/environment';
 import { Usuario } from '../../../models/usuario.model';
@@ -12,19 +12,20 @@ import { Usuario } from '../../../models/usuario.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="contenedor">
-      <h2>Estudiantes Pendientes de Aprobación</h2>
+      <h2>Usuarios Pendientes de Aprobación</h2>
+      <p class="subtitulo">Solicitudes de registro de estudiantes y egresados pendientes de validación.</p>
 
       @if (cargando()) {
         <p class="cargando">Cargando...</p>
       }
 
-      @if (!cargando() && estudiantes().length === 0) {
+      @if (!cargando() && usuarios().length === 0) {
         <div class="vacio">
-          <p>No hay estudiantes pendientes de aprobación.</p>
+          <p>No hay usuarios pendientes de aprobación.</p>
         </div>
       }
 
-      @if (!cargando() && estudiantes().length > 0) {
+      @if (!cargando() && usuarios().length > 0) {
         <div class="tabla-scroll">
           <table>
             <thead>
@@ -32,18 +33,24 @@ import { Usuario } from '../../../models/usuario.model';
                 <th>Nombre</th>
                 <th>Correo</th>
                 <th>Documento</th>
+                <th>Rol</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              @for (est of estudiantes(); track est.id) {
+              @for (u of usuarios(); track u.id) {
                 <tr>
-                  <td>{{ est.first_name }} {{ est.last_name }}</td>
-                  <td>{{ est.email }}</td>
-                  <td>{{ est.documento_identidad }}</td>
+                  <td>{{ u.first_name }} {{ u.last_name }}</td>
+                  <td>{{ u.email }}</td>
+                  <td>{{ u.documento_identidad || u.documento }}</td>
+                  <td>
+                    <span class="rol-badge" [class]="'rol-' + (u.rol || 'sin-rol')">
+                      {{ rolLabel(u.rol) }}
+                    </span>
+                  </td>
                   <td class="acciones">
-                    <button class="btn-aprobar" (click)="aprobar(est.id)">Aprobar</button>
-                    <button class="btn-rechazar" (click)="rechazar(est.id)">Rechazar</button>
+                    <button class="btn-aprobar" (click)="aprobar(u.id)">Aprobar</button>
+                    <button class="btn-rechazar" (click)="rechazar(u.id)">Rechazar</button>
                   </td>
                 </tr>
               }
@@ -59,7 +66,12 @@ import { Usuario } from '../../../models/usuario.model';
     }
     h2 {
       color: #0a2463;
-      margin-bottom: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .subtitulo {
+      color: #666;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
     }
     .cargando {
       color: #666;
@@ -125,52 +137,75 @@ import { Usuario } from '../../../models/usuario.model';
     .btn-rechazar:hover {
       background: #c82333;
     }
+    .rol-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .rol-estudiante {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .rol-egresado {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .rol-profesor {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .rol-sin-rol {
+      background: #f5f5f5;
+      color: #666;
+    }
   `]
 })
 export class EstudiantesPendientesComponent implements OnInit {
   private http = inject(HttpClient);
-  private auth = inject(AuthService);
 
-  estudiantes = signal<Usuario[]>([]);
+  usuarios = signal<Usuario[]>([]);
   cargando = signal(true);
 
   ngOnInit(): void {
     this.cargarPendientes();
   }
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('pisunpa_access_token');
-    return new HttpHeaders({ Authorization: `Bearer ${token}` });
+  rolLabel(rol: string | null): string {
+    if (!rol) return 'Sin rol';
+    const labels: Record<string, string> = {
+      estudiante: 'Estudiante',
+      egresado: 'Egresado',
+      profesor: 'Docente',
+      administrador: 'Administrador',
+    };
+    return labels[rol] || rol;
   }
 
   cargarPendientes(): void {
-    this.http.get<Usuario[]>(`${environment.apiUrl}/usuarios/estudiantes-pendientes/`, {
-      headers: this.getHeaders()
-    }).subscribe({
+    this.http.get<Usuario[]>(`${environment.apiUrl}/usuarios/estudiantes-pendientes/`).subscribe({
       next: (data) => {
-        this.estudiantes.set(data);
+        this.usuarios.set(data);
         this.cargando.set(false);
       },
       error: () => this.cargando.set(false)
     });
   }
 
-  aprobar(id: number): void {
-    this.http.patch(`${environment.apiUrl}/usuarios/usuarios/${id}/aprobar/`, {}, {
-      headers: this.getHeaders()
-    }).subscribe({
+  aprobar(id: string): void {
+    this.http.patch(`${environment.apiUrl}/usuarios/usuarios/${id}/aprobar/`, {}).subscribe({
       next: () => {
-        this.estudiantes.update(lista => lista.filter(e => e.id !== id));
+        this.usuarios.update(lista => lista.filter(u => u.id !== id));
       }
     });
   }
 
-  rechazar(id: number): void {
-    this.http.patch(`${environment.apiUrl}/usuarios/usuarios/${id}/rechazar/`, {}, {
-      headers: this.getHeaders()
-    }).subscribe({
+  rechazar(id: string): void {
+    this.http.patch(`${environment.apiUrl}/usuarios/usuarios/${id}/rechazar/`, {}).subscribe({
       next: () => {
-        this.estudiantes.update(lista => lista.filter(e => e.id !== id));
+        this.usuarios.update(lista => lista.filter(u => u.id !== id));
       }
     });
   }

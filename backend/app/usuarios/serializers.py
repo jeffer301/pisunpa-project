@@ -168,7 +168,7 @@ class EstudiantePendienteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['id', 'email', 'first_name', 'last_name', 'documento', 'documento_identidad', 'estado', 'creado']
+        fields = ['id', 'email', 'first_name', 'last_name', 'documento', 'documento_identidad', 'estado', 'creado', 'rol']
 
     def get_rol(self, obj):
         if obj.rol:

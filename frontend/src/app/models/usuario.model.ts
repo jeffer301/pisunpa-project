@@ -1,7 +1,7 @@
 import { Rol } from '../core/auth/role.model';
 
 export interface Usuario {
-  id: number;
+  id: string;
   nombre?: string;
   first_name?: string;
   last_name?: string;

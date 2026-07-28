@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { UsuariosService } from '../../services/usuarios.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ROL_LABELS } from '../../core/auth/role.model';
@@ -8,6 +9,7 @@ import { Usuario } from '../../models/usuario.model';
 import { UsuarioModalComponent } from './usuario-modal/usuario-modal.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { FeedbackService } from '../../shared/services/feedback.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin',
@@ -39,6 +41,7 @@ import { FeedbackService } from '../../shared/services/feedback.service';
 export class AdminComponent {
   usuariosService = inject(UsuariosService);
   authService = inject(AuthService);
+  private http = inject(HttpClient);
   private feedback = inject(FeedbackService);
   rolLabels = ROL_LABELS;
 
@@ -107,5 +110,18 @@ export class AdminComponent {
     this.usuariosService.eliminar(usuario.id);
     this.cancelarEliminacion();
     this.feedback.show('Usuario eliminado.');
+  }
+
+  promoverAEgresado(usuario: Usuario): void {
+    this.http.patch(`${environment.apiUrl}/usuarios/usuarios/${usuario.id}/promover-egresado/`, {})
+      .subscribe({
+        next: () => {
+          this.feedback.show(`${usuario.nombre} promovido a egresado.`);
+        },
+        error: (err) => {
+          const msg = err.error?.error || 'Error al promover usuario.';
+          this.feedback.show(msg, 'error');
+        }
+      });
   }
 }

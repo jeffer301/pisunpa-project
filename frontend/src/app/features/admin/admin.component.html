@@ -11,7 +11,7 @@
 
   <nav class="admin-nav">
     <a routerLink="/admin/estudiantes-pendientes" routerLinkActive="active">
-      Estudiantes Pendientes
+      Usuarios Pendientes
     </a>
     <a routerLink="/admin/asignacion-profesores" routerLinkActive="active">
       Asignación Profesores
@@ -58,6 +58,9 @@
           @if (puedeGestionar) {
             <td class="acciones">
               <button class="btn-editar" (click)="abrirEditar(u)">Editar</button>
+              @if (u.rol === 'estudiante') {
+                <button class="btn-promover" (click)="promoverAEgresado(u)">Promover a Egresado</button>
+              }
               <button class="btn-eliminar" (click)="solicitarEliminacion(u)">Eliminar</button>
             </td>
           }
