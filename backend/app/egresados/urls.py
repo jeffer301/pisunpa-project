@@ -1,20 +1,8 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import (
-    ProgramaListView, AsignaturaListView,
-    DepartamentoListView, CiudadListView, PerfilEgresadoViewSet
-)
-
-router = DefaultRouter()
-router.register(r'perfilegresado', PerfilEgresadoViewSet, basename='perfil-egresado')
+from django.urls import path
+from .views import ProgramaListView, DepartamentoListView, CiudadListView
 
 urlpatterns = [
-    # Mantenemos las rutas públicas de consulta de catálogos solicitadas
-    path('programas/', ProgramaListView.as_view(), name='programas-list'),
-    path('asignaturas/', AsignaturaListView.as_view(), name='asignaturas-list'),
-    path('departamentos/', DepartamentoListView.as_view(), name='departamentos-list'),
-    path('ciudades/', CiudadListView.as_view(), name='ciudades-list'),
-    
-    # Rutas dinámicas del CRUD y operaciones masivas
-    path('', include(router.urls)),
+    path('programas/', ProgramaListView.as_view()),
+    path('departamentos/', DepartamentoListView.as_view()),
+    path('ciudades/', CiudadListView.as_view()),
 ]

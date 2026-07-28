@@ -6,7 +6,7 @@ from .models import Supletorio, AnexoSupletorio, EstadoSupletorio
 class SupletorioCreateSerializer(serializers.ModelSerializer):
     fechaParcial = serializers.DateField(source='fecha_parcial')
     grupoAsignatura = serializers.CharField(source='grupo')
-    idPrograma = serializers.UUIDField(source='programa_id')
+    idPrograma = serializers.IntegerField(source='id_programa')
     anexos = serializers.ListField(
         child=serializers.FileField(), write_only=True, required=False
     )
@@ -18,26 +18,24 @@ class SupletorioCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         anexos_data = validated_data.pop('anexos', [])
-        request = self.context['request']
-        usuario = request.user
+        usuario = self.context['request'].user
 
-        from app.egresados.models import Programa
-        programa = Programa.objects.get(pk=validated_data.pop('programa_id'))
-        validated_data['programa'] = programa
-        validated_data['programa_nombre'] = programa.nombre
+        fecha_parcial = validated_data['fecha_parcial']
+        dias = (timezone.localdate() - fecha_parcial).days
+        estado_inicial = (
+            EstadoSupletorio.EN_REVISION if dias > Supletorio.DIAS_LIMITE
+            else EstadoSupletorio.PENDIENTE
+        )
 
         supletorio = Supletorio.objects.create(
-            usuario=usuario,
             estudiante_nombre=usuario.get_full_name() or usuario.get_username(),
             estudiante_email=usuario.email,
-            estado=EstadoSupletorio.PENDIENTE,
+            estado=estado_inicial,
             **validated_data,
         )
 
         for archivo in anexos_data:
-            AnexoSupletorio.objects.create(
-                supletorio=supletorio, archivo=archivo
-            )
+            AnexoSupletorio.objects.create(supletorio=supletorio, archivo=archivo)
 
         return supletorio
 
@@ -51,14 +49,11 @@ class SupletorioBandejaSerializer(serializers.ModelSerializer):
     estadoSolicitud = serializers.SerializerMethodField()
     estadoPago = serializers.SerializerMethodField()
     comprobanteNombre = serializers.SerializerMethodField()
-    fechaExamen = serializers.DateField(source='fecha_examen_supletorio', default=None)
-    nota = serializers.IntegerField(default=None)
 
     class Meta:
         model = Supletorio
         fields = ['id', 'estudiante', 'email', 'programa', 'asignatura', 'profesor', 'grupo',
-                  'descripcion', 'fechaParcial', 'estadoSolicitud', 'estadoPago', 'comprobanteNombre',
-                  'fechaExamen', 'nota']
+                  'descripcion', 'fechaParcial', 'estadoSolicitud', 'estadoPago', 'comprobanteNombre']
 
     def get_estadoSolicitud(self, obj):
         if obj.estado in (EstadoSupletorio.PENDIENTE, EstadoSupletorio.EN_REVISION):
@@ -91,62 +86,3 @@ class SupletorioPendienteSerializer(serializers.ModelSerializer):
 
     def get_estado(self, obj):
         return 'realizado' if obj.estado == EstadoSupletorio.REALIZADO else 'listo'
-
-
-class SupletorioMiSolicitudSerializer(serializers.ModelSerializer):
-    """Resumen de solicitud para el estudiante que la creó."""
-    fechaParcial = serializers.DateField(source='fecha_parcial')
-    fechaSolicitud = serializers.DateField(source='fecha_solicitud')
-    programa = serializers.CharField(source='programa_nombre')
-    estado = serializers.SerializerMethodField()
-    comprobanteNombre = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Supletorio
-        fields = ['id', 'asignatura', 'profesor', 'grupo', 'programa',
-                  'fechaParcial', 'fechaSolicitud', 'estado', 'comprobanteNombre']
-
-    def get_estado(self, obj):
-        return obj.estado
-
-    def get_comprobanteNombre(self, obj):
-        return obj.comprobante_pago.name.split('/')[-1] if obj.comprobante_pago else None
-
-
-from datetime import date
-from app.usuarios.notification_service import NotificacionService
-from app.usuarios.models import Usuario
-from .business_days import dias_habiles_entre
-
-
-class CalificarExamenSerializer(serializers.Serializer):
-    nota = serializers.IntegerField(min_value=0, max_value=100)
-    nota_observaciones = serializers.CharField(required=False, default='', allow_blank=True)
-
-    def validate(self, attrs):
-        supletorio = self.context['supletorio']
-        if supletorio.estado not in (EstadoSupletorio.NOTIFICADO_PROFESOR, EstadoSupletorio.AGENDADO):
-            raise serializers.ValidationError("Solo se pueden calificar supletorios notificados o agendados.")
-        return attrs
-
-
-class AgendarExamenSerializer(serializers.Serializer):
-    fecha_examen_supletorio = serializers.DateField()
-
-    def validate_fecha_examen_supletorio(self, value):
-        if value < date.today():
-            raise serializers.ValidationError("La fecha no puede ser en el pasado.")
-        return value
-
-    def validate(self, attrs):
-        supletorio = self.context['supletorio']
-        if supletorio.estado != EstadoSupletorio.NOTIFICADO_PROFESOR:
-            raise serializers.ValidationError("Solo se pueden agendar supletorios notificados al profesor.")
-        desde = supletorio.actualizado_en.date()
-        hasta = attrs['fecha_examen_supletorio']
-        dias = dias_habiles_entre(desde, hasta)
-        if dias > 10:
-            raise serializers.ValidationError(
-                f"La fecha excede los 10 días hábiles permitidos ({dias} días desde la confirmación)."
-            )
-        return attrs

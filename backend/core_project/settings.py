@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 env = environ.Env(
     DEBUG=(bool, True),
-    USE_SQLITE=(bool, False),  # ⚠️ True mientras no haya Postgres real conectado
+    USE_SQLITE=(bool, True),  # ⚠️ True mientras no haya Postgres real conectado
 )
 
 # Busca el .env en la raíz del repo (mismo nivel que docker-compose.yml)
@@ -29,7 +29,7 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', default='django-insecure-cambia-esto-en-pr
 
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['0.0.0.0','localhost', '127.0.0.1'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +125,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-AUTH_USER_MODEL = "usuarios.Usuario"
 
 # ---------------------------------------------------------------------------
 # Internacionalización

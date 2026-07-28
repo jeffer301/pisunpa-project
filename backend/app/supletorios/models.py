@@ -1,9 +1,5 @@
-import uuid
 from django.db import models
 from django.utils import timezone
-from django.conf import settings
-
-from app.egresados.models import Programa
 
 
 class EstadoSupletorio(models.TextChoices):
@@ -15,17 +11,12 @@ class EstadoSupletorio(models.TextChoices):
     COMPROBANTE_SUBIDO = 'comprobante_subido', 'Comprobante subido'
     NOTIFICADO_PROFESOR = 'notificado_profesor', 'Notificado al profesor'
     REALIZADO = 'realizado', 'Realizado'
-    AGENDADO = 'agendado', 'Agendado'
 
 
 class Supletorio(models.Model):
     DIAS_LIMITE = 5
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    usuario = models.ForeignKey(
-            settings.AUTH_USER_MODEL, 
-            on_delete=models.CASCADE, 
-            related_name='supletorios'
-        )
+
+    # Estudiante: campos planos hasta que exista el modelo Usuario (módulo de Duvan)
     estudiante_nombre = models.CharField(max_length=150)
     estudiante_email = models.EmailField()
 
@@ -36,9 +27,7 @@ class Supletorio(models.Model):
     asignatura = models.CharField(max_length=150)
     grupo = models.CharField(max_length=50)
 
-    programa = models.ForeignKey(
-        Programa, on_delete=models.PROTECT, null=True, blank=True
-    )
+    id_programa = models.IntegerField()
     programa_nombre = models.CharField(max_length=150, blank=True)
 
     descripcion = models.TextField()
@@ -47,17 +36,6 @@ class Supletorio(models.Model):
     estado = models.CharField(max_length=30, choices=EstadoSupletorio.choices, default=EstadoSupletorio.PENDIENTE)
 
     comprobante_pago = models.FileField(upload_to='comprobantes_pago/', null=True, blank=True)
-
-    fecha_examen_supletorio = models.DateField(null=True, blank=True)
-    nota = models.IntegerField(null=True, blank=True)
-    nota_observaciones = models.TextField(blank=True, default='')
-    fecha_programacion = models.DateTimeField(null=True, blank=True)
-    programado_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name='supletorios_programados'
-    )
 
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
@@ -70,7 +48,6 @@ class Supletorio(models.Model):
 
 
 class AnexoSupletorio(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     supletorio = models.ForeignKey(Supletorio, related_name='anexos', on_delete=models.CASCADE)
     archivo = models.FileField(upload_to='anexos_supletorios/')
     subido_en = models.DateTimeField(auto_now_add=True)
