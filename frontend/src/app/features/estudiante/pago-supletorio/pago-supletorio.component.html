@@ -11,7 +11,7 @@
       <p class="mensaje-vacio">No tiene solicitudes de supletorio registradas.</p>
     } @else {
       @for (sol of solicitudes(); track sol.id) {
-        <div class="tarjeta-solicitud">
+        <div class="tarjeta-solicitud" [id]="'supletorio-' + sol.id">
           <div class="solicitud-cabecera">
             <span class="solicitud-asignatura">{{ sol.asignatura }}</span>
             <span class="solicitud-estado" [class]="claseEstado(sol.estado)">{{ labelEstado(sol.estado) }}</span>

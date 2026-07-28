@@ -22,9 +22,12 @@ export interface SolicitudSupletorio {
   grupo: string;
   descripcion: string;
   fechaParcial: string;
+  fechaSolicitud: string;
   estadoSolicitud: 'pendiente' | 'aprobada' | 'rechazada';
   estadoPago: 'pendiente' | 'comprobante_subido' | 'pagado';
   comprobanteNombre: string | null;
+  comprobanteUrl: string | null;
+  anexos: { id: number; nombre: string; url: string }[];
   fechaExamen?: string;
   nota?: number;
 }
@@ -50,7 +53,9 @@ export interface SupletorioPendiente {
   asignatura: string;
   grupo: string;
   fechaParcial: string;
+  fechaSolicitud: string;
   estado: 'listo' | 'realizado' | 'agendado';
   fechaExamen?: string;
   nota?: number;
+  notaObservaciones?: string;
 }

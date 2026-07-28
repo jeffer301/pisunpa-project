@@ -16,9 +16,12 @@ export class NotificationService {
   readonly tieneNoLeidas = computed(() => this._noLeidas() > 0);
 
   cargarNotificaciones(): void {
-    this.http.get<{ results: Notificacion[] }>(`${this.api}/`)
+    this.http.get<Notificacion[] | { results: Notificacion[] }>(`${this.api}/`)
       .subscribe({
-        next: (res) => this._notificaciones.set(res.results),
+        next: (res) => {
+          const list = Array.isArray(res) ? res : res.results;
+          this._notificaciones.set(list);
+        },
         error: () => this._notificaciones.set([]),
       });
   }

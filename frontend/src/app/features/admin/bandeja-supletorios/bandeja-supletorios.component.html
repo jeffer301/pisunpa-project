@@ -40,8 +40,10 @@
         <th>Profesor</th>
         <th>Grupo</th>
         <th>Fecha Parcial</th>
+        <th>Fecha Solicitud</th>
         <th>Estado Solicitud</th>
-        <th>Soporte</th>
+        <th>Comprobante Pago</th>
+        <th>Anexos</th>
         <th>Estado Pago</th>
         <th>Fecha Examen</th>
         <th>Nota</th>
@@ -50,7 +52,7 @@
     </thead>
     <tbody>
       @for (s of solicitudesFiltradas(); track s.id) {
-        <tr>
+        <tr [id]="'supletorio-' + s.id">
           <td>
             <strong>{{ s.estudiante }}</strong>
             <br /><small style="color:#666">{{ s.email }}</small>
@@ -60,16 +62,26 @@
           <td>{{ s.profesor }}</td>
           <td>{{ s.grupo }}</td>
           <td>{{ s.fechaParcial }}</td>
+          <td>{{ s.fechaSolicitud }}</td>
           <td>
             <span class="estado-badge-solicitud" [class]="s.estadoSolicitud">
               {{ s.estadoSolicitud === 'pendiente' ? 'Pendiente' : s.estadoSolicitud === 'aprobada' ? 'Aprobada' : 'Rechazada' }}
             </span>
           </td>
           <td>
-            @if (s.comprobanteNombre) {
-              <button class="btn-ver-soporte" (click)="feedbackService.show('Abriendo soporte...')">{{ s.comprobanteNombre }}</button>
+            @if (s.comprobanteUrl) {
+              <a class="btn-ver-soporte" [href]="s.comprobanteUrl" target="_blank" rel="noopener">{{ s.comprobanteNombre }}</a>
             } @else {
-              <span class="sin-archivo">Sin archivo</span>
+              <span class="sin-archivo">Sin comprobante</span>
+            }
+          </td>
+          <td>
+            @if (s.anexos && s.anexos.length > 0) {
+              @for (anexo of s.anexos; track anexo.id) {
+                <a class="btn-ver-soporte btn-anexo" [href]="anexo.url" target="_blank" rel="noopener">{{ anexo.nombre }}</a>
+              }
+            } @else {
+              <span class="sin-archivo">Sin anexos</span>
             }
           </td>
           <td>

@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-notification-bell',
@@ -85,7 +86,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .notif-item.no-leida { background: #f0f7ff; }
     .notif-tipo { font-size: 1.2rem; flex-shrink: 0; padding-top: 2px; }
     .notif-body { flex: 1; min-width: 0; }
-    .notif-titulo { font-weight: 600; font-size: 0.8rem; margin-bottom: 2px; }
+    .notif-titulo { font-weight: 600; font-size: 0.8rem; margin-bottom: 2px; color: #1a202c; }
     .notif-mensaje { font-size: 0.75rem; color: #666; line-height: 1.3; }
     .notif-tiempo { font-size: 0.65rem; color: #999; margin-top: 3px; }
     .notif-empty { padding: 24px; text-align: center; color: #999; font-size: 0.85rem; }
@@ -94,6 +95,7 @@ import { NotificationService } from '../../../core/services/notification.service
 export class NotificationBellComponent implements OnInit, OnDestroy {
   notifService = inject(NotificationService);
   private router = inject(Router);
+  private authService = inject(AuthService);
   panelAbierto = signal(false);
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -128,10 +130,22 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     if (!notif.leido) {
       this.notifService.marcarLeida(notif.id);
     }
-    if (notif.supletorio_id) {
-      this.panelAbierto.set(false);
-      this.router.navigate(['/admin/bandeja-supletorios']);
+    this.panelAbierto.set(false);
+    const ruta = this.rutaParaNotificacion(notif);
+    const queryParams = notif.supletorio_id ? { highlight: notif.supletorio_id } : {};
+    this.router.navigate([ruta], { queryParams });
+  }
+
+  private rutaParaNotificacion(notif: import('../../../models/notificacion.model').Notificacion): string {
+    const rol = this.authService.rolActual();
+    if (!rol) return '/';
+    if (rol === 'administrador' || rol === 'director') {
+      return '/admin/bandeja-supletorios';
     }
+    if (rol === 'profesor') {
+      return '/profesor/supletorios-pendientes';
+    }
+    return '/estudiante/pago-supletorio';
   }
 
   marcarTodasLeidas(): void {

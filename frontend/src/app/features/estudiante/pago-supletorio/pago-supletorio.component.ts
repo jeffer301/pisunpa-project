@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { SupletorioService } from '../../../services/supletorio.service';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { MiSolicitudSupletorio, EstadoSupletorio } from '../../../models/supletorio.model';
@@ -335,12 +336,22 @@ import { MiSolicitudSupletorio, EstadoSupletorio } from '../../../models/supleto
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    @keyframes highlightFade {
+      0% { background-color: #fff3cd; }
+      100% { background-color: transparent; }
+    }
+
+    .tarjeta-solicitud.highlight {
+      animation: highlightFade 3s ease-out;
+    }
   `],
 })
 export class PagoSupletorioComponent implements OnInit {
 
   private supletorioService = inject(SupletorioService);
   private feedbackService = inject(FeedbackService);
+  private route = inject(ActivatedRoute);
 
   archivoComprobante = signal<File | null>(null);
   arrastrando = signal(false);
@@ -377,11 +388,25 @@ export class PagoSupletorioComponent implements OnInit {
       next: (solicitudes) => {
         this.solicitudes.set(solicitudes);
         this.cargando.set(false);
+        this.resaltarSiEsNecesario();
       },
       error: () => {
         this.cargando.set(false);
       },
     });
+  }
+
+  private resaltarSiEsNecesario(): void {
+    const highlightId = this.route.snapshot.queryParamMap.get('highlight');
+    if (!highlightId) return;
+    setTimeout(() => {
+      const el = document.getElementById('supletorio-' + highlightId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('highlight');
+        setTimeout(() => el.classList.remove('highlight'), 3500);
+      }
+    }, 100);
   }
 
   labelEstado(estado: EstadoSupletorio): string {

@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { SupletorioService } from '../../../services/supletorio.service';
@@ -119,6 +120,11 @@ export type EstadoPago = 'pendiente' | 'comprobante_subido' | 'pagado';
       background: #7d3c98;
     }
 
+    .btn-anexo {
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
     .acciones-solicitud {
       display: flex;
       gap: 0.4rem;
@@ -137,11 +143,21 @@ export type EstadoPago = 'pendiente' | 'comprobante_subido' | 'pagado';
       background: #f7fafc;
       border-radius: 8px;
     }
+
+    @keyframes highlightFade {
+      0% { background-color: #fff3cd; }
+      100% { background-color: transparent; }
+    }
+
+    tr.highlight {
+      animation: highlightFade 3s ease-out;
+    }
   `],
 })
 export class BandejaSupletoriosComponent implements OnInit {
 
   private supletorioService = inject(SupletorioService);
+  private route = inject(ActivatedRoute);
   readonly feedbackService = inject(FeedbackService);
 
   readonly filtroBusqueda = signal('');
@@ -178,12 +194,26 @@ export class BandejaSupletoriosComponent implements OnInit {
       next: (solicitudes) => {
         this.solicitudes.set(solicitudes);
         this.cargando.set(false);
+        this.resaltarSiEsNecesario();
       },
       error: () => {
         this.cargando.set(false);
         this.feedbackService.show('Error al cargar las solicitudes.', 'error');
       },
     });
+  }
+
+  private resaltarSiEsNecesario(): void {
+    const highlightId = this.route.snapshot.queryParamMap.get('highlight');
+    if (!highlightId) return;
+    setTimeout(() => {
+      const el = document.getElementById('supletorio-' + highlightId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('highlight');
+        setTimeout(() => el.classList.remove('highlight'), 3500);
+      }
+    }, 100);
   }
 
   limpiarFiltros(): void {

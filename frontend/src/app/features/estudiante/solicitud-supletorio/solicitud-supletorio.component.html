@@ -19,6 +19,19 @@
     </div>
 
     <div class="campo">
+      <label for="asignatura">Asignatura *</label>
+      <select id="asignatura" formControlName="asignatura" (change)="onAsignaturaChange($any($event.target).value)">
+        <option [value]="null" disabled>Seleccione una asignatura</option>
+        @for (a of asignaturas(); track a.id) {
+          <option [value]="a.id">{{ a.nombre }}</option>
+        }
+      </select>
+      @if (campoInvalido('asignatura')) {
+        <span class="error">Campo obligatorio.</span>
+      }
+    </div>
+
+    <div class="campo">
       <label for="profesor">Profesor *</label>
       <select id="profesor" formControlName="profesor">
         <option [value]="''" disabled>Seleccione un profesor</option>
@@ -35,19 +48,6 @@
     </div>
 
     <div class="campo">
-      <label for="asignatura">Asignatura *</label>
-      <select id="asignatura" formControlName="asignatura" (change)="onAsignaturaChange($any($event.target).value)">
-        <option [value]="null" disabled>Seleccione una asignatura</option>
-        @for (a of asignaturas; track a.id) {
-          <option [value]="a.id">{{ a.nombre }}</option>
-        }
-      </select>
-      @if (campoInvalido('asignatura')) {
-        <span class="error">Campo obligatorio.</span>
-      }
-    </div>
-
-    <div class="campo">
       <label for="grupoAsignatura">Grupo de la asignatura *</label>
       <input id="grupoAsignatura" formControlName="grupoAsignatura" placeholder="Ej: Grupo A" />
       @if (campoInvalido('grupoAsignatura')) {
@@ -59,7 +59,7 @@
       <label for="idPrograma">Programa *</label>
       <select id="idPrograma" formControlName="idPrograma">
         <option [value]="null" disabled>Seleccione un programa</option>
-        @for (p of programas; track p.id) {
+        @for (p of programas(); track p.id) {
           <option [value]="p.id">{{ p.nombre }}</option>
         }
       </select>
@@ -77,8 +77,27 @@
       }
     </div>
 
+    <div class="campo campo-obligatorio">
+      <label for="comprobantePago">Comprobante de Pago *</label>
+      <p class="campo-hint">Adjunte el recibo o comprobante del derecho de examen supletorio.</p>
+      <input id="comprobantePago" type="file" accept=".pdf,.jpg,.jpeg,.png"
+        (change)="onComprobanteSeleccionado($event)" />
+      @if (comprobantePago()) {
+        <ul class="lista-archivos">
+          <li>
+            <span>{{ comprobantePago()!.name }}</span>
+            <button type="button" class="btn-quitar" (click)="eliminarComprobante()">Quitar</button>
+          </li>
+        </ul>
+      }
+      @if (!comprobantePago()) {
+        <span class="error">El comprobante de pago es obligatorio.</span>
+      }
+    </div>
+
     <div class="campo">
-      <label for="anexos">Anexos de los hechos</label>
+      <label for="anexos">Anexos / Soporte de los hechos (opcional)</label>
+      <p class="campo-hint">Documentos que respalden la excusa (constancias, certificados, etc.).</p>
       <input id="anexos" type="file" multiple (change)="onArchivosSeleccionados($event)" />
       @if (archivosSeleccionados().length > 0) {
         <ul class="lista-archivos">

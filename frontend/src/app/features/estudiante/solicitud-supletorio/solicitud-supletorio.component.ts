@@ -27,6 +27,26 @@ import { diasHabilesEntre } from '../../../core/utils/business-days';
       font-size: 0.9rem;
     }
 
+    .campo-obligatorio {
+      border: 2px solid #0a2463;
+      border-radius: 8px;
+      padding: 1rem;
+      background: #f0f4ff;
+      margin-bottom: 1rem;
+    }
+
+    .campo-obligatorio label {
+      font-weight: 700;
+      color: #0a2463;
+      font-size: 1rem;
+    }
+
+    .campo-hint {
+      font-size: 0.82rem;
+      color: #666;
+      margin: 0.2rem 0 0.5rem;
+    }
+
     textarea {
       width: 100%;
       padding: 0.5rem 0.75rem;
@@ -83,11 +103,12 @@ export class SolicitudSupletorioComponent implements OnInit {
   private feedbackService = inject(FeedbackService);
 
   formulario!: FormGroup;
-  programas: Programa[] = [];
-  asignaturas: Asignatura[] = [];
+  programas = signal<Programa[]>([]);
+  asignaturas = signal<Asignatura[]>([]);
   profesores = signal<Usuario[]>([]);
   guardando = signal(false);
   archivosSeleccionados = signal<File[]>([]);
+  comprobantePago = signal<File | null>(null);
   fechaActual = signal(new Date());
 
   readonly Supletorio = Supletorio;
@@ -121,8 +142,8 @@ export class SolicitudSupletorioComponent implements OnInit {
       descripcion: ['', Validators.required],
     });
 
-    this.egresadosService.getProgramas().subscribe(p => this.programas = p);
-    this.egresadosService.getAsignaturas().subscribe(a => this.asignaturas = a);
+    this.egresadosService.getProgramas().subscribe(p => this.programas.set(p));
+    this.egresadosService.getAsignaturas().subscribe(a => this.asignaturas.set(a));
   }
 
   onArchivosSeleccionados(event: Event): void {
@@ -130,6 +151,17 @@ export class SolicitudSupletorioComponent implements OnInit {
     if (input.files) {
       this.archivosSeleccionados.set(Array.from(input.files));
     }
+  }
+
+  onComprobanteSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.comprobantePago.set(input.files[0]);
+    }
+  }
+
+  eliminarComprobante(): void {
+    this.comprobantePago.set(null);
   }
 
   eliminarArchivo(index: number): void {
@@ -149,8 +181,11 @@ export class SolicitudSupletorioComponent implements OnInit {
   }
 
   guardar(): void {
-    if (this.formulario.invalid) {
+    if (this.formulario.invalid || !this.comprobantePago()) {
       this.formulario.markAllAsTouched();
+      if (!this.comprobantePago()) {
+        this.feedbackService.show('Debe adjuntar el comprobante de pago.', 'error');
+      }
       return;
     }
 
@@ -164,6 +199,7 @@ export class SolicitudSupletorioComponent implements OnInit {
     formData.append('grupoAsignatura', vals.grupoAsignatura);
     formData.append('idPrograma', String(vals.idPrograma));
     formData.append('descripcion', vals.descripcion);
+    formData.append('comprobante_pago', this.comprobantePago()!);
 
     for (const archivo of this.archivosSeleccionados()) {
       formData.append('anexos', archivo);
@@ -174,6 +210,7 @@ export class SolicitudSupletorioComponent implements OnInit {
         this.feedbackService.show('Solicitud de supletorio enviada exitosamente.', 'success');
         this.formulario.reset();
         this.archivosSeleccionados.set([]);
+        this.comprobantePago.set(null);
         this.guardando.set(false);
       },
       error: () => {
