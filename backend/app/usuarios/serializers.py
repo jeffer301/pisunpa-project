@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Notificacion
+from .models import InvitacionDocente, Notificacion
 from .services import UsuarioService
 
 Usuario = get_user_model()
@@ -198,3 +198,66 @@ class NotificacionSerializer(serializers.ModelSerializer):
         model = Notificacion
         fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'creado_en']
         read_only_fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'creado_en']
+
+
+class ProfesorSerializer(serializers.ModelSerializer):
+    invitacion_enviada = serializers.SerializerMethodField()
+    invitacion_usada = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'documento',
+            'documento_identidad', 'telefono', 'estado', 'creado',
+            'invitacion_enviada', 'invitacion_usada',
+        ]
+
+    def get_invitacion_enviada(self, obj):
+        return obj.invitaciones.exists()
+
+    def get_invitacion_usada(self, obj):
+        return obj.invitaciones.filter(usado=True).exists()
+
+
+class InvitacionDocenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InvitacionDocente
+        fields = ['id', 'email', 'token', 'usado', 'valido', 'creado_en', 'expiracion']
+        read_only_fields = ['id', 'token', 'valido', 'creado_en', 'expiracion']
+
+
+class InvitacionDetailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    token = serializers.UUIDField()
+    valido = serializers.BooleanField()
+
+
+class RegistroDocenteConTokenSerializer(serializers.Serializer):
+    token = serializers.UUIDField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    password2 = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    documento_identidad = serializers.CharField(max_length=20)
+
+    def validate_token(self, value):
+        try:
+            invitacion = InvitacionDocente.objects.get(token=value)
+        except InvitacionDocente.DoesNotExist:
+            raise serializers.ValidationError('El enlace de invitación no es válido.')
+        if not invitacion.valido:
+            raise serializers.ValidationError('La invitación ha expirado o ya fue utilizada.')
+        return value
+
+    def validate_documento_identidad(self, value):
+        Usuario = get_user_model()
+        if Usuario.objects.filter(documento=value).exists():
+            raise serializers.ValidationError('Ya existe un usuario con este documento.')
+        return value
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({'password': 'Las contraseñas no coinciden'})
+        return attrs

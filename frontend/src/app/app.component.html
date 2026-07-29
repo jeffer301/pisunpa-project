@@ -14,6 +14,7 @@
       @if (esAdmin()) {
         <a routerLink="/dashboard/analitica-egresados" routerLinkActive="active">Dashboard Analítico</a>
         <a routerLink="/admin/gestion-egresados" routerLinkActive="active">Gestión de Egresados</a>
+        <a routerLink="/admin/profesores" routerLinkActive="active">Gestión de Profesores</a>
         <a routerLink="/admin/bandeja-supletorios" routerLinkActive="active">Bandeja de Supletorios</a>
       }
       @if (authService.tienePermiso('escribir') && !esAdmin()) {
@@ -33,7 +34,7 @@
       <a routerLink="/dashboard/objetivos-proyecto" routerLinkActive="active">Objetivos del Proyecto</a>
     </div>
     <div class="user-info">
-      <a class="btn-register-nav" routerLink="/registro/estudiante">Registrarse</a>
+      <a class="btn-register-nav" routerLink="/registro">Registrarse</a>
       <a class="btn-login-nav" routerLink="/login">Iniciar Sesión</a>
     </div>
   }

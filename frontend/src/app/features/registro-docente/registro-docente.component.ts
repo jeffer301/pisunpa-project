@@ -1,9 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ProfesorService } from '../../services/profesor.service';
 
 @Component({
   selector: 'app-registro-docente',
@@ -12,6 +13,11 @@ import { environment } from '../../../environments/environment';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="contenedor">
+      @if (tokenValido()) {
+        <div class="aviso-info">
+          Registro mediante invitación — <strong>{{ emailPrefill() }}</strong>
+        </div>
+      }
       <h2>Registro de Docente</h2>
       <p class="subtitulo">Universidad del Pacífico — Buenaventura</p>
 
@@ -28,6 +34,7 @@ import { environment } from '../../../environments/environment';
 
       @if (!mensajeExito()) {
         <form [formGroup]="formulario" (ngSubmit)="registrar()">
+
           <div class="campo">
             <label for="first_name">Nombres *</label>
             <input id="first_name" formControlName="first_name" placeholder="Nombres" />
@@ -44,13 +51,15 @@ import { environment } from '../../../environments/environment';
             }
           </div>
 
-          <div class="campo">
-            <label for="email">Correo electrónico *</label>
-            <input id="email" type="email" formControlName="email" placeholder="correo@ejemplo.com" />
-            @if (campoInvalido('email')) {
-              <span class="error">Ingrese un correo válido.</span>
-            }
-          </div>
+          @if (!tokenValido()) {
+            <div class="campo">
+              <label for="email">Correo electrónico *</label>
+              <input id="email" type="email" formControlName="email" placeholder="correo@ejemplo.com" />
+              @if (campoInvalido('email')) {
+                <span class="error">Ingrese un correo válido.</span>
+              }
+            </div>
+          }
 
           <div class="campo">
             <label for="documento_identidad">Documento de Identidad *</label>
@@ -107,9 +116,16 @@ import { environment } from '../../../environments/environment';
       margin-bottom: 1.5rem;
       font-size: 0.9rem;
     }
-    .campo {
+    .aviso-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
       margin-bottom: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
     }
+    .campo { margin-bottom: 1rem; }
     label {
       display: block;
       margin-bottom: 0.25rem;
@@ -184,11 +200,15 @@ import { environment } from '../../../environments/environment';
 export class RegistroDocenteComponent {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
-  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private profesorService = inject(ProfesorService);
 
   guardando = signal(false);
   mensajeExito = signal('');
   mensajeError = signal('');
+  token = signal<string | null>(null);
+  emailPrefill = signal('');
+  tokenValido = signal(false);
 
   formulario: FormGroup = this.fb.group({
     first_name: ['', Validators.required],
@@ -198,6 +218,35 @@ export class RegistroDocenteComponent {
     password: ['', [Validators.required, Validators.minLength(8)]],
     password2: ['', Validators.required],
   });
+
+  constructor() {
+    const tokenParam = this.route.snapshot.queryParamMap.get('token');
+    if (tokenParam) {
+      this.token.set(tokenParam);
+      this.cargarInvitacion(tokenParam);
+    }
+  }
+
+  cargarInvitacion(token: string): void {
+    this.profesorService.detalleInvitacion(token).subscribe({
+      next: (inv) => {
+        this.emailPrefill.set(inv.email);
+        this.tokenValido.set(true);
+        this.formulario.patchValue({
+          first_name: inv.first_name,
+          last_name: inv.last_name,
+          email: inv.email,
+        });
+      },
+      error: (err) => {
+        if (err.status === 410) {
+          this.mensajeError.set('La invitación ha expirado o ya fue utilizada.');
+        } else {
+          this.mensajeError.set('El enlace de invitación no es válido.');
+        }
+      },
+    });
+  }
 
   campoInvalido(campo: string): boolean {
     const control = this.formulario.get(campo);
@@ -209,17 +258,36 @@ export class RegistroDocenteComponent {
     this.guardando.set(true);
     this.mensajeError.set('');
 
-    this.http.post(`${environment.apiUrl}/usuarios/registro-docente/`, this.formulario.value)
-      .subscribe({
-        next: () => {
-          this.mensajeExito.set('Registro exitoso. Ya puedes iniciar sesión.');
-          this.guardando.set(false);
-        },
-        error: (err) => {
-          const msg = err.error?.detail || err.error?.mensaje || 'Error al registrar. Intente nuevamente.';
-          this.mensajeError.set(msg);
-          this.guardando.set(false);
-        }
-      });
+    const token = this.token();
+    const payload = this.formulario.value;
+
+    if (token) {
+      payload.token = token;
+      this.http.post(`${environment.apiUrl}/usuarios/registro-docente-con-token/`, payload)
+        .subscribe({
+          next: () => {
+            this.mensajeExito.set('Registro exitoso. Ya puedes iniciar sesión.');
+            this.guardando.set(false);
+          },
+          error: (err) => {
+            const msg = err.error?.detail || err.error?.mensaje || 'Error al registrar. Intente nuevamente.';
+            this.mensajeError.set(msg);
+            this.guardando.set(false);
+          }
+        });
+    } else {
+      this.http.post(`${environment.apiUrl}/usuarios/registro-docente/`, payload)
+        .subscribe({
+          next: () => {
+            this.mensajeExito.set('Registro exitoso. Ya puedes iniciar sesión.');
+            this.guardando.set(false);
+          },
+          error: (err) => {
+            const msg = err.error?.detail || err.error?.mensaje || 'Error al registrar. Intente nuevamente.';
+            this.mensajeError.set(msg);
+            this.guardando.set(false);
+          }
+        });
+    }
   }
 }

@@ -8,6 +8,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    restart: unless-stopped
     depends_on:
       - backend
 
@@ -15,15 +16,16 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    environment:
-      # Recuerda: Django necesita la librería dj-database-url para leer esto
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+    restart: unless-stopped
     depends_on:
-      - database
+      database:
+        condition: service_started
 
   database:
     image: postgres:16-alpine
@@ -35,9 +37,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Solo mantenemos la inicialización si crea usuarios/roles adicionales.
-      # ELIMINADO: 02-seed.sql. Django se encargará de los datos semilla.
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    restart: unless-stopped
 
   pgadmin:
     image: dpage/pgadmin4
@@ -48,6 +49,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
     depends_on:
       - database
 

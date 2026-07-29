@@ -1,4 +1,8 @@
+import re
+from uuid import UUID
+
 from django.db import transaction
+from openpyxl import load_workbook
 from rest_framework import status
 from rest_framework.permissions import (
     AllowAny,
@@ -6,23 +10,29 @@ from rest_framework.permissions import (
     IsAuthenticated,
 )
 from rest_framework import generics
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from app.egresados.models import PerfilEgresado, Programa
-from .models import Notificacion, Rol, Usuario
+from .models import InvitacionDocente, Notificacion, Rol, Usuario
 from .notification_service import NotificacionService
 from .serializers import (
     CustomTokenObtainSerializer,
     EstudiantePendienteSerializer,
+    InvitacionDetailSerializer,
+    InvitacionDocenteSerializer,
     NotificacionSerializer,
+    ProfesorSerializer,
     RegistroConRolSerializer,
+    RegistroDocenteConTokenSerializer,
     RegistroDocenteSerializer,
     RegistroSerializer,
     UsuariosDisponiblesSerializer,
     UsuarioSerializer,
 )
+from .utils import enviar_invitacion_docente
 
 
 class RegistroConRolView(APIView):
@@ -46,6 +56,10 @@ class RegistroConRolView(APIView):
             usuario.set_password(data["password"])
             usuario.estado = "pendiente_aprobacion"
             usuario.save()
+
+            if data["tipo_usuario"] == "estudiante":
+                usuario.rol = Rol.objects.get(nombre='estudiante')
+                usuario.save(update_fields=['rol'])
 
             if data["tipo_usuario"] == "egresado":
                 programa = Programa.objects.get(
@@ -266,3 +280,178 @@ class NotificacionLeerTodasView(APIView):
     def post(self, request):
         Notificacion.objects.filter(usuario=request.user, leido=False).update(leido=True)
         return Response({'detail': 'Todas marcadas como leídas'})
+
+
+class ProfesorListView(generics.ListAPIView):
+    serializer_class = ProfesorSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(
+            rol__nombre='profesor'
+        ).select_related('rol').prefetch_related('invitaciones').order_by('-creado')
+
+
+class ProfesorImportView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        archivo = request.FILES.get('archivo')
+        if not archivo:
+            return Response({'error': 'Debe subir un archivo Excel.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            wb = load_workbook(archivo, read_only=True)
+            ws = wb.active
+            rows = list(ws.iter_rows(min_row=3, values_only=True))
+        except Exception:
+            return Response({'error': 'Formato de archivo no válido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        rol_profesor = Rol.objects.get(nombre='profesor')
+        creados = 0
+        duplicados = 0
+        errores = []
+        profesores_unicos = {}
+
+        for row in rows:
+            nombre = str(row[0]).strip() if row[0] else None
+            email = str(row[1]).strip() if row[1] else None
+
+            if not nombre or not email:
+                continue
+
+            email = email.lower()
+            email_ok = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email)
+
+            if not email_ok:
+                errores.append(f'Email inválido para {nombre}: {row[1]}')
+                continue
+
+            if email in profesores_unicos:
+                continue
+
+            profesores_unicos[email] = nombre
+
+        for email, nombre in profesores_unicos.items():
+            if Usuario.objects.filter(email=email).exists():
+                duplicados += 1
+                continue
+
+            partes = nombre.split(' ', 1)
+            first_name = partes[0]
+            last_name = partes[1] if len(partes) > 1 else ''
+
+            with transaction.atomic():
+                usuario = Usuario(
+                    username=email,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    documento=email,
+                    rol=rol_profesor,
+                    estado='pendiente_aprobacion',
+                )
+                usuario.set_password(Usuario.objects.make_random_password())
+                usuario.save()
+                creados += 1
+
+        return Response({
+            'creados': creados,
+            'duplicados': duplicados,
+            'errores': errores,
+            'total_procesados': len(profesores_unicos),
+        })
+
+
+class ProfesorInvitarView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request, pk):
+        try:
+            usuario = Usuario.objects.get(pk=pk, rol__nombre='profesor')
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Profesor no encontrado.'}, status=404)
+
+        invitacion_valida = InvitacionDocente.objects.filter(
+            usuario=usuario, usado=False
+        ).first()
+
+        if invitacion_valida and not invitacion_valida.valido:
+            invitacion_valida = None
+
+        if invitacion_valida:
+            token = str(invitacion_valida.token)
+            email = invitacion_valida.email
+            creada_ahora = False
+        else:
+            invitacion = InvitacionDocente.objects.create(
+                usuario=usuario,
+                email=usuario.email,
+            )
+            token = str(invitacion.token)
+            email = invitacion.email
+            creada_ahora = True
+
+        nombre = f'{usuario.first_name} {usuario.last_name}'.strip() or email
+        enviar_invitacion_docente(email=email, nombre=nombre, token=token)
+
+        if creada_ahora:
+            serializer = InvitacionDocenteSerializer(invitacion)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            serializer = InvitacionDocenteSerializer(invitacion_valida)
+            return Response(serializer.data)
+
+
+class InvitacionDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        try:
+            token_uuid = UUID(str(token))
+            invitacion = InvitacionDocente.objects.select_related('usuario').get(token=token_uuid)
+        except (ValueError, InvitacionDocente.DoesNotExist):
+            return Response({'error': 'El enlace de invitación no es válido.'}, status=404)
+
+        if not invitacion.valido:
+            return Response({'error': 'La invitación ha expirado o ya fue utilizada.'}, status=410)
+
+        serializer = InvitacionDetailSerializer(data={
+            'email': invitacion.email,
+            'first_name': invitacion.usuario.first_name,
+            'last_name': invitacion.usuario.last_name,
+            'token': invitacion.token,
+            'valido': invitacion.valido,
+        })
+        serializer.is_valid()
+        return Response(serializer.data)
+
+
+class RegistroDocenteConTokenView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = RegistroDocenteConTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        with transaction.atomic():
+            invitacion = InvitacionDocente.objects.select_related('usuario').get(token=data['token'])
+            usuario = invitacion.usuario
+
+            usuario.first_name = data['first_name']
+            usuario.last_name = data['last_name']
+            usuario.documento = data['documento_identidad']
+            usuario.documento_identidad = data['documento_identidad']
+            usuario.estado = 'aprobado'
+            usuario.set_password(data['password'])
+            usuario.save()
+
+            invitacion.usado = True
+            invitacion.save()
+
+        return Response(
+            {'mensaje': 'Registro exitoso. Ya puedes iniciar sesión.'},
+            status=status.HTTP_201_CREATED,
+        )
