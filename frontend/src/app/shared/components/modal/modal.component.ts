@@ -49,10 +49,10 @@ import { Component, ChangeDetectionStrategy, input, output } from '@angular/core
   `],
   template: `
     <div class="modal-overlay" (click)="onBackdropClick($event)">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-content" role="dialog" aria-modal="true" [attr.aria-labelledby]="'modal-title-' + titulo()">
         <div class="modal-header">
-          <h3>{{ titulo() }}</h3>
-          <button class="btn-cerrar" (click)="cerrar.emit()">&times;</button>
+          <h3 [id]="'modal-title-' + titulo()">{{ titulo() }}</h3>
+          <button type="button" class="btn-cerrar" aria-label="Cerrar diálogo" (click)="cerrar.emit()">&times;</button>
         </div>
         <ng-content />
       </div>

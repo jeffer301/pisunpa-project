@@ -50,6 +50,7 @@ export class EgresadoModalComponent implements OnInit {
 
   titulo = input.required<string>();
   egresado = input<Egresado | null>(null);
+  guardando = input(false);
   guardar = output<Egresado>();
   cerrar = output<void>();
 

@@ -9,6 +9,32 @@
     }
   </div>
 
+  <nav class="admin-nav">
+    <a routerLink="/admin/estudiantes-pendientes" routerLinkActive="active">
+      Usuarios Pendientes
+    </a>
+    <a routerLink="/admin/profesores" routerLinkActive="active">
+      Gestión Profesores
+    </a>
+    <a routerLink="/admin/asignacion-profesores" routerLinkActive="active">
+      Asignación Profesores
+    </a>
+  </nav>
+
+  <div class="filtros management-toolbar">
+    <input type="search" aria-label="Buscar usuarios" placeholder="Buscar por nombre o email" [value]="filtroBusqueda()" (input)="filtroBusqueda.set($any($event.target).value)" />
+    <select aria-label="Filtrar por estado" [value]="filtroEstado()" (change)="filtroEstado.set($any($event.target).value)">
+      <option value="todos">Todos los estados</option>
+      <option value="activo">Activos</option>
+      <option value="inactivo">Inactivos</option>
+    </select>
+    @if (hayFiltrosActivos()) {
+      <button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
+    }
+  </div>
+  <p class="contador">{{ usuariosFiltrados().length }} usuario(s) encontrado(s)</p>
+
+  <div class="table-scroll">
   <table>
     <thead>
       <tr>
@@ -22,7 +48,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (u of usuariosService.usuarios(); track u.id) {
+      @for (u of usuariosFiltrados(); track u.id) {
         <tr>
           <td>{{ u.nombre }}</td>
           <td>{{ u.email }}</td>
@@ -35,26 +61,34 @@
           @if (puedeGestionar) {
             <td class="acciones">
               <button class="btn-editar" (click)="abrirEditar(u)">Editar</button>
-              <button class="btn-eliminar" (click)="eliminar(u.id)">Eliminar</button>
+              @if (u.rol === 'estudiante') {
+                <button class="btn-promover" (click)="promoverAEgresado(u)">Promover a Egresado</button>
+              }
+              <button class="btn-eliminar" (click)="solicitarEliminacion(u)">Eliminar</button>
             </td>
           }
         </tr>
       } @empty {
         <tr>
           <td [attr.colspan]="puedeGestionar ? 5 : 4" class="vacio">
-            No hay usuarios registrados.
+            @if (hayFiltrosActivos()) { No hay usuarios que coincidan con los filtros. } @else { No hay usuarios registrados. }
           </td>
         </tr>
       }
     </tbody>
   </table>
+  </div>
 
-  @if (mostrarModal) {
+  @if (mostrarModal()) {
     <app-usuario-modal
-      [titulo]="modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario'"
-      [usuario]="usuarioSeleccionado"
+      [titulo]="modoEdicion() ? 'Editar Usuario' : 'Nuevo Usuario'"
+      [usuario]="usuarioSeleccionado()"
       (guardar)="onGuardar($event)"
       (cerrar)="cerrarModal()"
     />
   }
 </div>
+
+@if (usuarioPendienteEliminacion(); as pendiente) {
+  <app-confirm-dialog titulo="Eliminar usuario" [mensaje]="'Se eliminará a ' + pendiente.nombre + '.'" (confirmar)="confirmarEliminacion()" (cancelar)="cancelarEliminacion()" />
+}

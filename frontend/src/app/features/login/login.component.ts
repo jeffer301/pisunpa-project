@@ -1,13 +1,13 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
-import { UsuariosService } from '../../services/usuarios.service';
-import { Usuario } from '../../models/usuario.model';
-import { ROL_LABELS, Rol } from '../../core/auth/role.model';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-login',
   standalone: true,
+  imports: [FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host {
@@ -23,7 +23,7 @@ import { ROL_LABELS, Rol } from '../../core/auth/role.model';
       border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.2);
       padding: 3rem 2.5rem;
-      max-width: 520px;
+      max-width: 420px;
       width: 90%;
       text-align: center;
     }
@@ -38,126 +38,283 @@ import { ROL_LABELS, Rol } from '../../core/auth/role.model';
     .login-subtitle {
       color: #718096;
       font-size: 0.95rem;
-      margin-bottom: 2rem;
+      margin-bottom: 0.5rem;
     }
 
-    .login-section-title {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #a0aec0;
+    .login-slogan {
+      font-size: 0.82rem;
+      font-style: italic;
+      color: #5a8db5;
+      margin-bottom: 1.75rem;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
       font-weight: 600;
-      margin-bottom: 1rem;
+      color: #4a5568;
+      margin-bottom: 0.35rem;
     }
 
-    .user-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+    .form-group input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #1a202c;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #3da5d9;
+      box-shadow: 0 0 0 3px rgba(61, 165, 217, 0.15);
+    }
+
+    .form-group input.invalid {
+      border-color: #e53e3e;
+      box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+    }
+
+    .field-error {
+      color: #e53e3e;
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+
+    .login-error {
+      background: #fff5f5;
+      color: #e53e3e;
+      border: 1px solid #fed7d7;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
       text-align: left;
     }
 
-    .user-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 0.875rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: #fff;
+    .aviso-advertencia {
+      background: #fff3cd;
+      color: #856404;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      border: 1px solid #ffc107;
     }
 
-    .user-card:hover {
-      border-color: #3da5d9;
-      box-shadow: 0 2px 8px rgba(61, 165, 217, 0.15);
-      transform: translateY(-1px);
-    }
-
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #e8eeff;
-      color: #0a2463;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
+    .btn-login {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0a2463;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
       font-size: 1rem;
-      flex-shrink: 0;
-    }
-
-    .user-details {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .user-name {
       font-weight: 600;
-      color: #1a202c;
-      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
-    .user-email {
-      color: #a0aec0;
-      font-size: 0.8rem;
+    .btn-login:hover {
+      background: #163d8f;
     }
 
-    .rol-tag {
-      background: #e8eeff;
+    .btn-login:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+    }
+
+    .login-links {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .forgot-link {
+      font-size: 0.85rem;
+      color: #3da5d9;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .forgot-link:hover {
       color: #0a2463;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0.25rem 0;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .login-divider span {
+      font-size: 0.8rem;
+      color: #a0aec0;
       white-space: nowrap;
     }
 
-    .rol-tag.lectura {
-      background: #fff3cd;
-      color: #856404;
+    .register-btn {
+      display: inline-block;
+      padding: 0.65rem 1rem;
+      background: transparent;
+      color: #0a2463;
+      border: 2px solid #0a2463;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .register-btn:hover {
+      background: #0a2463;
+      color: #fff;
     }
   `],
   template: `
     <div class="login-container">
       <div class="login-brand">pisunpa.com</div>
       <p class="login-subtitle">Sistema de Gestión de Egresados</p>
+      <p class="login-slogan">Innovar no es una opción, es nuestro próximo paso. ¡Construyamos juntos el futuro!</p>
 
-      <p class="login-section-title">Selecciona un usuario para continuar</p>
+      @if (errorMensaje()) {
+        <div class="login-error">{{ errorMensaje() }}</div>
+      }
 
-      <div class="user-cards">
-        @for (u of usuarios(); track u.id) {
-          <button class="user-card" (click)="seleccionar(u)">
-            <div class="user-avatar">{{ u.nombre.charAt(0) }}</div>
-            <div class="user-details">
-              <div class="user-name">{{ u.nombre }}</div>
-              <div class="user-email">{{ u.email }}</div>
+      @if (mensajeAdvertencia()) {
+        <div class="aviso-advertencia">
+          {{ mensajeAdvertencia() }}
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <div class="form-group">
+          <label for="email">Correo Electrónico</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="tu@pisunpa.com"
+            [(ngModel)]="email"
+            name="email"
+            required
+            email
+            #emailField="ngModel"
+            [class.invalid]="emailField.invalid && emailField.touched"
+          />
+          @if (emailField.invalid && emailField.touched) {
+            <div class="field-error">
+              @if (emailField.errors?.['required']) {
+                El correo es obligatorio.
+              } @else if (emailField.errors?.['email']) {
+                Ingrese un correo válido.
+              }
             </div>
-            <span class="rol-tag" [class.lectura]="esLectura(u.rol)">
-              {{ rolLabels[u.rol] }}
-            </span>
-          </button>
-        }
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••"
+            [(ngModel)]="password"
+            name="password"
+            required
+            minlength="6"
+            #passwordField="ngModel"
+            [class.invalid]="passwordField.invalid && passwordField.touched"
+          />
+          @if (passwordField.invalid && passwordField.touched) {
+            <div class="field-error">
+              @if (passwordField.errors?.['required']) {
+                La contraseña es obligatoria.
+              } @else if (passwordField.errors?.['minlength']) {
+                Mínimo 6 caracteres.
+              }
+            </div>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn-login"
+          [disabled]="loginForm.invalid || cargando()"
+        >
+          {{ cargando() ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
+        </button>
+      </form>
+
+      <div class="login-links">
+        <a class="forgot-link" routerLink="/login">¿Olvidaste tu contraseña?</a>
+
+        <div class="login-divider">
+          <span>o</span>
+        </div>
+
+        <a class="register-btn" routerLink="/registro-egresado">
+          ¿Eres egresado antiguo y no tienes cuenta? Regístrate aquí
+        </a>
       </div>
     </div>
   `
 })
 export class LoginComponent {
   private authService = inject(AuthService);
-  private usuariosService = inject(UsuariosService);
   private router = inject(Router);
 
-  usuarios = this.usuariosService.usuarios;
-  rolLabels = ROL_LABELS;
+  email = '';
+  password = '';
+  errorMensaje = signal('');
+  mensajeAdvertencia = signal('');
+  cargando = signal(false);
 
-  esLectura(rol: Rol): boolean {
-    return rol === 'profesor' || rol === 'egresado';
-  }
+  onSubmit(): void {
+    this.errorMensaje.set('');
+    this.mensajeAdvertencia.set('');
 
-  seleccionar(usuario: Usuario): void {
-    this.authService.cambiarUsuario(usuario);
-    this.router.navigate(['/dashboard']);
+    if (!this.email || !this.password) {
+      this.errorMensaje.set('Complete todos los campos.');
+      return;
+    }
+
+    this.cargando.set(true);
+    this.authService.login(this.email, this.password).pipe(
+      finalize(() => this.cargando.set(false))
+    ).subscribe({
+      next: (exito) => {
+        if (exito) {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
+        }
+      },
+      error: (err) => {
+        if (err.status === 403 || (err.error && typeof err.error === 'string')) {
+          this.mensajeAdvertencia.set(err.error || 'Acceso denegado');
+        } else {
+          this.errorMensaje.set('Credenciales incorrectas. Inténtalo de nuevo.');
+        }
+      },
+    });
   }
 }

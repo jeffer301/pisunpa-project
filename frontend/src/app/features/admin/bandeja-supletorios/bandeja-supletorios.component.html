@@ -1,0 +1,140 @@
+<div class="contenedor">
+  <div class="admin-header">
+    <div>
+      <h2>Bandeja de Supletorios</h2>
+      <p class="subtitulo">Gestiona las solicitudes de supletorio de los estudiantes</p>
+    </div>
+  </div>
+
+  <div class="filtros management-toolbar">
+    <input type="search" aria-label="Buscar solicitudes" placeholder="Buscar por estudiante, asignatura o profesor"
+      [value]="filtroBusqueda()" (input)="filtroBusqueda.set($any($event.target).value)" />
+    <select aria-label="Filtrar por estado de solicitud" [value]="filtroEstadoSolicitud()"
+      (change)="filtroEstadoSolicitud.set($any($event.target).value)">
+      <option value="todos">Todos los estados</option>
+      <option value="pendiente">Pendientes</option>
+      <option value="aprobada">Aprobadas</option>
+      <option value="rechazada">Rechazadas</option>
+    </select>
+    <select aria-label="Filtrar por estado de pago" [value]="filtroEstadoPago()"
+      (change)="filtroEstadoPago.set($any($event.target).value)">
+      <option value="todos">Todos los pagos</option>
+      <option value="pendiente">Pago pendiente</option>
+      <option value="comprobante_subido">Comprobante subido</option>
+      <option value="pagado">Pagado</option>
+    </select>
+    @if (hayFiltrosActivos()) {
+      <button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
+    }
+  </div>
+
+  <p class="contador">{{ solicitudesFiltradas().length }} solicitud(es) encontrada(s)</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Estudiante</th>
+        <th>Programa</th>
+        <th>Asignatura</th>
+        <th>Profesor</th>
+        <th>Grupo</th>
+        <th>Fecha Parcial</th>
+        <th>Fecha Solicitud</th>
+        <th>Estado Solicitud</th>
+        <th>Comprobante Pago</th>
+        <th>Anexos</th>
+        <th>Estado Pago</th>
+        <th>Fecha Examen</th>
+        <th>Nota</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (s of solicitudesFiltradas(); track s.id) {
+        <tr [id]="'supletorio-' + s.id">
+          <td>
+            <strong>{{ s.estudiante }}</strong>
+            <br /><small style="color:#666">{{ s.email }}</small>
+          </td>
+          <td>{{ s.programa }}</td>
+          <td>{{ s.asignatura }}</td>
+          <td>{{ s.profesor }}</td>
+          <td>{{ s.grupo }}</td>
+          <td>{{ s.fechaParcial }}</td>
+          <td>{{ s.fechaSolicitud }}</td>
+          <td>
+            <span class="estado-badge-solicitud" [class]="s.estadoSolicitud">
+              {{ s.estadoSolicitud === 'pendiente' ? 'Pendiente' : s.estadoSolicitud === 'aprobada' ? 'Aprobada' : 'Rechazada' }}
+            </span>
+          </td>
+          <td>
+            @if (s.comprobanteUrl) {
+              <a class="btn-ver-soporte" [href]="s.comprobanteUrl" target="_blank" rel="noopener">{{ s.comprobanteNombre }}</a>
+            } @else {
+              <span class="sin-archivo">Sin comprobante</span>
+            }
+          </td>
+          <td>
+            @if (s.anexos && s.anexos.length > 0) {
+              @for (anexo of s.anexos; track anexo.id) {
+                <a class="btn-ver-soporte btn-anexo" [href]="anexo.url" target="_blank" rel="noopener">{{ anexo.nombre }}</a>
+              }
+            } @else {
+              <span class="sin-archivo">Sin anexos</span>
+            }
+          </td>
+          <td>
+            <span class="estado-badge-pago" [class]="s.estadoPago">
+              {{ s.estadoPago === 'pendiente' ? 'Pendiente' : s.estadoPago === 'comprobante_subido' ? 'Comprobante subido' : 'Pagado' }}
+            </span>
+          </td>
+          <td>{{ s.fechaExamen || '—' }}</td>
+          <td>{{ s.nota ?? '—' }}</td>
+          <td>
+            <div class="acciones-solicitud">
+              @if (s.estadoSolicitud === 'pendiente') {
+                <button class="btn-aprobar" (click)="solicitarAccion(s, 'aprobar')">Aprobar</button>
+                <button class="btn-rechazar" (click)="solicitarAccion(s, 'rechazar')">Rechazar</button>
+              }
+              @if (s.estadoSolicitud === 'aprobada' && s.estadoPago !== 'pagado' && s.comprobanteNombre) {
+                <button class="btn-confirmar-pago" (click)="solicitarConfirmarPago(s)">Confirmar Pago</button>
+              }
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="12" class="vacio">
+            @if (hayFiltrosActivos()) {
+              No hay solicitudes que coincidan con los filtros.
+            } @else {
+              No hay solicitudes de supletorio registradas.
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  </div>
+</div>
+
+@if (solicitudPendienteAccion(); as pendiente) {
+  <app-confirm-dialog
+    [titulo]="textoAccionAprobarRechazar().titulo"
+    [mensaje]="textoAccionAprobarRechazar().mensaje"
+    [confirmarLabel]="pendiente.accion === 'aprobar' ? 'Aprobar' : 'Rechazar'"
+    (confirmar)="confirmarAccion()"
+    (cancelar)="cancelarAccion()"
+  />
+}
+
+@if (solicitudPendientePago(); as pendiente) {
+  <app-confirm-dialog
+    titulo="Confirmar pago"
+    [mensaje]="'¿Confirmar que ' + pendiente.estudiante + ' ha realizado el pago del supletorio?'"
+    confirmarLabel="Confirmar"
+    (confirmar)="confirmarPago()"
+    (cancelar)="cancelarConfirmarPago()"
+  />
+}

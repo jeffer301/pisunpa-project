@@ -55,6 +55,7 @@ export class UsuarioModalComponent implements OnInit {
 
   titulo = input.required<string>();
   usuario = input<Usuario | null>(null);
+  guardando = input(false);
   guardar = output<Omit<Usuario, 'id'> | Usuario>();
   cerrar = output<void>();
 

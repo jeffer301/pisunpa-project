@@ -1,37 +1,45 @@
 <div class="contenedor">
-  <div class="header-row">
+  <div class="admin-header">
     <div>
       <h2>Dashboard de Egresados</h2>
       @if (!authService.tienePermiso('escribir')) {
         <span class="badge-lectura">Modo lectura</span>
       }
     </div>
+    @if (authService.tienePermiso('escribir')) {
+      <a class="btn-nuevo" routerLink="/registrar">Nuevo egresado</a>
+    }
   </div>
 
-  <div class="filtros">
+  <div class="filtros management-toolbar">
     <input
       type="text"
+      aria-label="Buscar egresados"
       placeholder="Buscar por nombre o apellido..."
       [value]="filtroNombre()"
       (input)="onFiltroNombre($any($event.target).value)"
     />
 
-    <select [value]="filtroPrograma()" (change)="onFiltroPrograma($any($event.target).value)">
-      <option [ngValue]="0">Todos los programas</option>
+    <select aria-label="Filtrar por programa" (change)="onFiltroPrograma($any($event.target).value)">
+      <option value="0">Todos los programas</option>
       @for (p of programas(); track p.id) {
-        <option [ngValue]="p.id">{{ p.nombre }}</option>
+        <option [value]="p.id">{{ p.nombre }}</option>
       }
     </select>
 
-    <select [value]="filtroLaboral()" (change)="onFiltroLaboral($any($event.target).value)">
+    <select aria-label="Filtrar por situación laboral" [value]="filtroLaboral()" (change)="onFiltroLaboral($any($event.target).value)">
       <option value="todos">Todos</option>
       <option value="trabaja">Trabaja</option>
       <option value="no_trabaja">No trabaja</option>
     </select>
+    @if (hayFiltrosActivos()) {
+      <button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
+    }
   </div>
 
   <p class="contador">{{ egresadosFiltrados().length }} egresado(s) encontrado(s)</p>
 
+  <div class="table-scroll">
   <table>
     <thead>
       <tr>
@@ -56,26 +64,40 @@
           @if (authService.tienePermiso('escribir')) {
             <td class="acciones">
               <button class="btn-editar" (click)="abrirEditar(e)">Editar</button>
-              <button class="btn-eliminar" (click)="eliminar(e.id)">Eliminar</button>
+              <button class="btn-eliminar" (click)="solicitarEliminacion(e)">Eliminar</button>
             </td>
           }
         </tr>
       } @empty {
         <tr>
           <td [attr.colspan]="authService.tienePermiso('escribir') ? 6 : 5" class="vacio">
-            No se encontraron egresados.
+            @if (hayFiltrosActivos()) {
+              No se encontraron egresados con los filtros aplicados.
+            } @else {
+              No hay egresados registrados.
+            }
           </td>
         </tr>
       }
     </tbody>
   </table>
+  </div>
 </div>
 
-@if (mostrarModalEdicion && egresadoSeleccionado) {
+@if (mostrarModalEdicion() && egresadoSeleccionado(); as seleccionado) {
   <app-egresado-modal
     titulo="Editar Egresado"
-    [egresado]="egresadoSeleccionado"
+    [egresado]="seleccionado"
     (guardar)="onGuardarEdicion($event)"
     (cerrar)="cerrarModalEdicion()"
+  />
+}
+
+@if (egresadoPendienteEliminacion(); as pendiente) {
+  <app-confirm-dialog
+    titulo="Eliminar egresado"
+    [mensaje]="'Se eliminará a ' + pendiente.nombres + ' ' + pendiente.apellidos + '.'"
+    (confirmar)="confirmarEliminacion()"
+    (cancelar)="cancelarEliminacion()"
   />
 }
