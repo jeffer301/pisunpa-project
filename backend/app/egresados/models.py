@@ -79,6 +79,28 @@ class ProfesorAsignatura(models.Model):
     def __str__(self):
         return f"{self.profesor} - {self.asignatura}"
 
+
+class Grupo(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    codigo = models.CharField(max_length=50)
+    asignatura = models.ForeignKey(
+        Asignatura, on_delete=models.CASCADE, related_name='grupos'
+    )
+    profesor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='grupos_asignados'
+    )
+    franja_horaria = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        unique_together = ('codigo', 'asignatura')
+        ordering = ['codigo']
+
+    def __str__(self):
+        return self.codigo
+
 class PerfilEgresado(models.Model):
     TIPO_DOC_CHOICES = [
         ('CC', 'Cédula de Ciudadanía'),

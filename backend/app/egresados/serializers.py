@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import (
     Departamento, Ciudad, Programa, Asignatura, PerfilEgresado,
     ExperienciaLaboral, EstudioPosterior, RedProfesional, DocumentoAdjunto,
-    ProfesorAsignatura
+    ProfesorAsignatura, Grupo,
 )
 
 User = get_user_model()
@@ -100,6 +100,12 @@ class PerfilEgresadoWriteSerializer(serializers.ModelSerializer):
             'contacto_emergencia_telefono', 'contacto_emergencia_email',
             'validado', 'usuario_id',
         ]
+
+
+class GrupoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Grupo
+        fields = ['id', 'codigo']
 
 
 class ProfesorAsignaturaSerializer(serializers.ModelSerializer):

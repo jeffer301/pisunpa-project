@@ -6,11 +6,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from .models import Departamento, Ciudad, Programa, Asignatura, PerfilEgresado, ProfesorAsignatura
+from .models import Departamento, Ciudad, Programa, Asignatura, PerfilEgresado, ProfesorAsignatura, Grupo
 from .serializers import (
     DepartamentoSerializer, CiudadSerializer, ProgramaSerializer, AsignaturaSerializer,
     PerfilEgresadoReadSerializer, PerfilEgresadoWriteSerializer,
-    ProfesorAsignaturaSerializer, ProfesorAsignaturaWriteSerializer
+    ProfesorAsignaturaSerializer, ProfesorAsignaturaWriteSerializer,
+    UserSimpleSerializer, GrupoSerializer,
 )
 from .services import EgresadoService
 
@@ -156,6 +157,30 @@ class PerfilEgresadoViewSet(viewsets.ModelViewSet):
         return Response(
             {'detail': 'Egresado validado exitosamente.'}
         )
+
+
+class ProfesoresPorAsignaturaView(generics.ListAPIView):
+    serializer_class = UserSimpleSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        asignatura_id = self.request.query_params.get('asignatura_id')
+        if not asignatura_id:
+            return User.objects.none()
+        return User.objects.filter(
+            asignaciones_asignatura__asignatura_id=asignatura_id
+        ).distinct()
+
+
+class GruposPorAsignaturaView(generics.ListAPIView):
+    serializer_class = GrupoSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        asignatura_id = self.request.query_params.get('asignatura_id')
+        if not asignatura_id:
+            return Grupo.objects.none()
+        return Grupo.objects.filter(asignatura_id=asignatura_id)
 
 
 class ProfesorAsignaturaViewSet(viewsets.ModelViewSet):

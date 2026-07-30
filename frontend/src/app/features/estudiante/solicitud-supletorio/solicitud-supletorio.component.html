@@ -49,7 +49,15 @@
 
     <div class="campo">
       <label for="grupoAsignatura">Grupo de la asignatura *</label>
-      <input id="grupoAsignatura" formControlName="grupoAsignatura" placeholder="Ej: Grupo A" />
+      <select id="grupoAsignatura" formControlName="grupoAsignatura">
+        <option [value]="''" disabled>Seleccione un grupo</option>
+        @for (g of grupos(); track g.id) {
+          <option [value]="g.codigo">{{ g.codigo }}</option>
+        }
+      </select>
+      @if (grupos().length === 0 && formulario.get('asignatura')?.value) {
+        <span class="error">No hay grupos disponibles para esta asignatura.</span>
+      }
       @if (campoInvalido('grupoAsignatura')) {
         <span class="error">Campo obligatorio.</span>
       }

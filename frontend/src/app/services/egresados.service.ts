@@ -80,6 +80,10 @@ export class EgresadosService {
     return this.http.get<Usuario[]>(`${this.apiUrl}/egresados/profesores-por-asignatura/?asignatura_id=${asignaturaId}`);
   }
 
+  getGruposPorAsignatura(asignaturaId: string): Observable<{ id: string; codigo: string }[]> {
+    return this.http.get<{ id: string; codigo: string }[]>(`${this.apiUrl}/egresados/grupos-por-asignatura/?asignatura_id=${asignaturaId}`);
+  }
+
   getEgresados(): Observable<Egresado[]> {
     return of(this.egresados);
   }

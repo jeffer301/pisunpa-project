@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ProgramaListView, AsignaturaListView,
     DepartamentoListView, CiudadListView, PerfilEgresadoViewSet,
-    ProfesorAsignaturaViewSet
+    ProfesorAsignaturaViewSet, ProfesoresPorAsignaturaView,
+    GruposPorAsignaturaView,
 )
 
 router = DefaultRouter()
@@ -14,6 +15,8 @@ urlpatterns = [
     # Mantenemos las rutas públicas de consulta de catálogos solicitadas
     path('programas/', ProgramaListView.as_view(), name='programas-list'),
     path('asignaturas/', AsignaturaListView.as_view(), name='asignaturas-list'),
+    path('profesores-por-asignatura/', ProfesoresPorAsignaturaView.as_view(), name='profesores-por-asignatura'),
+    path('grupos-por-asignatura/', GruposPorAsignaturaView.as_view(), name='grupos-por-asignatura'),
     path('departamentos/', DepartamentoListView.as_view(), name='departamentos-list'),
     path('ciudades/', CiudadListView.as_view(), name='ciudades-list'),
 

@@ -106,6 +106,7 @@ export class SolicitudSupletorioComponent implements OnInit {
   programas = signal<Programa[]>([]);
   asignaturas = signal<Asignatura[]>([]);
   profesores = signal<Usuario[]>([]);
+  grupos = signal<{ id: string; codigo: string }[]>([]);
   guardando = signal(false);
   archivosSeleccionados = signal<File[]>([]);
   comprobantePago = signal<File | null>(null);
@@ -169,14 +170,19 @@ export class SolicitudSupletorioComponent implements OnInit {
   }
 
   onAsignaturaChange(asignaturaId: string): void {
-    this.formulario.patchValue({ profesor: '' });
+    this.formulario.patchValue({ profesor: '', grupoAsignatura: '' });
     if (!asignaturaId) {
       this.profesores.set([]);
+      this.grupos.set([]);
       return;
     }
     this.egresadosService.getProfesoresPorAsignatura(asignaturaId).subscribe({
       next: (profesores) => this.profesores.set(profesores),
       error: () => this.profesores.set([])
+    });
+    this.egresadosService.getGruposPorAsignatura(asignaturaId).subscribe({
+      next: (grupos) => this.grupos.set(grupos),
+      error: () => this.grupos.set([])
     });
   }
 
