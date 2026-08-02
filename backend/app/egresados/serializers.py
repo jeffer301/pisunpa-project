@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import (
     Departamento, Ciudad, Programa, Asignatura, PerfilEgresado,
     ExperienciaLaboral, EstudioPosterior, RedProfesional, DocumentoAdjunto,
-    ProfesorAsignatura, Grupo,
+    ProfesorAsignatura, Grupo, Evento, InscripcionEvento,
 )
 
 User = get_user_model()
@@ -150,3 +150,40 @@ class ProfesorAsignaturaWriteSerializer(serializers.Serializer):
         ).exists():
             raise serializers.ValidationError("Esta asignación ya existe.")
         return attrs
+
+
+class EventoSerializer(serializers.ModelSerializer):
+    inscrito = serializers.SerializerMethodField()
+    cupos_disponibles = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Evento
+        fields = ['id', 'nombre', 'descripcion', 'fecha', 'hora', 'lugar',
+                  'capacidad', 'inscrito', 'cupos_disponibles', 'creado_en']
+
+    def get_inscrito(self, obj):
+        user = self.context['request'].user
+        return obj.inscripciones.filter(
+            egresado=user, cancelada=False
+        ).exists()
+
+    def get_cupos_disponibles(self, obj):
+        if obj.capacidad is None:
+            return None
+        ocupados = obj.inscripciones.filter(cancelada=False).count()
+        return obj.capacidad - ocupados
+
+
+class EventoWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Evento
+        fields = ['id', 'nombre', 'descripcion', 'fecha', 'hora', 'lugar', 'capacidad']
+        read_only_fields = ['id']
+
+
+class InscripcionEventoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InscripcionEvento
+        fields = ['id', 'evento', 'egresado', 'nombre_egresado',
+                  'documento_egresado', 'programa_egresado', 'fecha_inscripcion']
+        read_only_fields = fields

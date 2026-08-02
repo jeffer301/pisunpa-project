@@ -4,12 +4,13 @@ from .views import (
     ProgramaListView, AsignaturaListView,
     DepartamentoListView, CiudadListView, PerfilEgresadoViewSet,
     ProfesorAsignaturaViewSet, ProfesoresPorAsignaturaView,
-    GruposPorAsignaturaView,
+    GruposPorAsignaturaView, EventoViewSet,
 )
 
 router = DefaultRouter()
 router.register(r'perfilegresado', PerfilEgresadoViewSet, basename='perfil-egresado')
 router.register(r'profesor-asignaturas', ProfesorAsignaturaViewSet, basename='profesor-asignatura')
+router.register(r'eventos', EventoViewSet, basename='evento')
 
 urlpatterns = [
     # Mantenemos las rutas públicas de consulta de catálogos solicitadas

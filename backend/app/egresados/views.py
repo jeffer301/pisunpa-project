@@ -5,15 +5,22 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from datetime import date
 
-from .models import Departamento, Ciudad, Programa, Asignatura, PerfilEgresado, ProfesorAsignatura, Grupo
+from .models import (
+    Departamento, Ciudad, Programa, Asignatura, PerfilEgresado,
+    ProfesorAsignatura, Grupo, Evento, InscripcionEvento,
+)
 from .serializers import (
     DepartamentoSerializer, CiudadSerializer, ProgramaSerializer, AsignaturaSerializer,
     PerfilEgresadoReadSerializer, PerfilEgresadoWriteSerializer,
     ProfesorAsignaturaSerializer, ProfesorAsignaturaWriteSerializer,
     UserSimpleSerializer, GrupoSerializer,
+    EventoSerializer, EventoWriteSerializer, InscripcionEventoSerializer,
 )
 from .services import EgresadoService
+from app.usuarios.permissions import EsCoordinadorEgresados
+from app.usuarios.notification_service import NotificacionService
 
 User = get_user_model()
 
@@ -208,3 +215,122 @@ class ProfesorAsignaturaViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EventoViewSet(viewsets.ModelViewSet):
+    queryset = Evento.objects.all()
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return EventoWriteSerializer
+        return EventoSerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'inscritos']:
+            return [EsCoordinadorEgresados()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.action != 'list':
+            return qs
+        if getattr(self.request.user, 'rol', None) and self.request.user.rol.nombre in (
+            'coordinador', 'administrador', 'director'
+        ):
+            return qs
+        return qs.filter(fecha__gte=date.today())
+
+    def perform_create(self, serializer):
+        serializer.save(creado_por=self.request.user)
+        NotificacionService.crear(
+            usuario=self.request.user,
+            titulo='Evento creado',
+            mensaje=f'Se creó el evento "{self.request.data.get("nombre")}".',
+            tipo='evento_creado',
+            roles_broadcast=['secretario', 'coordinador'],
+        )
+
+    @action(detail=True, methods=['post'], url_path='inscribirse')
+    def inscribirse(self, request, pk=None):
+        evento = self.get_object()
+        user = request.user
+        if not (user.rol and user.rol.nombre == 'egresado'):
+            return Response(
+                {'detail': 'Solo egresados pueden inscribirse.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if not hasattr(user, 'perfil_egresado'):
+            return Response(
+                {'detail': 'Debes tener perfil de egresado.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if evento.fecha < date.today():
+            return Response(
+                {'detail': 'El evento ya pasó.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        ocupados = evento.inscripciones.filter(cancelada=False).count()
+        if evento.capacidad is not None and ocupados >= evento.capacidad:
+            return Response(
+                {'detail': 'El evento alcanzó su capacidad máxima.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if evento.inscripciones.filter(egresado=user, cancelada=False).exists():
+            return Response(
+                {'detail': 'Ya estás inscrito en este evento.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        perfil = user.perfil_egresado
+        inscripcion = InscripcionEvento.objects.create(
+            evento=evento,
+            egresado=user,
+            nombre_egresado=user.get_full_name() or user.email,
+            documento_egresado=perfil.numero_documento,
+            programa_egresado=perfil.programa.nombre if perfil.programa else '',
+        )
+        NotificacionService.crear(
+            usuario=user,
+            titulo='Inscripción a evento',
+            mensaje=f'Te inscribiste en "{evento.nombre}".',
+            tipo='evento_inscripcion',
+            evento=evento,
+            roles_broadcast=['secretario', 'coordinador'],
+        )
+        return Response(
+            InscripcionEventoSerializer(inscripcion).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=['delete'], url_path='inscripcion')
+    def cancelar_inscripcion(self, request, pk=None):
+        evento = self.get_object()
+        user = request.user
+        inscripcion = evento.inscripciones.filter(
+            egresado=user, cancelada=False
+        ).first()
+        if not inscripcion:
+            return Response(
+                {'detail': 'No tienes inscripción activa en este evento.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        inscripcion.cancelada = True
+        inscripcion.save(update_fields=['cancelada'])
+        NotificacionService.crear(
+            usuario=user,
+            titulo='Inscripción cancelada',
+            mensaje=f'Cancelaste tu inscripción en "{evento.nombre}".',
+            tipo='evento_cancelacion',
+            evento=evento,
+            roles_broadcast=['secretario', 'coordinador'],
+        )
+        return Response({'detail': 'Inscripción cancelada.'})
+
+    @action(detail=True, methods=['get'], url_path='inscritos')
+    def inscritos(self, request, pk=None):
+        evento = self.get_object()
+        inscripciones = evento.inscripciones.filter(cancelada=False).order_by(
+            'fecha_inscripcion'
+        )
+        return Response(InscripcionEventoSerializer(inscripciones, many=True).data)
