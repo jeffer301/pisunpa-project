@@ -1,4 +1,4 @@
-import re
+﻿import re
 from uuid import UUID
 
 from django.db import transaction
@@ -6,7 +6,6 @@ from openpyxl import load_workbook
 from rest_framework import status
 from rest_framework.permissions import (
     AllowAny,
-    BasePermission,
     IsAuthenticated,
 )
 from rest_framework import generics
@@ -18,6 +17,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from app.egresados.models import PerfilEgresado, Programa
 from .models import InvitacionDocente, Notificacion, Rol, Usuario
 from .notification_service import NotificacionService
+from .permissions import EsAdminEscritura, EsAdminLectura
 from .serializers import (
     CustomTokenObtainSerializer,
     EstudiantePendienteSerializer,
@@ -82,9 +82,9 @@ class RegistroConRolView(APIView):
             {
                 "mensaje": (
                     "Registro como egresado pendiente de "
-                    "validación."
+                    "validaciÃ³n."
                     if data["tipo_usuario"] == "egresado"
-                    else "Tu cuenta está pendiente de aprobación "
+                    else "Tu cuenta estÃ¡ pendiente de aprobaciÃ³n "
                     "por el director/administrador."
                 )
             },
@@ -120,20 +120,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainSerializer
 
 
-class IsAdminUser(BasePermission):
-    def has_permission(self, request, view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and getattr(request.user, 'rol', None)
-            and request.user.rol.nombre
-            in ('administrador', 'director', 'secretario')
-        )
-
-
 class UsuariosDisponiblesView(generics.ListAPIView):
     serializer_class = UsuariosDisponiblesSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminLectura]
 
     def get_queryset(self):
         usuario_ids_con_perfil = PerfilEgresado.objects.values_list(
@@ -165,14 +154,14 @@ class RegistroDocenteView(APIView):
             usuario.save()
 
         return Response(
-            {"mensaje": "Registro exitoso. Ya puedes iniciar sesión."},
+            {"mensaje": "Registro exitoso. Ya puedes iniciar sesiÃ³n."},
             status=status.HTTP_201_CREATED,
         )
 
 
 class EstudiantesPendientesView(generics.ListAPIView):
     serializer_class = EstudiantePendienteSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminLectura]
 
     def get_queryset(self):
         return Usuario.objects.filter(
@@ -181,7 +170,7 @@ class EstudiantesPendientesView(generics.ListAPIView):
 
 
 class AprobarEstudianteView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminEscritura]
 
     def patch(self, request, pk):
         try:
@@ -197,7 +186,7 @@ class AprobarEstudianteView(APIView):
 
 
 class RechazarEstudianteView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminEscritura]
 
     def patch(self, request, pk):
         try:
@@ -213,7 +202,7 @@ class RechazarEstudianteView(APIView):
 
 
 class PromoverEgresadoView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminEscritura]
 
     def patch(self, request, pk):
         try:
@@ -272,19 +261,19 @@ class NotificacionMarcarLeidaView(APIView):
     def patch(self, request, pk):
         updated = NotificacionService.marcar_como_leida(pk, request.user)
         if not updated:
-            return Response({'detail': 'Notificación no encontrada'}, status=404)
-        return Response({'detail': 'Marcada como leída'})
+            return Response({'detail': 'NotificaciÃ³n no encontrada'}, status=404)
+        return Response({'detail': 'Marcada como leÃ­da'})
 
 
 class NotificacionLeerTodasView(APIView):
     def post(self, request):
         Notificacion.objects.filter(usuario=request.user, leido=False).update(leido=True)
-        return Response({'detail': 'Todas marcadas como leídas'})
+        return Response({'detail': 'Todas marcadas como leÃ­das'})
 
 
 class ProfesorListView(generics.ListAPIView):
     serializer_class = ProfesorSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminLectura]
 
     def get_queryset(self):
         return Usuario.objects.filter(
@@ -293,7 +282,7 @@ class ProfesorListView(generics.ListAPIView):
 
 
 class ProfesorImportView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminEscritura]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
@@ -306,7 +295,7 @@ class ProfesorImportView(APIView):
             ws = wb.active
             rows = list(ws.iter_rows(min_row=3, values_only=True))
         except Exception:
-            return Response({'error': 'Formato de archivo no válido.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Formato de archivo no vÃ¡lido.'}, status=status.HTTP_400_BAD_REQUEST)
 
         rol_profesor = Rol.objects.get(nombre='profesor')
         creados = 0
@@ -325,7 +314,7 @@ class ProfesorImportView(APIView):
             email_ok = re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email)
 
             if not email_ok:
-                errores.append(f'Email inválido para {nombre}: {row[1]}')
+                errores.append(f'Email invÃ¡lido para {nombre}: {row[1]}')
                 continue
 
             if email in profesores_unicos:
@@ -365,7 +354,7 @@ class ProfesorImportView(APIView):
 
 
 class ProfesorInvitarView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, EsAdminEscritura]
 
     def post(self, request, pk):
         try:
@@ -412,10 +401,10 @@ class InvitacionDetailView(APIView):
             token_uuid = UUID(str(token))
             invitacion = InvitacionDocente.objects.select_related('usuario').get(token=token_uuid)
         except (ValueError, InvitacionDocente.DoesNotExist):
-            return Response({'error': 'El enlace de invitación no es válido.'}, status=404)
+            return Response({'error': 'El enlace de invitaciÃ³n no es vÃ¡lido.'}, status=404)
 
         if not invitacion.valido:
-            return Response({'error': 'La invitación ha expirado o ya fue utilizada.'}, status=410)
+            return Response({'error': 'La invitaciÃ³n ha expirado o ya fue utilizada.'}, status=410)
 
         serializer = InvitacionDetailSerializer(data={
             'email': invitacion.email,
@@ -452,6 +441,6 @@ class RegistroDocenteConTokenView(APIView):
             invitacion.save()
 
         return Response(
-            {'mensaje': 'Registro exitoso. Ya puedes iniciar sesión.'},
+            {'mensaje': 'Registro exitoso. Ya puedes iniciar sesiÃ³n.'},
             status=status.HTTP_201_CREATED,
         )

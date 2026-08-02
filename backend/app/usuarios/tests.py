@@ -1,9 +1,33 @@
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from rest_framework.test import APIClient
 from app.usuarios.models import Rol
 
 User = get_user_model()
+
+
+@override_settings(ROOT_URLCONF='core_project.urls')
+class SeedUsuariosTest(TestCase):
+    """El seed crea todos los roles y usuarios; el director es superusuario."""
+
+    def test_seed_crea_roles_y_director_superusuario(self):
+        for nombre in ['administrador', 'director', 'secretario', 'coordinador',
+                       'profesor', 'egresado', 'estudiante']:
+            Rol.objects.create(nombre=nombre)
+        call_command('seed_usuarios')
+
+        self.assertTrue(User.objects.filter(email='director@pisunpa.com').exists())
+        self.assertTrue(User.objects.filter(email='secretario@pisunpa.com').exists())
+        self.assertTrue(User.objects.filter(email='coordinador@pisunpa.com').exists())
+
+        director = User.objects.get(email='director@pisunpa.com')
+        self.assertTrue(director.is_superuser)
+        self.assertTrue(director.is_staff)
+        self.assertEqual(director.rol.nombre, 'director')
+
+        coordinador = User.objects.get(email='coordinador@pisunpa.com')
+        self.assertEqual(coordinador.rol.nombre, 'coordinador')
 
 
 @override_settings(ROOT_URLCONF='core_project.urls')
