@@ -1,0 +1,95 @@
+<section class="admin-eventos">
+  <header class="admin-eventos__header">
+    <h1>Eventos de egresados</h1>
+    @if (esCoordinador) {
+      <button class="btn" (click)="nuevoEvento()">+ Nuevo evento</button>
+    }
+  </header>
+
+  @if (mostrandoFormulario()) {
+    <form class="evento-form" [formGroup]="form" (ngSubmit)="guardar()">
+      <label>Nombre
+        <input formControlName="nombre" type="text" required />
+      </label>
+      <label>Descripción
+        <textarea formControlName="descripcion"></textarea>
+      </label>
+      <label>Fecha
+        <input formControlName="fecha" type="date" required />
+      </label>
+      <label>Hora
+        <input formControlName="hora" type="time" />
+      </label>
+      <label>Lugar
+        <input formControlName="lugar" type="text" />
+      </label>
+      <label>Capacidad
+        <input formControlName="capacidad" type="number" min="1" />
+      </label>
+      <div class="evento-form__acciones">
+        <button type="button" class="btn btn-secundario"
+          (click)="mostrandoFormulario.set(false)">Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </form>
+  }
+
+  @if (inscritos().length > 0) {
+    <div class="inscritos">
+      <h2>Inscritos a {{ eventoSeleccionado()?.nombre }}</h2>
+      <button class="btn btn-secundario" (click)="cerrarInscritos()">Cerrar</button>
+      <table>
+        <thead>
+          <tr><th>Nombre</th><th>Documento</th><th>Programa</th><th>Fecha inscripción</th></tr>
+        </thead>
+        <tbody>
+          @for (inscripcion of inscritos(); track inscripcion.id) {
+            <tr>
+              <td>{{ inscripcion.nombre_egresado }}</td>
+              <td>{{ inscripcion.documento_egresado }}</td>
+              <td>{{ inscripcion.programa_egresado }}</td>
+              <td>{{ inscripcion.fecha_inscripcion | date: 'short' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (cargando()) {
+    <p class="cargando">Cargando eventos…</p>
+  } @else if (eventos().length === 0) {
+    <p class="vacio">No hay eventos registrados.</p>
+  } @else {
+    <table class="eventos-tabla">
+      <thead>
+        <tr>
+          <th>Evento</th><th>Fecha</th><th>Lugar</th><th>Cupos</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (evento of eventos(); track evento.id) {
+          <tr>
+            <td><strong>{{ evento.nombre }}</strong></td>
+            <td>{{ evento.fecha | date: 'longDate' }}</td>
+            <td>{{ evento.lugar }}</td>
+            <td>
+              @if (evento.capacidad !== null) {
+                {{ evento.cupos_disponibles }} / {{ evento.capacidad }}
+              } @else {
+                Sin límite
+              }
+            </td>
+            <td>
+              @if (esCoordinador) {
+                <button class="btn btn-secundario" (click)="editarEvento(evento)">Editar</button>
+                <button class="btn btn-peligro" (click)="eliminarEvento(evento)">Eliminar</button>
+                <button class="btn btn-secundario" (click)="verInscritos(evento)">Inscritos</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

@@ -2,6 +2,9 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, O
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { FeedbackService } from '../../shared/services/feedback.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { EventosService } from '../../services/eventos.service';
+import { Evento } from '../../models/evento.model';
 
 type TabId = 'perfil' | 'experiencia' | 'estudios' | 'documentos';
 type Privacidad = 'publico' | 'privado' | 'universidad';
@@ -660,6 +663,42 @@ interface CompetenciaCategoria {
               </div>
             </div>
           }
+        }
+
+        @if (soloEgresado()) {
+          <section class="eventos">
+            <h2>Eventos de egresados</h2>
+            @if (cargandoEventos()) {
+              <p class="cargando">Cargando eventos…</p>
+            } @else if (eventos().length === 0) {
+              <p class="vacio">No hay eventos disponibles.</p>
+            } @else {
+              <ul class="eventos-lista">
+                @for (evento of eventos(); track evento.id) {
+                  <li class="evento">
+                    <div class="evento-info">
+                      <strong>{{ evento.nombre }}</strong>
+                      <span>{{ evento.fecha | date: 'longDate' }}
+                        @if (evento.hora) { · {{ evento.hora }} }</span>
+                      @if (evento.lugar) { <span>📍 {{ evento.lugar }}</span> }
+                      @if (evento.descripcion) { <p>{{ evento.descripcion }}</p> }
+                      @if (evento.capacidad) {
+                        <small>{{ evento.cupos_disponibles }} cupos disponibles</small>
+                      }
+                    </div>
+                    <button
+                      class="btn"
+                      [class.btn-secundario]="evento.inscrito"
+                      (click)="evento.inscrito ? cancelarInscripcion(evento) : inscribirse(evento)"
+                      [disabled]="!evento.inscrito && (evento.cupos_disponibles !== null && evento.cupos_disponibles <= 0)"
+                    >
+                      {{ evento.inscrito ? 'Cancelar inscripción' : 'Inscribirme' }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
         }
       </main>
     </div>
@@ -1629,16 +1668,120 @@ interface CompetenciaCategoria {
         width: 100%;
       }
     }
+
+    /* Eventos de egresados */
+    .eventos {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .eventos h2 {
+      font-size: 1.3rem;
+      color: var(--color-primary);
+      margin-bottom: 1rem;
+    }
+
+    .cargando, .vacio {
+      color: #888;
+      padding: 1rem 0;
+    }
+
+    .eventos-lista {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .evento {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .evento-info {
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .evento-info strong {
+      color: #1a1a1a;
+      font-size: 1rem;
+    }
+
+    .evento-info span {
+      color: #666;
+      font-size: 0.85rem;
+    }
+
+    .evento-info p {
+      color: #555;
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    .evento-info small {
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+
+    .evento .btn {
+      background: var(--color-primary);
+      color: #fff;
+      padding: 0.5rem 1.25rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .evento .btn:hover:not(:disabled) {
+      background: #163d8f;
+    }
+
+    .evento .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .evento .btn-secundario {
+      background: #fde8e8;
+      color: var(--color-danger);
+    }
+
+    .evento .btn-secundario:hover {
+      background: #f5d0d0;
+    }
   `,
 })
 export class PortalEgresadoComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private feedback = inject(FeedbackService);
+  private auth = inject(AuthService);
+  private eventosService = inject(EventosService);
 
   activeTab = signal<TabId>('perfil');
   privacidad = signal<Privacidad>('privado');
   mensajeExito = signal('');
   guardando = signal(false);
+
+  readonly soloEgresado = computed(() => this.auth.tieneRol('egresado'));
+  readonly eventos = signal<Evento[]>([]);
+  readonly cargandoEventos = signal(false);
 
   private nextId = 3;
 
@@ -1852,6 +1995,44 @@ export class PortalEgresadoComponent implements OnInit, OnDestroy {
       nombre: ['', Validators.required],
       institucion: ['', Validators.required],
       anioFinalizacion: [null, Validators.required],
+    });
+
+    if (this.soloEgresado()) {
+      this.cargarEventos();
+    }
+  }
+
+  cargarEventos(): void {
+    this.cargandoEventos.set(true);
+    this.eventosService.listar().subscribe({
+      next: (eventos) => {
+        this.eventos.set(eventos);
+        this.cargandoEventos.set(false);
+      },
+      error: (err) => {
+        this.cargandoEventos.set(false);
+        this.feedback.show(err.error?.detail ?? 'No se pudieron cargar los eventos.', 'error');
+      },
+    });
+  }
+
+  inscribirse(evento: Evento): void {
+    this.eventosService.inscribirse(evento.id).subscribe({
+      next: () => {
+        this.feedback.show(`Te inscribiste en "${evento.nombre}".`);
+        this.cargarEventos();
+      },
+      error: (err) => this.feedback.show(err.error?.detail ?? 'No fue posible inscribirte en el evento.', 'error'),
+    });
+  }
+
+  cancelarInscripcion(evento: Evento): void {
+    this.eventosService.cancelarInscripcion(evento.id).subscribe({
+      next: () => {
+        this.feedback.show(`Cancelaste tu inscripción en "${evento.nombre}".`);
+        this.cargarEventos();
+      },
+      error: (err) => this.feedback.show(err.error?.detail ?? 'No fue posible cancelar la inscripción.', 'error'),
     });
   }
 

@@ -48,4 +48,13 @@ export const routes: Routes = [
   { path: 'admin/gestion-egresados', component: GestionEgresadosComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'dashboard/analitica-egresados', component: AnaliticaEgresadosComponent, canActivate: [authGuard, roleGuard], data: { roles: rolesAdmin } },
   { path: 'dashboard/objetivos-proyecto', component: ObjetivosProyectoComponent, canActivate: [authGuard] },
+  {
+    path: 'admin/eventos',
+    loadComponent: () =>
+      import('./features/admin/admin-eventos/admin-eventos.component').then(
+        (m) => m.AdminEventosComponent
+      ),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['coordinador', 'administrador', 'director'] as Rol[] },
+  },
 ];
