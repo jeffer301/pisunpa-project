@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { EgresadosComponent } from './egresados.component';
 import { Egresado } from '../../models/egresado.model';
 
@@ -23,7 +24,7 @@ describe('EgresadosComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EgresadosComponent],
+      imports: [EgresadosComponent, HttpClientTestingModule],
       providers: [provideRouter([])],
     }).compileComponents();
 

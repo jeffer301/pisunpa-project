@@ -9,7 +9,7 @@ describe('EgresadoModalComponent', () => {
   let fixture: ComponentFixture<EgresadoModalComponent>;
   let egresadosService: jasmine.SpyObj<EgresadosService>;
 
-  const mockProgramas = [{ id: 1, nombre: 'Ingeniería' }];
+  const mockProgramas = [{ id: '1', nombre: 'Ingeniería' }];
   const mockDepartamentos = [{ id: 1, nombre: 'Valle' }];
   const mockCiudades = [{ id: 1, nombre: 'Buenaventura', idDepartamento: 1 }];
 

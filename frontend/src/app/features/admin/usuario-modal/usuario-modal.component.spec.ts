@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { UsuarioModalComponent } from './usuario-modal.component';
 
 describe('UsuarioModalComponent', () => {
@@ -8,7 +9,7 @@ describe('UsuarioModalComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [UsuarioModalComponent]
+      imports: [UsuarioModalComponent, HttpClientTestingModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(UsuarioModalComponent);
@@ -29,7 +30,7 @@ describe('UsuarioModalComponent', () => {
       nombre: 'Ana',
       email: 'ana@example.com',
       rol: 'secretario',
-      activo: true
+      password: 'cambiar123'
     });
     fixture.detectChanges();
     expect(save.disabled).toBeFalse();
@@ -47,7 +48,7 @@ describe('UsuarioModalComponent', () => {
       nombre: 'Ana',
       email: 'ana@example.com',
       rol: 'secretario',
-      activo: true
+      password: 'cambiar123'
     });
     fixture.detectChanges();
     fixture.componentRef.setInput('guardando', true);
@@ -61,7 +62,7 @@ describe('UsuarioModalComponent', () => {
       nombre: 'Ana',
       email: 'ana@example.com',
       rol: 'secretario',
-      activo: true
+      password: 'cambiar123'
     });
     fixture.detectChanges();
     fixture.componentRef.setInput('guardando', true);
@@ -77,7 +78,7 @@ describe('UsuarioModalComponent', () => {
       nombre: 'Ana',
       email: 'ana@example.com',
       rol: 'secretario',
-      activo: true
+      password: 'cambiar123'
     });
     fixture.detectChanges();
     component.onSubmit();
