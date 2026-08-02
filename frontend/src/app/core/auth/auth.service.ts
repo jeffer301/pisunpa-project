@@ -21,12 +21,24 @@ export class AuthService {
     const rol = this._usuarioActivo()?.rol;
     if (!rol) return false;
     if (accion === 'leer') return true;
-    return ['administrador', 'director', 'secretario'].includes(rol);
+    return ['administrador', 'director'].includes(rol);
   }
 
   tieneRol(...roles: Rol[]): boolean {
     const rol = this._usuarioActivo()?.rol;
     return rol != null && roles.includes(rol);
+  }
+
+  esSoloLectura(): boolean {
+    return this.tieneRol('secretario');
+  }
+
+  esAdminEscritura(): boolean {
+    return this.tieneRol('administrador', 'director');
+  }
+
+  esCoordinador(): boolean {
+    return this.tieneRol('coordinador');
   }
 
   constructor() {

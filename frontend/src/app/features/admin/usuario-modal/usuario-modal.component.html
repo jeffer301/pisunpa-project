@@ -17,21 +17,34 @@
       }
     </div>
 
+    @if (!esEdicion()) {
+      <div class="campo">
+        <label for="documento">Documento *</label>
+        <input id="documento" formControlName="documento" />
+        @if (campoInvalido('documento')) {
+          <span class="error">El documento es obligatorio.</span>
+        }
+      </div>
+    }
+
     <div class="campo">
       <label for="rol">Rol *</label>
       <select id="rol" formControlName="rol">
-        @for (r of roles; track r.value) {
+        @for (r of roles(); track r.value) {
           <option [value]="r.value">{{ r.label }}</option>
         }
       </select>
     </div>
 
-    <div class="campo-check">
-      <label>
-        <input type="checkbox" formControlName="activo" />
-        Activo
-      </label>
-    </div>
+    @if (!esEdicion()) {
+      <div class="campo">
+        <label for="password">Contraseña *</label>
+        <input id="password" type="password" formControlName="password" />
+        @if (campoInvalido('password')) {
+          <span class="error">Mínimo 8 caracteres.</span>
+        }
+      </div>
+    }
 
     <div class="acciones-form">
       <button type="button" class="btn-cancelar" (click)="cerrar.emit()">Cancelar</button>

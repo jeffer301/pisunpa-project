@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output, OnInit, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, OnInit, inject, computed } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Usuario } from '../../../models/usuario.model';
@@ -60,17 +60,25 @@ export class UsuarioModalComponent implements OnInit {
   cerrar = output<void>();
 
   formulario!: FormGroup;
-  roles: { value: Rol; label: string }[] = Object.entries(ROL_LABELS).map(
-    ([value, label]) => ({ value: value as Rol, label })
-  );
+
+  readonly esEdicion = computed(() => this.usuario() != null);
+
+  readonly roles = computed(() => {
+    const opciones = (Object.entries(ROL_LABELS) as [string, string][]).map(
+      ([value, label]) => ({ value: value as Rol, label })
+    );
+    if (this.esEdicion()) return opciones;
+    return opciones.filter(r => ['administrador', 'coordinador', 'secretario'].includes(r.value));
+  });
 
   ngOnInit(): void {
     const u = this.usuario();
     this.formulario = this.fb.group({
       nombre: [u?.nombre ?? '', Validators.required],
       email: [u?.email ?? '', [Validators.required, Validators.email]],
-      rol: [u?.rol ?? 'egresado', Validators.required],
-      activo: [u?.activo ?? true],
+      documento: [u?.documento ?? ''],
+      rol: [u?.rol ?? 'administrador', Validators.required],
+      password: ['', this.esEdicion() ? [] : [Validators.required, Validators.minLength(8)]],
     });
   }
 
