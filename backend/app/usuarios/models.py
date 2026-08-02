@@ -52,6 +52,9 @@ class Notificacion(models.Model):
         ('pago_confirmado', 'Pago Confirmado'),
         ('examen_agendado', 'Examen Agendado'),
         ('examen_calificado', 'Examen Calificado'),
+        ('evento_creado', 'Evento Creado'),
+        ('evento_inscripcion', 'Inscripción a Evento'),
+        ('evento_cancelacion', 'Cancelación de Inscripción'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -66,6 +69,13 @@ class Notificacion(models.Model):
     )
     supletorio = models.ForeignKey(
         'supletorios.Supletorio',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notificaciones',
+    )
+    evento = models.ForeignKey(
+        'egresados.Evento',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

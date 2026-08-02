@@ -229,3 +229,27 @@ class DocumentoAdjunto(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class Evento(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=150)
+    descripcion = models.TextField(blank=True)
+    fecha = models.DateField()
+    hora = models.TimeField(null=True, blank=True)
+    lugar = models.CharField(max_length=200, blank=True)
+    capacidad = models.PositiveIntegerField(null=True, blank=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='eventos_creados',
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha', 'hora']
+
+    def __str__(self):
+        return f'{self.nombre} — {self.fecha}'

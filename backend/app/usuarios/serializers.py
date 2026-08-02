@@ -193,11 +193,12 @@ class CustomTokenObtainSerializer(TokenObtainPairSerializer):
 
 class NotificacionSerializer(serializers.ModelSerializer):
     supletorio_id = serializers.UUIDField(source='supletorio.id', read_only=True, default=None)
+    evento_id = serializers.UUIDField(source='evento.id', read_only=True, default=None)
 
     class Meta:
         model = Notificacion
-        fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'creado_en']
-        read_only_fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'creado_en']
+        fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'evento_id', 'creado_en']
+        read_only_fields = ['id', 'titulo', 'mensaje', 'tipo', 'leido', 'supletorio_id', 'evento_id', 'creado_en']
 
 
 class ProfesorSerializer(serializers.ModelSerializer):

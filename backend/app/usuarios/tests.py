@@ -340,6 +340,78 @@ class GestionUsuariosTest(TestCase):
 
 
 @override_settings(ROOT_URLCONF='core_project.urls')
+class NotificacionFanOutTest(TestCase):
+    def setUp(self):
+        from app.usuarios.models import Notificacion
+        self.Notificacion = Notificacion
+        self.rol_secretario = Rol.objects.create(nombre='secretario')
+        self.rol_coordinador = Rol.objects.create(nombre='coordinador')
+        self.rol_egresado = Rol.objects.create(nombre='egresado')
+        self.secretario = User.objects.create_user(
+            username='sec@test.com', email='sec@test.com',
+            password='sec123', documento='F01', rol=self.rol_secretario,
+            estado='aprobado',
+        )
+        self.coordinador = User.objects.create_user(
+            username='coord@test.com', email='coord@test.com',
+            password='coord123', documento='F02', rol=self.rol_coordinador,
+            estado='aprobado',
+        )
+        self.egresado = User.objects.create_user(
+            username='egr@test.com', email='egr@test.com',
+            password='egr123', documento='F03', rol=self.rol_egresado,
+            estado='aprobado',
+        )
+
+    def test_crear_hace_fan_out_a_roles(self):
+        from app.usuarios.notification_service import NotificacionService
+        NotificacionService.crear(
+            usuario=self.egresado,
+            titulo='Evento nuevo',
+            mensaje='Se creó un evento.',
+            tipo='evento_creado',
+            roles_broadcast=['secretario', 'coordinador'],
+        )
+        self.assertTrue(
+            self.Notificacion.objects.filter(usuario=self.secretario).exists()
+        )
+        self.assertTrue(
+            self.Notificacion.objects.filter(usuario=self.coordinador).exists()
+        )
+        self.assertTrue(
+            self.Notificacion.objects.filter(usuario=self.egresado).exists()
+        )
+
+    def test_broadcast_no_duplica_ni_incluye_no_roles(self):
+        from app.usuarios.notification_service import NotificacionService
+        NotificacionService.crear(
+            usuario=self.secretario,
+            titulo='Prueba',
+            mensaje='Mensaje',
+            tipo='evento_inscripcion',
+            roles_broadcast=['secretario', 'coordinador'],
+        )
+        self.assertEqual(
+            self.Notificacion.objects.filter(usuario=self.secretario).count(), 1
+        )
+        self.assertFalse(
+            self.Notificacion.objects.filter(usuario=self.egresado).exists()
+        )
+
+    def test_default_broadcast_es_secretario(self):
+        from app.usuarios.notification_service import NotificacionService
+        NotificacionService.crear(
+            usuario=self.egresado,
+            titulo='Inscripción',
+            mensaje='Te inscribiste.',
+            tipo='evento_inscripcion',
+        )
+        self.assertTrue(
+            self.Notificacion.objects.filter(usuario=self.secretario).exists()
+        )
+
+
+@override_settings(ROOT_URLCONF='core_project.urls')
 class NotificacionesTest(TestCase):
     """Conteo y marcado de notificaciones."""
 
