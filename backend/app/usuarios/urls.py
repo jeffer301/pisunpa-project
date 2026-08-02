@@ -3,8 +3,11 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
     AprobarEstudianteView,
+    CambiarRolView,
+    CrearAdminView,
     CustomTokenObtainPairView,
     EstudiantesPendientesView,
+    GestUsuariosListView,
     InvitacionDetailView,
     NotificacionContarNoLeidasView,
     NotificacionLeerTodasView,
@@ -92,4 +95,7 @@ urlpatterns = [
     path("notificaciones/contar-no-leidas/", NotificacionContarNoLeidasView.as_view(), name="notificaciones-contar"),
     path("notificaciones/<uuid:pk>/leer/", NotificacionMarcarLeidaView.as_view(), name="notificaciones-leer"),
     path("notificaciones/leer-todas/", NotificacionLeerTodasView.as_view(), name="notificaciones-leer-todas"),
+    path("usuarios/", GestUsuariosListView.as_view(), name="usuarios-list"),
+    path("usuarios/crear-admin/", CrearAdminView.as_view(), name="usuarios-crear-admin"),
+    path("usuarios/<uuid:pk>/rol/", CambiarRolView.as_view(), name="usuarios-cambiar-rol"),
 ]

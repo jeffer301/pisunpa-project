@@ -1,7 +1,7 @@
 ﻿import re
 from uuid import UUID
 
-from django.db import transaction
+from django.db import models, transaction
 from openpyxl import load_workbook
 from rest_framework import status
 from rest_framework.permissions import (
@@ -19,6 +19,8 @@ from .models import InvitacionDocente, Notificacion, Rol, Usuario
 from .notification_service import NotificacionService
 from .permissions import EsAdminEscritura, EsAdminLectura
 from .serializers import (
+    CambioRolSerializer,
+    CrearAdminSerializer,
     CustomTokenObtainSerializer,
     EstudiantePendienteSerializer,
     InvitacionDetailSerializer,
@@ -30,6 +32,7 @@ from .serializers import (
     RegistroDocenteSerializer,
     RegistroSerializer,
     UsuariosDisponiblesSerializer,
+    UsuarioGestionSerializer,
     UsuarioSerializer,
 )
 from .utils import enviar_invitacion_docente
@@ -441,6 +444,56 @@ class RegistroDocenteConTokenView(APIView):
             invitacion.save()
 
         return Response(
-            {'mensaje': 'Registro exitoso. Ya puedes iniciar sesiÃ³n.'},
+            {'mensaje': 'Registro exitoso. Ya puedes iniciar sesión.'},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class GestUsuariosListView(generics.ListAPIView):
+    serializer_class = UsuarioGestionSerializer
+    permission_classes = [IsAuthenticated, EsAdminLectura]
+
+    def get_queryset(self):
+        qs = Usuario.objects.select_related('rol').order_by('-creado')
+        query = self.request.query_params.get('q', '').strip()
+        estado = self.request.query_params.get('estado', '').strip()
+        if query:
+            qs = qs.filter(
+                models.Q(email__icontains=query)
+                | models.Q(first_name__icontains=query)
+                | models.Q(last_name__icontains=query)
+                | models.Q(documento__icontains=query)
+            )
+        if estado:
+            qs = qs.filter(estado=estado)
+        return qs
+
+
+class CambiarRolView(APIView):
+    permission_classes = [IsAuthenticated, EsAdminEscritura]
+
+    def patch(self, request, pk):
+        try:
+            usuario = Usuario.objects.get(pk=pk)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado.'}, status=404)
+        serializer = CambioRolSerializer(
+            data=request.data,
+            context={'usuario': usuario, 'solicitante': request.user},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UsuarioGestionSerializer(usuario).data)
+
+
+class CrearAdminView(APIView):
+    permission_classes = [IsAuthenticated, EsAdminEscritura]
+
+    def post(self, request):
+        serializer = CrearAdminSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        usuario = serializer.save()
+        return Response(
+            UsuarioGestionSerializer(usuario).data,
             status=status.HTTP_201_CREATED,
         )

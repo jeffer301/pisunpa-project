@@ -229,6 +229,117 @@ class ProgramasSinDuplicadosTest(TestCase):
 
 
 @override_settings(ROOT_URLCONF='core_project.urls')
+class GestionUsuariosTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.rol_admin = Rol.objects.create(nombre='administrador')
+        self.rol_director = Rol.objects.create(nombre='director')
+        self.rol_secretario = Rol.objects.create(nombre='secretario')
+        self.rol_estudiante = Rol.objects.create(nombre='estudiante')
+        Rol.objects.create(nombre='coordinador')
+
+        self.admin = User.objects.create_user(
+            username='admin@test.com', email='admin@test.com',
+            password='admin123', documento='A01', rol=self.rol_admin,
+            estado='aprobado',
+        )
+        self.director = User.objects.create_user(
+            username='dir@test.com', email='dir@test.com',
+            password='dir123', documento='A02', rol=self.rol_director,
+            estado='aprobado', is_superuser=True, is_staff=True,
+        )
+        self.secretario = User.objects.create_user(
+            username='sec@test.com', email='sec@test.com',
+            password='sec123', documento='A03', rol=self.rol_secretario,
+            estado='aprobado',
+        )
+        self.estudiante = User.objects.create_user(
+            username='est@test.com', email='est@test.com',
+            password='est123', documento='A04', rol=self.rol_estudiante,
+            estado='aprobado',
+        )
+
+    def test_listar_usuarios_requiere_admin_lectura(self):
+        self.client.force_authenticate(user=self.secretario)
+        response = self.client.get('/api/usuarios/usuarios/')
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(response.data), 4)
+
+    def test_listar_usuarios_rechaza_estudiante(self):
+        self.client.force_authenticate(user=self.estudiante)
+        response = self.client.get('/api/usuarios/usuarios/')
+        self.assertEqual(response.status_code, 403)
+
+    def test_listar_filtra_por_q(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get('/api/usuarios/usuarios/?q=est@test.com')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['email'], 'est@test.com')
+
+    def test_cambiar_rol_por_administrador(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.estudiante.id}/rol/',
+            {'rol': 'secretario'}, format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.estudiante.refresh_from_db()
+        self.assertEqual(self.estudiante.rol.nombre, 'secretario')
+
+    def test_admin_no_puede_cambiar_rol_del_director(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.director.id}/rol/',
+            {'rol': 'secretario'}, format='json'
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_no_puede_cambiarse_propio_rol(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.admin.id}/rol/',
+            {'rol': 'director'}, format='json'
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_secretario_no_puede_cambiar_rol(self):
+        self.client.force_authenticate(user=self.secretario)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.estudiante.id}/rol/',
+            {'rol': 'secretario'}, format='json'
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_crear_admin(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post('/api/usuarios/usuarios/crear-admin/', {
+            'email': 'nuevo.admin@test.com',
+            'first_name': 'Nuevo',
+            'last_name': 'Admin',
+            'documento': 'A99',
+            'password': 'StrongPass1!',
+            'rol': 'coordinador',
+        }, format='json')
+        self.assertEqual(response.status_code, 201)
+        usuario = User.objects.get(email='nuevo.admin@test.com')
+        self.assertEqual(usuario.rol.nombre, 'coordinador')
+        self.assertEqual(usuario.estado, 'aprobado')
+
+    def test_crear_admin_no_acepta_director(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post('/api/usuarios/usuarios/crear-admin/', {
+            'email': 'falso.director@test.com',
+            'first_name': 'Falso',
+            'last_name': 'Director',
+            'documento': 'A98',
+            'password': 'StrongPass1!',
+            'rol': 'director',
+        }, format='json')
+        self.assertEqual(response.status_code, 400)
+
+
+@override_settings(ROOT_URLCONF='core_project.urls')
 class NotificacionesTest(TestCase):
     """Conteo y marcado de notificaciones."""
 
