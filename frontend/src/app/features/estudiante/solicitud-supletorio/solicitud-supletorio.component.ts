@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { EgresadosService } from '../../../services/egresados.service';
@@ -114,24 +114,23 @@ export class SolicitudSupletorioComponent implements OnInit {
 
   readonly Supletorio = Supletorio;
 
-  readonly excedeLimite = computed(() => {
+  excedeLimite(): boolean {
     const fp = this.formulario?.get('fechaParcial')?.value;
     if (!fp) return false;
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const fechaParcial = new Date(fp);
-    const diff = diasHabilesEntre(fechaParcial, hoy);
-    return diff > Supletorio.DIAS_LIMITE;
-  });
+    return diasHabilesEntre(fechaParcial, hoy) > Supletorio.DIAS_LIMITE;
+  }
 
-  readonly diasDesdeParcial = computed(() => {
+  diasDesdeParcial(): number {
     const fp = this.formulario?.get('fechaParcial')?.value;
     if (!fp) return 0;
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const fechaParcial = new Date(fp);
     return diasHabilesEntre(fechaParcial, hoy);
-  });
+  }
 
   ngOnInit(): void {
     this.formulario = this.fb.group({
