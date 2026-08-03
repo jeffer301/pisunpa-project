@@ -21,9 +21,9 @@
         [value]="nuevoDocumento()" (input)="nuevoDocumento.set($any($event.target).value)" />
       <input type="password" placeholder="Contraseña * (mín. 8)"
         [value]="nuevoPassword()" (input)="nuevoPassword.set($any($event.target).value)" />
-      <select [value]="nuevoRol()" (change)="nuevoRol.set($any($event.target).value)">
+      <select (change)="nuevoRol.set($any($event.target).value)">
         @for (rol of rolesCreables(); track rol) {
-          <option [value]="rol">{{ rolLabels[rol] }}</option>
+          <option [value]="rol" [selected]="rol === nuevoRol()">{{ rolLabels[rol] }}</option>
         }
       </select>
       <button type="submit" class="btn-guardar" [disabled]="creando()">
@@ -64,9 +64,9 @@
               @if (filaBloqueada(u)) {
                 <span class="motivo">{{ motivoBloqueo(u) }}</span>
               } @else {
-                <select [value]="rolSeleccionado(u)" (change)="onRolCambiar(u, $any($event.target).value)">
+                <select (change)="onRolCambiar(u, $any($event.target).value)">
                   @for (rol of rolesAsignables(); track rol) {
-                    <option [value]="rol">{{ rolLabels[rol] }}</option>
+                    <option [value]="rol" [selected]="rol === rolSeleccionado(u)">{{ rolLabels[rol] }}</option>
                   }
                 </select>
               }
