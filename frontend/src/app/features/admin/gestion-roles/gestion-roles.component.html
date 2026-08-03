@@ -1,0 +1,91 @@
+<div class="contenedor">
+  <div class="admin-header">
+    <div>
+      <h2>Gestión de Roles</h2>
+      <p class="subtitulo">Asigna roles y crea cuentas de administración</p>
+    </div>
+    <button class="btn-nuevo" (click)="mostrandoCrear.set(!mostrandoCrear())">
+      {{ mostrandoCrear() ? 'Cancelar' : '+ Nuevo Usuario' }}
+    </button>
+  </div>
+
+  @if (mostrandoCrear()) {
+    <form class="form-crear" (ngSubmit)="crearUsuario()">
+      <input type="text" placeholder="Nombre *"
+        [value]="nuevoNombre()" (input)="nuevoNombre.set($any($event.target).value)" />
+      <input type="text" placeholder="Apellido"
+        [value]="nuevoApellido()" (input)="nuevoApellido.set($any($event.target).value)" />
+      <input type="email" placeholder="Email *"
+        [value]="nuevoEmail()" (input)="nuevoEmail.set($any($event.target).value)" />
+      <input type="text" placeholder="Documento"
+        [value]="nuevoDocumento()" (input)="nuevoDocumento.set($any($event.target).value)" />
+      <input type="password" placeholder="Contraseña * (mín. 8)"
+        [value]="nuevoPassword()" (input)="nuevoPassword.set($any($event.target).value)" />
+      <select [value]="nuevoRol()" (change)="nuevoRol.set($any($event.target).value)">
+        @for (rol of rolesAsignables(); track rol) {
+          <option [value]="rol">{{ rolLabels[rol] }}</option>
+        }
+      </select>
+      <button type="submit" class="btn-guardar" [disabled]="creando()">
+        {{ creando() ? 'Creando...' : 'Crear' }}
+      </button>
+    </form>
+  }
+
+  <div class="filtros management-toolbar">
+    <input type="search" aria-label="Buscar usuarios" placeholder="Buscar por nombre o email"
+      [value]="filtroBusqueda()" (input)="filtroBusqueda.set($any($event.target).value)" />
+  </div>
+
+  @if (cargando()) {
+    <p class="contador">Cargando usuarios...</p>
+  } @else {
+    <p class="contador">{{ usuariosFiltrados().length }} usuario(s)</p>
+  }
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol actual</th>
+          <th>Nuevo rol</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of usuariosFiltrados(); track u.id) {
+          <tr>
+            <td>{{ u.nombre }}</td>
+            <td>{{ u.email }}</td>
+            <td><span class="rol-badge">{{ rolLabels[u.rol] ?? u.rol }}</span></td>
+            <td>
+              @if (filaBloqueada(u)) {
+                <span class="motivo">{{ motivoBloqueo(u) }}</span>
+              } @else {
+                <select [value]="rolSeleccionado(u)" (change)="onRolCambiar(u, $any($event.target).value)">
+                  @for (rol of rolesAsignables(); track rol) {
+                    <option [value]="rol">{{ rolLabels[rol] }}</option>
+                  }
+                </select>
+              }
+            </td>
+            <td class="acciones">
+              @if (!filaBloqueada(u)) {
+                <button class="btn-guardar" [disabled]="!hayCambio(u) || enviando()[u.id]"
+                  (click)="guardarRol(u)">
+                  {{ enviando()[u.id] ? 'Guardando...' : 'Guardar' }}
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="vacio">No hay usuarios registrados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
