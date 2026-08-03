@@ -330,10 +330,15 @@ class CrearAdminSerializer(serializers.Serializer):
         return value
 
     def validate_rol(self, value):
-        if value not in ('administrador', 'coordinador', 'secretario'):
+        if value == 'director':
+            raise serializers.ValidationError('No se puede crear un usuario con rol director.')
+        solicitante = self.context.get('solicitante')
+        if value == 'administrador' and not (solicitante and es_superadmin(solicitante)):
             raise serializers.ValidationError(
-                'El rol debe ser administrador, coordinador o secretario.'
+                'Solo el director puede crear cuentas de administrador.'
             )
+        if not Rol.objects.filter(nombre=value).exists():
+            raise serializers.ValidationError('El rol indicado no existe.')
         return value
 
     def create(self, validated_data):

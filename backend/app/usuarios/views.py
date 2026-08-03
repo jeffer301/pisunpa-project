@@ -490,7 +490,10 @@ class CrearAdminView(APIView):
     permission_classes = [IsAuthenticated, EsAdminEscritura]
 
     def post(self, request):
-        serializer = CrearAdminSerializer(data=request.data)
+        serializer = CrearAdminSerializer(
+            data=request.data,
+            context={'solicitante': request.user},
+        )
         serializer.is_valid(raise_exception=True)
         usuario = serializer.save()
         return Response(

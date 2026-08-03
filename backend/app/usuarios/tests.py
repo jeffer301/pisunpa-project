@@ -535,3 +535,41 @@ class GestionRolesJerarquiaTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.otro_admin.refresh_from_db()
         self.assertEqual(self.otro_admin.rol.nombre, 'coordinador')
+
+    def test_admin_no_puede_crear_cuenta_administrador(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post('/api/usuarios/usuarios/crear-admin/', {
+            'email': 'nuevo.admin2@test.com',
+            'first_name': 'Nuevo',
+            'last_name': 'Admin',
+            'documento': 'J98',
+            'password': 'StrongPass1!',
+            'rol': 'administrador',
+        }, format='json')
+        self.assertEqual(response.status_code, 400)
+
+    def test_director_puede_crear_cuenta_administrador(self):
+        self.client.force_authenticate(user=self.director)
+        response = self.client.post('/api/usuarios/usuarios/crear-admin/', {
+            'email': 'admin3@test.com',
+            'first_name': 'Admin',
+            'last_name': 'Tres',
+            'documento': 'J97',
+            'password': 'StrongPass1!',
+            'rol': 'administrador',
+        }, format='json')
+        self.assertEqual(response.status_code, 201)
+        usuario = User.objects.get(email='admin3@test.com')
+        self.assertEqual(usuario.rol.nombre, 'administrador')
+
+    def test_director_no_puede_crear_cuenta_director(self):
+        self.client.force_authenticate(user=self.director)
+        response = self.client.post('/api/usuarios/usuarios/crear-admin/', {
+            'email': 'falso.director2@test.com',
+            'first_name': 'Falso',
+            'last_name': 'Director',
+            'documento': 'J96',
+            'password': 'StrongPass1!',
+            'rol': 'director',
+        }, format='json')
+        self.assertEqual(response.status_code, 400)
