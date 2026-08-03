@@ -9,7 +9,7 @@ USUARIOS = [
         'first_name': 'Directora',
         'last_name': 'PISUNPA',
         'rol_nombre': 'director',
-        'documento': '00000001',
+        'documento': 'SEED-00000001',
         'is_superuser': True,
         'is_staff': True,
     },
@@ -19,7 +19,7 @@ USUARIOS = [
         'first_name': 'Admin',
         'last_name': 'PISUNPA',
         'rol_nombre': 'administrador',
-        'documento': '00000002',
+        'documento': 'SEED-00000002',
     },
     {
         'email': 'secretario@pisunpa.com',
@@ -27,7 +27,7 @@ USUARIOS = [
         'first_name': 'Secretario',
         'last_name': 'PISUNPA',
         'rol_nombre': 'secretario',
-        'documento': '00000003',
+        'documento': 'SEED-00000003',
     },
     {
         'email': 'coordinador@pisunpa.com',
@@ -35,7 +35,7 @@ USUARIOS = [
         'first_name': 'Coordinador',
         'last_name': 'Egresados',
         'rol_nombre': 'coordinador',
-        'documento': '00000004',
+        'documento': 'SEED-00000004',
     },
     {
         'email': 'profesor@pisunpa.com',
@@ -43,7 +43,7 @@ USUARIOS = [
         'first_name': 'Profesor',
         'last_name': 'PISUNPA',
         'rol_nombre': 'profesor',
-        'documento': '00000005',
+        'documento': 'SEED-00000005',
     },
     {
         'email': 'estudiante@pisunpa.com',
@@ -51,7 +51,7 @@ USUARIOS = [
         'first_name': 'Estudiante',
         'last_name': 'PISUNPA',
         'rol_nombre': 'estudiante',
-        'documento': '00000006',
+        'documento': 'SEED-00000006',
     },
     {
         'email': 'egresado@pisunpa.com',
@@ -59,7 +59,7 @@ USUARIOS = [
         'first_name': 'Egresado',
         'last_name': 'PISUNPA',
         'rol_nombre': 'egresado',
-        'documento': '00000007',
+        'documento': 'SEED-00000007',
     },
 ]
 
@@ -78,28 +78,24 @@ class Command(BaseCommand):
             rol = Rol.objects.get(nombre=data['rol_nombre'])
             usuario, created = Usuario.objects.get_or_create(
                 email=data['email'],
-                defaults={
-                    'username': data['email'],
-                    'first_name': data['first_name'],
-                    'last_name': data['last_name'],
-                    'documento': data['documento'],
-                    'rol': rol,
-                    'estado': 'aprobado',
-                },
+                defaults={'username': data['email']},
             )
+            usuario.first_name = data['first_name']
+            usuario.last_name = data['last_name']
+            usuario.documento = data['documento']
+            usuario.rol = rol
+            usuario.estado = 'aprobado'
+            usuario.set_password(data['password'])
+            if data.get('is_superuser'):
+                usuario.is_superuser = True
+                usuario.is_staff = True
+            usuario.save()
             if created:
-                usuario.set_password(data['password'])
-                usuario.save()
                 creados += 1
                 self.stdout.write(f'  + {data["email"]} ({data["rol_nombre"]})')
             else:
                 actualizados += 1
-                self.stdout.write(f'  = {data["email"]} ya existe')
-
-            if data.get('is_superuser'):
-                usuario.is_superuser = True
-                usuario.is_staff = True
-                usuario.save(update_fields=['is_superuser', 'is_staff'])
+                self.stdout.write(f'  = {data["email"]} actualizado')
 
         self.stdout.write(
             self.style.SUCCESS(f'Usuarios: {creados} creados, {actualizados} ya existentes')
