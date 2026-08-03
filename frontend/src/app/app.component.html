@@ -5,6 +5,10 @@
     <div class="nav-links">
       @if (esEstudiante()) {
         <a routerLink="/egresado/perfil" routerLinkActive="active">Mi Portal</a>
+        @if (esEstudianteSolo()) {
+          <a routerLink="/estudiante/solicitud-supletorio" routerLinkActive="active">Solicitar Supletorio</a>
+          <a routerLink="/estudiante/pago-supletorio" routerLinkActive="active">Mis Supletorios</a>
+        }
       }
       @if (esProfesor()) {
         <a routerLink="/profesor/supletorios-pendientes" routerLinkActive="active">Supletorios Pendientes</a>

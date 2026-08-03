@@ -30,6 +30,7 @@ export class AppComponent {
   });
 
   readonly esEstudiante = computed(() => this.authService.tieneRol('estudiante', 'egresado'));
+  readonly esEstudianteSolo = computed(() => this.authService.tieneRol('estudiante'));
   readonly esProfesor = computed(() => this.authService.tieneRol('profesor'));
   readonly esAdmin = computed(() => this.authService.tieneRol('administrador', 'director', 'secretario'));
   readonly esCoordinador = computed(() => this.authService.esCoordinador());
