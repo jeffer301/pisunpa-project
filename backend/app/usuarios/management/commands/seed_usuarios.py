@@ -6,7 +6,7 @@ USUARIOS = [
     {
         'email': 'director@pisunpa.com',
         'password': 'director123',
-        'first_name': 'Directora',
+        'first_name': 'Director',
         'last_name': 'PISUNPA',
         'rol_nombre': 'director',
         'documento': 'SEED-00000001',
