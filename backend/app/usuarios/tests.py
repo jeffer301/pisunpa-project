@@ -29,6 +29,19 @@ class SeedUsuariosTest(TestCase):
         coordinador = User.objects.get(email='coordinador@pisunpa.com')
         self.assertEqual(coordinador.rol.nombre, 'coordinador')
 
+    def test_seed_egresado_tiene_perfil(self):
+        for nombre in ['administrador', 'director', 'secretario', 'coordinador',
+                       'profesor', 'egresado', 'estudiante']:
+            Rol.objects.create(nombre=nombre)
+        call_command('seed_usuarios')
+
+        egresado = User.objects.get(email='egresado@pisunpa.com')
+        self.assertTrue(hasattr(egresado, 'perfil_egresado'))
+        self.assertEqual(
+            egresado.perfil_egresado.numero_documento,
+            'SEED-00000007',
+        )
+
 
 @override_settings(ROOT_URLCONF='core_project.urls')
 class RegistroRestriccionDocenteTest(TestCase):

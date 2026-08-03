@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from app.usuarios.models import Rol, Usuario
+from app.egresados.models import PerfilEgresado, Programa
 
 
 USUARIOS = [
@@ -90,6 +91,19 @@ class Command(BaseCommand):
                 usuario.is_superuser = True
                 usuario.is_staff = True
             usuario.save()
+            if data['rol_nombre'] == 'egresado':
+                programa = (
+                    Programa.objects.filter(nombre='Ingenieria De Sistemas').first()
+                    or Programa.objects.first()
+                )
+                PerfilEgresado.objects.get_or_create(
+                    usuario=usuario,
+                    defaults={
+                        'tipo_documento': 'CC',
+                        'numero_documento': data['documento'],
+                        'programa': programa,
+                    },
+                )
             if created:
                 creados += 1
                 self.stdout.write(f'  + {data["email"]} ({data["rol_nombre"]})')

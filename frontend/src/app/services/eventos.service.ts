@@ -7,14 +7,14 @@ import { Evento, EventoWrite, InscripcionEvento } from '../models/evento.model';
 @Injectable({ providedIn: 'root' })
 export class EventosService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/egresados/eventos`;
+  private baseUrl = `${environment.apiUrl}/egresados/eventos/`;
 
   listar(): Observable<Evento[]> {
     return this.http.get<Evento[]>(this.baseUrl);
   }
 
   obtener(id: string): Observable<Evento> {
-    return this.http.get<Evento>(`${this.baseUrl}/${id}/`);
+    return this.http.get<Evento>(`${this.baseUrl}${id}/`);
   }
 
   crear(evento: EventoWrite): Observable<Evento> {
@@ -22,22 +22,22 @@ export class EventosService {
   }
 
   actualizar(id: string, evento: Partial<EventoWrite>): Observable<Evento> {
-    return this.http.patch<Evento>(`${this.baseUrl}/${id}/`, evento);
+    return this.http.patch<Evento>(`${this.baseUrl}${id}/`, evento);
   }
 
   eliminar(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}/`);
+    return this.http.delete<void>(`${this.baseUrl}${id}/`);
   }
 
   inscribirse(id: string): Observable<InscripcionEvento> {
-    return this.http.post<InscripcionEvento>(`${this.baseUrl}/${id}/inscribirse/`, {});
+    return this.http.post<InscripcionEvento>(`${this.baseUrl}${id}/inscribirse/`, {});
   }
 
   cancelarInscripcion(id: string): Observable<{ detail: string }> {
-    return this.http.delete<{ detail: string }>(`${this.baseUrl}/${id}/inscripcion/`);
+    return this.http.delete<{ detail: string }>(`${this.baseUrl}${id}/inscripcion/`);
   }
 
   inscritos(id: string): Observable<InscripcionEvento[]> {
-    return this.http.get<InscripcionEvento[]>(`${this.baseUrl}/${id}/inscritos/`);
+    return this.http.get<InscripcionEvento[]>(`${this.baseUrl}${id}/inscritos/`);
   }
 }

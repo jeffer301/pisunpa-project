@@ -132,13 +132,31 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     }
     this.panelAbierto.set(false);
     const ruta = this.rutaParaNotificacion(notif);
-    const queryParams = notif.supletorio_id ? { highlight: notif.supletorio_id } : {};
+    const queryParams: Record<string, string> = {};
+    if (notif.supletorio_id) queryParams['highlight'] = notif.supletorio_id;
+    if (this.esNotificacionEvento(notif) && this.authService.rolActual() === 'egresado') {
+      queryParams['tab'] = 'eventos';
+    }
     this.router.navigate([ruta], { queryParams });
+  }
+
+  private esNotificacionEvento(notif: import('../../../models/notificacion.model').Notificacion): boolean {
+    return notif.tipo === 'evento_creado'
+      || notif.tipo === 'evento_inscripcion'
+      || notif.tipo === 'evento_cancelacion';
   }
 
   private rutaParaNotificacion(notif: import('../../../models/notificacion.model').Notificacion): string {
     const rol = this.authService.rolActual();
     if (!rol) return '/';
+    if (this.esNotificacionEvento(notif)) {
+      if (rol === 'administrador' || rol === 'director' || rol === 'secretario' || rol === 'coordinador') {
+        return '/admin/eventos';
+      }
+      if (rol === 'egresado') {
+        return '/egresado/perfil';
+      }
+    }
     if (rol === 'administrador' || rol === 'director' || rol === 'secretario') {
       return '/admin/bandeja-supletorios';
     }

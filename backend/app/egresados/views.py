@@ -293,7 +293,7 @@ class EventoViewSet(viewsets.ModelViewSet):
         NotificacionService.crear(
             usuario=user,
             titulo='Inscripción a evento',
-            mensaje=f'Te inscribiste en "{evento.nombre}".',
+            mensaje=f'{inscripcion.nombre_egresado} se inscribió en "{evento.nombre}".',
             tipo='evento_inscripcion',
             evento=evento,
             roles_broadcast=['secretario', 'coordinador'],
@@ -320,7 +320,7 @@ class EventoViewSet(viewsets.ModelViewSet):
         NotificacionService.crear(
             usuario=user,
             titulo='Inscripción cancelada',
-            mensaje=f'Cancelaste tu inscripción en "{evento.nombre}".',
+            mensaje=f'{inscripcion.nombre_egresado} canceló su inscripción en "{evento.nombre}".',
             tipo='evento_cancelacion',
             evento=evento,
             roles_broadcast=['secretario', 'coordinador'],

@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FeedbackService } from '../../shared/services/feedback.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -1779,6 +1780,7 @@ export class PortalEgresadoComponent implements OnInit, OnDestroy {
   private feedback = inject(FeedbackService);
   private auth = inject(AuthService);
   private eventosService = inject(EventosService);
+  private route = inject(ActivatedRoute);
 
   activeTab = signal<TabId>('perfil');
   privacidad = signal<Privacidad>('privado');
@@ -1952,6 +1954,11 @@ export class PortalEgresadoComponent implements OnInit, OnDestroy {
   certificacionForm!: FormGroup;
 
   ngOnInit(): void {
+    const tabInicial = this.route.snapshot.queryParamMap.get('tab') as TabId | null;
+    if (tabInicial && this.tabs.some(t => t.id === tabInicial)) {
+      this.activeTab.set(tabInicial);
+    }
+
     this.perfilForm = this.fb.group({
       nombres: ['', Validators.required],
       apellidos: ['', Validators.required],
