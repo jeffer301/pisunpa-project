@@ -70,3 +70,25 @@ class EsCoordinadorEgresados(BasePermission):
             and request.user.is_authenticated
             and es_coordinador(request.user)
         )
+
+
+def es_superadmin(user):
+    return rol_de(user) == ROL_DIRECTOR
+
+
+def puede_tocar_usuario(solicitante, usuario):
+    """¿Puede `solicitante` modificar el rol de `usuario`? Cuentas admin/director solo director."""
+    if es_superadmin(solicitante):
+        return True
+    if usuario.rol and usuario.rol.nombre in (ROL_ADMIN, ROL_DIRECTOR):
+        return False
+    return True
+
+
+def puede_asignar_rol(solicitante, rol):
+    """¿Puede `solicitante` asignar el rol `rol` a otro usuario?"""
+    if rol == ROL_DIRECTOR:
+        return False
+    if rol == ROL_ADMIN and not es_superadmin(solicitante):
+        return False
+    return True

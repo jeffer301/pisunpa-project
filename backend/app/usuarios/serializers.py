@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import InvitacionDocente, Notificacion, Rol
+from .permissions import es_superadmin, puede_asignar_rol, puede_tocar_usuario
 from .services import UsuarioService
 
 Usuario = get_user_model()
@@ -295,8 +296,12 @@ class CambioRolSerializer(serializers.Serializer):
         solicitante = self.context['solicitante']
         if usuario.pk == solicitante.pk:
             raise serializers.ValidationError('No puedes cambiar tu propio rol.')
-        if solicitante.rol.nombre != 'director' and usuario.rol and usuario.rol.nombre == 'director':
-            raise serializers.ValidationError('Solo el director puede modificar al rol director.')
+        if not puede_tocar_usuario(solicitante, usuario):
+            raise serializers.ValidationError(
+                'Solo el director puede modificar cuentas de administrador o director.'
+            )
+        if not puede_asignar_rol(solicitante, self._rol.nombre):
+            raise serializers.ValidationError('No tienes permiso para asignar este rol.')
         return attrs
 
     def save(self):

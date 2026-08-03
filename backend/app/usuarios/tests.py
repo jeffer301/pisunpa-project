@@ -450,3 +450,88 @@ class NotificacionesTest(TestCase):
         self.assertEqual(response.status_code, 200)
         notif.refresh_from_db()
         self.assertTrue(notif.leido)
+
+
+@override_settings(ROOT_URLCONF='core_project.urls')
+class GestionRolesJerarquiaTest(TestCase):
+    """Jerarquía de gestión de roles: admin vs director."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.rol_admin = Rol.objects.create(nombre='administrador')
+        self.rol_director = Rol.objects.create(nombre='director')
+        self.rol_secretario = Rol.objects.create(nombre='secretario')
+        self.rol_coordinador = Rol.objects.create(nombre='coordinador')
+        self.rol_estudiante = Rol.objects.create(nombre='estudiante')
+
+        self.admin = User.objects.create_user(
+            username='admin@test.com', email='admin@test.com',
+            password='admin123', documento='J01', rol=self.rol_admin,
+            estado='aprobado',
+        )
+        self.director = User.objects.create_user(
+            username='dir@test.com', email='dir@test.com',
+            password='dir123', documento='J02', rol=self.rol_director,
+            estado='aprobado', is_superuser=True, is_staff=True,
+        )
+        self.coordinador = User.objects.create_user(
+            username='coord@test.com', email='coord@test.com',
+            password='coord123', documento='J03', rol=self.rol_coordinador,
+            estado='aprobado',
+        )
+        self.estudiante = User.objects.create_user(
+            username='est@test.com', email='est@test.com',
+            password='est123', documento='J04', rol=self.rol_estudiante,
+            estado='aprobado',
+        )
+        self.otro_admin = User.objects.create_user(
+            username='admin2@test.com', email='admin2@test.com',
+            password='admin2', documento='J05', rol=self.rol_admin,
+            estado='aprobado',
+        )
+
+    def test_admin_no_puede_asignar_rol_administrador(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.estudiante.id}/rol/',
+            {'rol': 'administrador'}, format='json'
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_admin_no_puede_rebajar_cuenta_administrador(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.otro_admin.id}/rol/',
+            {'rol': 'secretario'}, format='json'
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_admin_cambia_rol_de_coordinador(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.coordinador.id}/rol/',
+            {'rol': 'secretario'}, format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.coordinador.refresh_from_db()
+        self.assertEqual(self.coordinador.rol.nombre, 'secretario')
+
+    def test_director_eleva_a_administrador(self):
+        self.client.force_authenticate(user=self.director)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.coordinador.id}/rol/',
+            {'rol': 'administrador'}, format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.coordinador.refresh_from_db()
+        self.assertEqual(self.coordinador.rol.nombre, 'administrador')
+
+    def test_director_rebaja_cuenta_administrador(self):
+        self.client.force_authenticate(user=self.director)
+        response = self.client.patch(
+            f'/api/usuarios/usuarios/{self.otro_admin.id}/rol/',
+            {'rol': 'coordinador'}, format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.otro_admin.refresh_from_db()
+        self.assertEqual(self.otro_admin.rol.nombre, 'coordinador')
