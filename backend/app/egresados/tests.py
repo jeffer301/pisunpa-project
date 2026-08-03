@@ -77,6 +77,12 @@ class EventosTest(TestCase):
                 usuario=self.secretario, tipo='evento_creado'
             ).exists()
         )
+        self.assertTrue(
+            Notificacion.objects.filter(
+                usuario=self.egresado, tipo='evento_creado'
+            ).exists(),
+            'El egresado no recibió la notificación del evento creado',
+        )
 
     def test_egresado_se_inscribe_con_snapshot(self):
         evento = Evento.objects.create(nombre='Futuro', fecha=self.manana)

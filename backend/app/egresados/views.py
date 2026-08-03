@@ -248,7 +248,7 @@ class EventoViewSet(viewsets.ModelViewSet):
             titulo='Evento creado',
             mensaje=f'Se creó el evento "{self.request.data.get("nombre")}".',
             tipo='evento_creado',
-            roles_broadcast=['secretario', 'coordinador'],
+            roles_broadcast=['secretario', 'coordinador', 'egresado'],
         )
 
     @action(detail=True, methods=['post'], url_path='inscribirse')
