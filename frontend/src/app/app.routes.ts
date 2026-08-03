@@ -55,6 +55,6 @@ export const routes: Routes = [
         (m) => m.AdminEventosComponent
       ),
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['coordinador', 'administrador', 'director'] as Rol[] },
+    data: { roles: ['coordinador', 'administrador', 'director', 'secretario'] as Rol[] },
   },
 ];

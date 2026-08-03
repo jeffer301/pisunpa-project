@@ -6,7 +6,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { EventosService } from '../../services/eventos.service';
 import { Evento } from '../../models/evento.model';
 
-type TabId = 'perfil' | 'experiencia' | 'estudios' | 'documentos';
+type TabId = 'perfil' | 'experiencia' | 'estudios' | 'documentos' | 'eventos';
 type Privacidad = 'publico' | 'privado' | 'universidad';
 type ModalidadTrabajo = 'Presencial' | 'Remoto' | 'Híbrido' | 'Freelance';
 type TipoContrato = 'Término indefinido' | 'Término fijo' | 'Prestación de servicios' | 'Obra o labor' | 'Independiente';
@@ -22,6 +22,7 @@ interface Tab {
   id: TabId;
   label: string;
   icon: string;
+  soloEgresado?: boolean;
 }
 
 type TipoPosgrado = 'Especialización' | 'Maestría' | 'Doctorado';
@@ -78,13 +79,15 @@ interface CompetenciaCategoria {
         </div>
         <nav class="sidebar-nav">
           @for (tab of tabs; track tab.id) {
-            <button
-              class="nav-item"
-              [class.active]="activeTab() === tab.id"
-              (click)="activeTab.set(tab.id)">
-              <span class="nav-icon">{{ tab.icon }}</span>
-              {{ tab.label }}
-            </button>
+            @if (!tab.soloEgresado || soloEgresado()) {
+              <button
+                class="nav-item"
+                [class.active]="activeTab() === tab.id"
+                (click)="activeTab.set(tab.id)">
+                <span class="nav-icon">{{ tab.icon }}</span>
+                {{ tab.label }}
+              </button>
+            }
           }
         </nav>
       </aside>
@@ -663,42 +666,45 @@ interface CompetenciaCategoria {
               </div>
             </div>
           }
-        }
-
-        @if (soloEgresado()) {
-          <section class="eventos">
-            <h2>Eventos de egresados</h2>
-            @if (cargandoEventos()) {
-              <p class="cargando">Cargando eventos…</p>
-            } @else if (eventos().length === 0) {
-              <p class="vacio">No hay eventos disponibles.</p>
-            } @else {
-              <ul class="eventos-lista">
-                @for (evento of eventos(); track evento.id) {
-                  <li class="evento">
-                    <div class="evento-info">
-                      <strong>{{ evento.nombre }}</strong>
-                      <span>{{ evento.fecha | date: 'longDate' }}
-                        @if (evento.hora) { · {{ evento.hora }} }</span>
-                      @if (evento.lugar) { <span>📍 {{ evento.lugar }}</span> }
-                      @if (evento.descripcion) { <p>{{ evento.descripcion }}</p> }
-                      @if (evento.capacidad) {
-                        <small>{{ evento.cupos_disponibles }} cupos disponibles</small>
+          @case ('eventos') {
+            <div class="eventos-tab">
+              @if (soloEgresado()) {
+                <section class="eventos">
+                  <h2>Eventos de egresados</h2>
+                  @if (cargandoEventos()) {
+                    <p class="cargando">Cargando eventos…</p>
+                  } @else if (eventos().length === 0) {
+                    <p class="vacio">No hay eventos disponibles.</p>
+                  } @else {
+                    <ul class="eventos-lista">
+                      @for (evento of eventos(); track evento.id) {
+                        <li class="evento">
+                          <div class="evento-info">
+                            <strong>{{ evento.nombre }}</strong>
+                            <span>{{ evento.fecha | date: 'longDate' }}
+                              @if (evento.hora) { · {{ evento.hora }} }</span>
+                            @if (evento.lugar) { <span>📍 {{ evento.lugar }}</span> }
+                            @if (evento.descripcion) { <p>{{ evento.descripcion }}</p> }
+                            @if (evento.capacidad) {
+                              <small>{{ evento.cupos_disponibles }} cupos disponibles</small>
+                            }
+                          </div>
+                          <button
+                            class="btn"
+                            [class.btn-secundario]="evento.inscrito"
+                            (click)="evento.inscrito ? cancelarInscripcion(evento) : inscribirse(evento)"
+                            [disabled]="!evento.inscrito && (evento.cupos_disponibles !== null && evento.cupos_disponibles <= 0)"
+                          >
+                            {{ evento.inscrito ? 'Cancelar inscripción' : 'Inscribirme' }}
+                          </button>
+                        </li>
                       }
-                    </div>
-                    <button
-                      class="btn"
-                      [class.btn-secundario]="evento.inscrito"
-                      (click)="evento.inscrito ? cancelarInscripcion(evento) : inscribirse(evento)"
-                      [disabled]="!evento.inscrito && (evento.cupos_disponibles !== null && evento.cupos_disponibles <= 0)"
-                    >
-                      {{ evento.inscrito ? 'Cancelar inscripción' : 'Inscribirme' }}
-                    </button>
-                  </li>
-                }
-              </ul>
-            }
-          </section>
+                    </ul>
+                  }
+                </section>
+              }
+            </div>
+          }
         }
       </main>
     </div>
@@ -1909,6 +1915,7 @@ export class PortalEgresadoComponent implements OnInit, OnDestroy {
     { id: 'experiencia', label: 'Experiencia Laboral', icon: '💼' },
     { id: 'estudios', label: 'Estudios Posteriores', icon: '🎓' },
     { id: 'documentos', label: 'Mis Documentos', icon: '📄' },
+    { id: 'eventos', label: 'Eventos de Egresados', icon: '🎉', soloEgresado: true },
   ];
 
   readonly privacidadOptions = [

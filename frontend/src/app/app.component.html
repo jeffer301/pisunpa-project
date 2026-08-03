@@ -14,8 +14,13 @@
       @if (esAdmin()) {
         <a routerLink="/dashboard/analitica-egresados" routerLinkActive="active">Dashboard Analítico</a>
         <a routerLink="/admin/gestion-egresados" routerLinkActive="active">Gestión de Egresados</a>
+        <a routerLink="/admin/eventos" routerLinkActive="active">Gestión de Eventos</a>
         <a routerLink="/admin/profesores" routerLinkActive="active">Gestión de Profesores</a>
         <a routerLink="/admin/bandeja-supletorios" routerLinkActive="active">Bandeja de Supletorios</a>
+      }
+      @if (esCoordinador()) {
+        <a routerLink="/egresados" routerLinkActive="active">Egresados</a>
+        <a routerLink="/admin/eventos" routerLinkActive="active">Gestión de Eventos</a>
       }
       @if (authService.tienePermiso('escribir') && !esAdmin()) {
         <a routerLink="/registrar" routerLinkActive="active">Registrar</a>
