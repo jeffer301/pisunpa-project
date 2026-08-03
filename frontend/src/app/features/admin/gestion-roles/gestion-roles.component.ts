@@ -82,6 +82,12 @@ export class GestionRolesComponent implements OnInit {
     return todos.filter(r => r !== 'director' && r !== 'administrador');
   });
 
+  readonly rolesCreables = computed<Rol[]>(() => {
+    const base: Rol[] = ['administrador', 'coordinador', 'secretario', 'profesor'];
+    if (this.esSuperadmin) return base;
+    return base.filter(r => r !== 'administrador');
+  });
+
   readonly usuariosFiltrados = computed(() => {
     const consulta = this.filtroBusqueda().trim().toLocaleLowerCase();
     if (!consulta) return this.usuarios();
