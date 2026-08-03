@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { SupletorioService } from '../../../services/supletorio.service';
@@ -158,7 +159,10 @@ export class BandejaSupletoriosComponent implements OnInit {
 
   private supletorioService = inject(SupletorioService);
   private route = inject(ActivatedRoute);
+  private authService = inject(AuthService);
   readonly feedbackService = inject(FeedbackService);
+
+  readonly esEscritura = computed(() => this.authService.esAdminEscritura());
 
   readonly filtroBusqueda = signal('');
   readonly filtroEstadoSolicitud = signal<'todos' | EstadoSolicitud>('todos');

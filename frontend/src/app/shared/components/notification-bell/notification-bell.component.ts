@@ -139,7 +139,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   private rutaParaNotificacion(notif: import('../../../models/notificacion.model').Notificacion): string {
     const rol = this.authService.rolActual();
     if (!rol) return '/';
-    if (rol === 'administrador' || rol === 'director') {
+    if (rol === 'administrador' || rol === 'director' || rol === 'secretario') {
       return '/admin/bandeja-supletorios';
     }
     if (rol === 'profesor') {

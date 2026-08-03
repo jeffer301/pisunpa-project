@@ -93,12 +93,16 @@
           <td>{{ s.nota ?? '—' }}</td>
           <td>
             <div class="acciones-solicitud">
-              @if (s.estadoSolicitud === 'pendiente') {
-                <button class="btn-aprobar" (click)="solicitarAccion(s, 'aprobar')">Aprobar</button>
-                <button class="btn-rechazar" (click)="solicitarAccion(s, 'rechazar')">Rechazar</button>
-              }
-              @if (s.estadoSolicitud === 'aprobada' && s.estadoPago !== 'pagado' && s.comprobanteNombre) {
-                <button class="btn-confirmar-pago" (click)="solicitarConfirmarPago(s)">Confirmar Pago</button>
+              @if (esEscritura()) {
+                @if (s.estadoSolicitud === 'pendiente') {
+                  <button class="btn-aprobar" (click)="solicitarAccion(s, 'aprobar')">Aprobar</button>
+                  <button class="btn-rechazar" (click)="solicitarAccion(s, 'rechazar')">Rechazar</button>
+                }
+                @if (s.estadoSolicitud === 'aprobada' && s.estadoPago !== 'pagado' && s.comprobanteNombre) {
+                  <button class="btn-confirmar-pago" (click)="solicitarConfirmarPago(s)">Confirmar Pago</button>
+                }
+              } @else {
+                <span class="sin-archivo">—</span>
               }
             </div>
           </td>
