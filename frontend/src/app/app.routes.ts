@@ -57,4 +57,13 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
     data: { roles: ['coordinador', 'administrador', 'director', 'secretario'] as Rol[] },
   },
+  {
+    path: 'admin/roles',
+    loadComponent: () =>
+      import('./features/admin/gestion-roles/gestion-roles.component').then(
+        (m) => m.GestionRolesComponent
+      ),
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['administrador', 'director'] as Rol[] },
+  },
 ];

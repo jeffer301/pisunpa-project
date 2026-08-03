@@ -5,8 +5,6 @@
     <div class="nav-links">
       @if (esEstudiante()) {
         <a routerLink="/egresado/perfil" routerLinkActive="active">Mi Portal</a>
-        <a routerLink="/estudiante/solicitud-supletorio" routerLinkActive="active">Solicitar Supletorio</a>
-        <a routerLink="/estudiante/pago-supletorio" routerLinkActive="active">Mis Supletorios</a>
       }
       @if (esProfesor()) {
         <a routerLink="/profesor/supletorios-pendientes" routerLinkActive="active">Supletorios Pendientes</a>
@@ -15,6 +13,9 @@
         <a routerLink="/dashboard/analitica-egresados" routerLinkActive="active">Dashboard Analítico</a>
         <a routerLink="/admin/gestion-egresados" routerLinkActive="active">Gestión de Egresados</a>
         <a routerLink="/admin/eventos" routerLinkActive="active">Gestión de Eventos</a>
+        @if (authService.esAdminEscritura()) {
+          <a routerLink="/admin/roles" routerLinkActive="active">Gestión de Roles</a>
+        }
         <a routerLink="/admin/profesores" routerLinkActive="active">Gestión de Profesores</a>
         <a routerLink="/admin/bandeja-supletorios" routerLinkActive="active">Bandeja de Supletorios</a>
       }
