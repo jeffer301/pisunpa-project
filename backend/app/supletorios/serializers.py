@@ -1,12 +1,14 @@
 from django.utils import timezone
 from rest_framework import serializers
+from django.core.exceptions import ValidationError
+from app.egresados.models import Programa, Asignatura
 from .models import Supletorio, AnexoSupletorio, EstadoSupletorio
 
 
 class SupletorioCreateSerializer(serializers.ModelSerializer):
     fechaParcial = serializers.DateField(source='fecha_parcial')
     grupoAsignatura = serializers.CharField(source='grupo')
-    idPrograma = serializers.IntegerField(source='id_programa')
+    idPrograma = serializers.UUIDField(source='id_programa')
     anexos = serializers.ListField(
         child=serializers.FileField(), write_only=True, required=False
     )
@@ -19,6 +21,20 @@ class SupletorioCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         anexos_data = validated_data.pop('anexos', [])
         usuario = self.context['request'].user
+
+        id_programa = validated_data.get('id_programa')
+        if id_programa:
+            programa = Programa.objects.filter(pk=id_programa).first()
+            validated_data['programa_nombre'] = programa.nombre if programa else ''
+
+        asignatura_valor = validated_data.get('asignatura')
+        if asignatura_valor:
+            try:
+                asignatura = Asignatura.objects.filter(pk=asignatura_valor).first()
+            except (ValueError, TypeError, ValidationError):
+                asignatura = None
+            if asignatura:
+                validated_data['asignatura'] = asignatura.nombre
 
         fecha_parcial = validated_data['fecha_parcial']
         dias = (timezone.localdate() - fecha_parcial).days
@@ -86,3 +102,19 @@ class SupletorioPendienteSerializer(serializers.ModelSerializer):
 
     def get_estado(self, obj):
         return 'realizado' if obj.estado == EstadoSupletorio.REALIZADO else 'listo'
+
+
+class MiSolicitudSupletorioSerializer(serializers.ModelSerializer):
+    """Contrato exacto que espera pago-supletorio.component.ts (estudiante)."""
+    programa = serializers.CharField(source='programa_nombre')
+    fechaParcial = serializers.DateField(source='fecha_parcial')
+    fechaSolicitud = serializers.DateField(source='fecha_solicitud')
+    comprobanteNombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Supletorio
+        fields = ['id', 'asignatura', 'profesor', 'grupo', 'programa', 'fechaParcial',
+                  'fechaSolicitud', 'estado', 'comprobanteNombre']
+
+    def get_comprobanteNombre(self, obj):
+        return obj.comprobante_pago.name.split('/')[-1] if obj.comprobante_pago else None

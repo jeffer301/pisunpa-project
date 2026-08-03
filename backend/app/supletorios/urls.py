@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     SolicitudSupletorioCreateView,
+    MisSolicitudesView,
     SubirComprobanteView,
     BandejaSupletoriosListView,
     AprobarSupletorioView,
@@ -12,6 +13,7 @@ from .views import (
 
 urlpatterns = [
     path('solicitudes/', SolicitudSupletorioCreateView.as_view()),
+    path('mis-solicitudes/', MisSolicitudesView.as_view()),
     path('pago/comprobante/', SubirComprobanteView.as_view()),
     path('bandeja/', BandejaSupletoriosListView.as_view()),
     path('bandeja/<int:pk>/aprobar/', AprobarSupletorioView.as_view()),

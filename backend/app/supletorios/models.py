@@ -27,7 +27,7 @@ class Supletorio(models.Model):
     asignatura = models.CharField(max_length=150)
     grupo = models.CharField(max_length=50)
 
-    id_programa = models.IntegerField()
+    id_programa = models.UUIDField(null=True, blank=True)
     programa_nombre = models.CharField(max_length=150, blank=True)
 
     descripcion = models.TextField()

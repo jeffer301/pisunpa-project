@@ -9,6 +9,7 @@ from app.usuarios.permissions import (
     IsAuthenticated,
     EsAdminLectura,
     EsAdminEscritura,
+    ADMIN_LECTURA,
 )
 from app.usuarios.notification_service import NotificacionService
 
@@ -17,6 +18,7 @@ from .serializers import (
     SupletorioCreateSerializer,
     SupletorioBandejaSerializer,
     SupletorioPendienteSerializer,
+    MiSolicitudSupletorioSerializer,
 )
 from .utils import enviar_correo
 
@@ -40,9 +42,21 @@ class SolicitudSupletorioCreateView(generics.CreateAPIView):
             ),
             tipo='solicitud_creada',
             supletorio=supletorio,
+            roles_broadcast=list(ADMIN_LECTURA),
         )
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+# --- Estudiante: mis solicitudes (bandeja "Mis Supletorios") ---
+class MisSolicitudesView(generics.ListAPIView):
+    serializer_class = MiSolicitudSupletorioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Supletorio.objects.filter(
+            estudiante_email=self.request.user.email
+        ).order_by('-creado_en')
 
 
 # --- Estudiante: subir comprobante de pago ---
@@ -73,6 +87,7 @@ class SubirComprobanteView(APIView):
             mensaje=f'Comprobante de pago para {supletorio.asignatura} recibido.',
             tipo='pago_confirmado',
             supletorio=supletorio,
+            roles_broadcast=list(ADMIN_LECTURA),
         )
 
         return Response({'detail': 'Comprobante recibido correctamente.'}, status=200)
@@ -106,6 +121,7 @@ class AprobarSupletorioView(APIView):
             ),
             tipo='solicitud_aprobada',
             supletorio=supletorio,
+            roles_broadcast=list(ADMIN_LECTURA),
         )
         return Response(SupletorioBandejaSerializer(supletorio).data)
 
@@ -126,6 +142,7 @@ class RechazarSupletorioView(APIView):
             ),
             tipo='solicitud_rechazada',
             supletorio=supletorio,
+            roles_broadcast=list(ADMIN_LECTURA),
         )
         return Response(SupletorioBandejaSerializer(supletorio).data)
 
@@ -143,6 +160,7 @@ class ConfirmarPagoView(APIView):
             mensaje=f'Pago de {supletorio.estudiante_nombre} ({supletorio.asignatura}) confirmado.',
             tipo='pago_confirmado',
             supletorio=supletorio,
+            roles_broadcast=list(ADMIN_LECTURA),
         )
         # El profesor aún no tiene email real (campo `profesor` es texto libre).
         # Cuando exista FK a Usuario, reemplazar destinatario por supletorio.profesor.email
@@ -175,5 +193,6 @@ class MarcarRealizadoView(APIView):
             mensaje=f'El supletorio de {supletorio.estudiante_nombre} ({supletorio.asignatura}) fue calificado.',
             tipo='examen_calificado',
             supletorio=supletorio,
+            roles_broadcast=list(ADMIN_LECTURA),
         )
         return Response(SupletorioPendienteSerializer(supletorio).data)
