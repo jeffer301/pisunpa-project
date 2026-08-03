@@ -312,6 +312,7 @@ class CambioRolSerializer(serializers.Serializer):
 
 
 class CrearAdminSerializer(serializers.Serializer):
+    ROLES_CREABLES = ('administrador', 'coordinador', 'secretario', 'profesor')
     email = serializers.EmailField()
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150, allow_blank=True, default='')
@@ -337,8 +338,10 @@ class CrearAdminSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Solo el director puede crear cuentas de administrador.'
             )
-        if not Rol.objects.filter(nombre=value).exists():
-            raise serializers.ValidationError('El rol indicado no existe.')
+        if value not in self.ROLES_CREABLES:
+            raise serializers.ValidationError(
+                'El rol debe ser administrador, coordinador, secretario o profesor.'
+            )
         return value
 
     def create(self, validated_data):
