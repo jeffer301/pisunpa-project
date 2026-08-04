@@ -159,7 +159,7 @@ class EventoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evento
         fields = ['id', 'nombre', 'descripcion', 'fecha', 'hora', 'lugar',
-                  'capacidad', 'inscrito', 'cupos_disponibles', 'creado_en']
+                  'capacidad', 'imagen', 'inscrito', 'cupos_disponibles', 'creado_en']
 
     def get_inscrito(self, obj):
         user = self.context['request'].user
@@ -177,7 +177,8 @@ class EventoSerializer(serializers.ModelSerializer):
 class EventoWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evento
-        fields = ['id', 'nombre', 'descripcion', 'fecha', 'hora', 'lugar', 'capacidad']
+        fields = ['id', 'nombre', 'descripcion', 'fecha', 'hora', 'lugar',
+                  'capacidad', 'imagen']
         read_only_fields = ['id']
 
 

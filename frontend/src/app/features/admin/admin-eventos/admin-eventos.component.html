@@ -26,6 +26,13 @@
       <label>Capacidad
         <input formControlName="capacidad" type="number" min="1" />
       </label>
+      <label>Imagen (opcional)
+        <input type="file" accept="image/*" (change)="onImagenSeleccionada($event)" />
+        @if (imagenActual()) {
+          <img class="evento-form__imagen-preview" [src]="imagenActual()"
+            alt="Vista previa de la imagen del evento" />
+        }
+      </label>
       <div class="evento-form__acciones">
         <button type="button" class="btn btn-secundario"
           (click)="mostrandoFormulario.set(false)">Cancelar</button>
@@ -84,6 +91,8 @@
               @if (esCoordinador) {
                 <button class="btn btn-secundario" (click)="editarEvento(evento)">Editar</button>
                 <button class="btn btn-peligro" (click)="eliminarEvento(evento)">Eliminar</button>
+              }
+              @if (puedeVerInscritos) {
                 <button class="btn btn-secundario" (click)="verInscritos(evento)">Inscritos</button>
               }
             </td>

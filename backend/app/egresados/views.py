@@ -19,7 +19,13 @@ from .serializers import (
     EventoSerializer, EventoWriteSerializer, InscripcionEventoSerializer,
 )
 from .services import EgresadoService
-from app.usuarios.permissions import EsCoordinadorEgresados
+from app.usuarios.permissions import (
+    EsCoordinadorEgresados,
+    PuedeVerInscritosEvento,
+    ADMIN_LECTURA,
+    COORDINADOR_EGRESADOS,
+    ROL_EGRESADO,
+)
 from app.usuarios.notification_service import NotificacionService
 
 User = get_user_model()
@@ -227,8 +233,10 @@ class EventoViewSet(viewsets.ModelViewSet):
         return EventoSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'inscritos']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [EsCoordinadorEgresados()]
+        if self.action == 'inscritos':
+            return [PuedeVerInscritosEvento()]
         return super().get_permissions()
 
     def get_queryset(self):
@@ -243,12 +251,13 @@ class EventoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(creado_por=self.request.user)
+        roles_evento = list(set(ADMIN_LECTURA) | set(COORDINADOR_EGRESADOS)) + [ROL_EGRESADO]
         NotificacionService.crear(
             usuario=self.request.user,
             titulo='Evento creado',
             mensaje=f'Se creó el evento "{self.request.data.get("nombre")}".',
             tipo='evento_creado',
-            roles_broadcast=['secretario', 'coordinador', 'egresado'],
+            roles_broadcast=roles_evento,
         )
 
     @action(detail=True, methods=['post'], url_path='inscribirse')

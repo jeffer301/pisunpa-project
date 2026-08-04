@@ -680,6 +680,11 @@ interface CompetenciaCategoria {
                     <ul class="eventos-lista">
                       @for (evento of eventos(); track evento.id) {
                         <li class="evento">
+                          @if (evento.imagen) {
+                            <div class="evento-imagen">
+                              <img [src]="urlImagen(evento)" [alt]="evento.nombre" />
+                            </div>
+                          }
                           <div class="evento-info">
                             <strong>{{ evento.nombre }}</strong>
                             <span>{{ evento.fecha | date: 'longDate' }}
@@ -1714,6 +1719,22 @@ interface CompetenciaCategoria {
       flex-wrap: wrap;
     }
 
+    .evento-imagen {
+      flex-shrink: 0;
+      width: 96px;
+      height: 96px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f1f5f9;
+    }
+
+    .evento-imagen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
     .evento-info {
       flex: 1;
       min-width: 220px;
@@ -2028,6 +2049,10 @@ export class PortalEgresadoComponent implements OnInit, OnDestroy {
         this.feedback.show(err.error?.detail ?? 'No se pudieron cargar los eventos.', 'error');
       },
     });
+  }
+
+  urlImagen(evento: Evento): string | null {
+    return this.eventosService.urlImagen(evento.imagen);
   }
 
   inscribirse(evento: Evento): void {

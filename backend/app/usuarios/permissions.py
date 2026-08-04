@@ -72,6 +72,17 @@ class EsCoordinadorEgresados(BasePermission):
         )
 
 
+class PuedeVerInscritosEvento(BasePermission):
+    message = 'No tienes permiso para consultar los inscritos de un evento.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (es_coordinador(request.user) or es_admin_lectura(request.user))
+        )
+
+
 def es_superadmin(user):
     return rol_de(user) == ROL_DIRECTOR
 

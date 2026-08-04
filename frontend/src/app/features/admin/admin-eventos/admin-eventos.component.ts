@@ -24,7 +24,10 @@ export class AdminEventosComponent implements OnInit {
   inscritos = signal<InscripcionEvento[]>([]);
   eventoSeleccionado = signal<Evento | null>(null);
   mostrandoFormulario = signal(false);
+  imagenSeleccionada = signal<File | null>(null);
+  imagenActual = signal<string | null>(null);
   esCoordinador = this.auth.tienePermiso('escribir') || this.auth.esCoordinador();
+  puedeVerInscritos = this.esCoordinador || this.auth.esSoloLectura();
 
   form = this.fb.group({
     nombre: ['', Validators.required],
@@ -56,6 +59,8 @@ export class AdminEventosComponent implements OnInit {
   nuevoEvento(): void {
     this.eventoSeleccionado.set(null);
     this.form.reset();
+    this.imagenSeleccionada.set(null);
+    this.imagenActual.set(null);
     this.mostrandoFormulario.set(true);
   }
 
@@ -69,7 +74,16 @@ export class AdminEventosComponent implements OnInit {
       lugar: evento.lugar,
       capacidad: evento.capacidad,
     });
+    this.imagenSeleccionada.set(null);
+    this.imagenActual.set(this.eventosService.urlImagen(evento.imagen));
     this.mostrandoFormulario.set(true);
+  }
+
+  onImagenSeleccionada(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    this.imagenSeleccionada.set(archivo);
+    this.imagenActual.set(archivo ? URL.createObjectURL(archivo) : this.imagenActual());
   }
 
   guardar(): void {
@@ -87,8 +101,10 @@ export class AdminEventosComponent implements OnInit {
       capacidad: v.capacidad ?? null,
     };
     const actualizar = this.eventoSeleccionado()
-      ? this.eventosService.actualizar(this.eventoSeleccionado()!.id, payload)
-      : this.eventosService.crear(payload);
+      ? this.eventosService.actualizar(
+          this.eventoSeleccionado()!.id, payload, this.imagenSeleccionada()
+        )
+      : this.eventosService.crear(payload, this.imagenSeleccionada());
     actualizar.subscribe({
       next: () => {
         this.feedback.show(

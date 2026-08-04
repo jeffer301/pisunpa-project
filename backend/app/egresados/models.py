@@ -239,6 +239,7 @@ class Evento(models.Model):
     hora = models.TimeField(null=True, blank=True)
     lugar = models.CharField(max_length=200, blank=True)
     capacidad = models.PositiveIntegerField(null=True, blank=True)
+    imagen = models.ImageField(upload_to='eventos/', null=True, blank=True)
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

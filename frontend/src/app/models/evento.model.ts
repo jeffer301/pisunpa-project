@@ -6,6 +6,7 @@ export interface Evento {
   hora: string | null;
   lugar: string;
   capacidad: number | null;
+  imagen: string | null;
   inscrito: boolean;
   cupos_disponibles: number | null;
   creado_en: string;
