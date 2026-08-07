@@ -1,5 +1,20 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
+interface MateriaCurricular {
+  codigo: string;
+  nombre: string;
+  creditos: number;
+  area: 'Ciencias Básicas' | 'Programación & Software' | 'Bases de Datos' | 'Redes & Ciberseguridad' | 'Gestión & Proyectos' | 'Investigación & Grado' | 'Humanística & Ética';
+  requisito?: string;
+}
+
+interface SemestreCurricular {
+  numero: number;
+  nombre: string;
+  creditosTotales: number;
+  materias: MateriaCurricular[];
+}
 
 @Component({
   selector: 'app-programa',
@@ -66,7 +81,7 @@ import { RouterLink } from '@angular/router';
     /* ===== HERO PHOTO BACKGROUND ===== */
     .page-hero {
       position: relative;
-      min-height: 60vh;
+      min-height: 50vh;
       display: flex;
       align-items: center;
       justify-content: flex-start;
@@ -87,25 +102,25 @@ import { RouterLink } from '@angular/router';
     .hero-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(90deg, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.65) 60%, rgba(15, 23, 42, 0.3) 100%);
+      background: linear-gradient(90deg, rgba(15, 23, 42, 0.82) 0%, rgba(15, 23, 42, 0.45) 55%, rgba(15, 23, 42, 0.15) 100%);
     }
 
     .page-hero-container {
       position: relative;
       z-index: 10;
-      max-width: 650px;
+      max-width: 720px;
       margin: 0;
       text-align: left;
     }
 
     .page-hero h1 {
-      font-size: 3.2rem;
+      font-size: 3.4rem;
       font-weight: 900;
       color: #ffffff;
       letter-spacing: -0.035em;
       line-height: 1.1;
-      margin-bottom: 1.25rem;
-      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      margin-bottom: 1rem;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
 
     .page-hero h1 span {
@@ -113,23 +128,48 @@ import { RouterLink } from '@angular/router';
     }
 
     .page-hero p {
-      font-size: 1.1rem;
-      color: #e2e8f0;
-      line-height: 1.65;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      font-size: 1.15rem;
+      color: #f1f5f9;
+      line-height: 1.6;
+      font-weight: 500;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
     }
 
-    /* ===== PAGE BODY & EDITORIAL SECTIONS ===== */
+    /* ===== PAGE BODY ===== */
     .page-body {
       padding: 4rem 2rem 6rem;
       max-width: 1240px;
       margin: 0 auto;
     }
 
-    .section-divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
-      margin: 4.5rem 0;
+    .section-header-block {
+      margin-bottom: 2.25rem;
+    }
+
+    .section-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #15803d;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-main-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    .section-subtext {
+      font-size: 1rem;
+      color: #64748b;
+      line-height: 1.6;
     }
 
     /* FICHA TÉCNICA BARRA RESUMEN */
@@ -241,56 +281,180 @@ import { RouterLink } from '@angular/router';
 
     .mv-icon-circle svg { width: 26px; height: 26px; }
 
-    .mv-card h3 {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: #0f172a;
-    }
-
-    .mv-card p {
-      font-size: 1.02rem;
-      color: #334155;
-      line-height: 1.75;
-    }
+    .mv-card h3 { font-size: 1.6rem; font-weight: 800; color: #0f172a; }
+    .mv-card p { font-size: 1.02rem; color: #334155; line-height: 1.75; }
 
     /* PERFILES PROFESIONAL Y OCUPACIONAL */
-    .perfiles-section {
+    .perfiles-section { margin-bottom: 4.5rem; }
+    .perfiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 1.75rem; }
+    .perfil-card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 20px; padding: 2.5rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; gap: 1rem; }
+    .perfil-card h4 { font-size: 1.4rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.65rem; }
+    .perfil-card p { font-size: 1.02rem; color: #334155; line-height: 1.75; margin: 0; }
+
+    /* ===== MALLA CURRICULAR (DISEÑO INTERACTIVO PREMIUM) ===== */
+    .malla-container {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 3.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
       margin-bottom: 4.5rem;
     }
 
-    .perfiles-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
-      margin-top: 1.75rem;
-    }
-
-    .perfil-card {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 20px;
-      padding: 2.5rem;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+    .semester-tabs {
       display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-bottom: 3rem;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 1.5rem;
     }
 
-    .perfil-card h4 {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: #0f172a;
+    .tab-btn {
+      padding: 0.65rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      background: #f8fafc;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: #f0fdf4;
+      color: #15803d;
+      border-color: #bbf7d0;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+      color: #ffffff;
+      border-color: #15803d;
+      box-shadow: 0 4px 14px rgba(21, 128, 61, 0.35);
+    }
+
+    .semester-block {
+      margin-bottom: 3rem;
+    }
+
+    .semester-header {
       display: flex;
       align-items: center;
-      gap: 0.65rem;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #f0fdf4;
+      padding-bottom: 0.75rem;
     }
 
-    .perfil-card p {
-      font-size: 1.02rem;
-      color: #334155;
-      line-height: 1.75;
-      margin: 0;
+    .semester-header h4 {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.01em;
     }
+
+    .semester-credits-badge {
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+    }
+
+    /* GRID DE MATERIAS INDIVIDUALES */
+    .subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .subject-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .subject-card:hover {
+      border-color: #15803d;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(21, 128, 61, 0.1);
+    }
+
+    .subject-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .subject-code {
+      font-family: monospace;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #0f172a;
+      background: #f1f5f9;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+    }
+
+    .subject-credits-pill {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #15803d;
+      background: #f0fdf4;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      border: 1px solid #bbf7d0;
+    }
+
+    .subject-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+    }
+
+    .subject-card-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .area-chip {
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      align-self: flex-start;
+    }
+
+    .area-ciencias-basicas { background: #eff6ff; color: #1d4ed8; }
+    .area-programacion-software { background: #f0fdf4; color: #15803d; }
+    .area-bases-datos { background: #fefce8; color: #a16207; }
+    .area-redes-ciberseguridad { background: #faf5ff; color: #7e22ce; }
+    .area-gestion-proyectos { background: #fff7ed; color: #c2410c; }
+    .area-investigacion-grado { background: #ecfeff; color: #0e7490; }
+    .area-humanistica-etica { background: #fdf2f8; color: #be185d; }
+
+    .prereq-info {
+      font-size: 0.78rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .prereq-info svg { width: 14px; height: 14px; color: #94a3b8; }
 
     /* CONTACTO INSTITUCIONAL BLOCK */
     .contacto-institucional-box {
@@ -304,54 +468,16 @@ import { RouterLink } from '@angular/router';
       box-shadow: 0 12px 36px rgba(15, 23, 42, 0.15);
     }
 
-    .contacto-info h3 {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: #ffffff;
-      margin-bottom: 0.5rem;
-    }
+    .contacto-info h3 { font-size: 1.6rem; font-weight: 800; color: #ffffff; margin-bottom: 0.5rem; }
+    .contacto-info p { font-size: 1rem; color: #94a3b8; margin: 0; }
 
-    .contacto-info p {
-      font-size: 1rem;
-      color: #94a3b8;
-      margin: 0;
-    }
-
-    .contacto-details {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      align-items: flex-end;
-    }
-
-    .contacto-item {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 0.95rem;
-      color: #4ade80;
-      font-weight: 700;
-    }
-
+    .contacto-details { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-end; }
+    .contacto-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: #4ade80; font-weight: 700; }
     .contacto-item svg { width: 20px; height: 20px; }
 
     /* FOOTER */
-    .landing-footer {
-      background: linear-gradient(135deg, #15803d 0%, #14532d 100%);
-      color: #ffffff;
-      padding: 4.5rem 2rem 2.5rem;
-      border-top: 1px solid #166534;
-    }
-
-    .footer-container {
-      max-width: 1240px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-      gap: 3.5rem;
-      margin-bottom: 3.5rem;
-    }
-
+    .landing-footer { background: linear-gradient(135deg, #15803d 0%, #14532d 100%); color: #ffffff; padding: 4.5rem 2rem 2.5rem; border-top: 1px solid #166534; }
+    .footer-container { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3.5rem; margin-bottom: 3.5rem; }
     .footer-brand h4 { color: #ffffff; font-size: 1.3rem; font-weight: 900; margin-bottom: 0.85rem; }
     .footer-brand p { color: rgba(255, 255, 255, 0.85); font-size: 0.9rem; line-height: 1.65; max-width: 350px; }
     .footer-col h5 { color: #ffffff; font-size: 0.9rem; font-weight: 800; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -359,21 +485,12 @@ import { RouterLink } from '@angular/router';
     .footer-links a { color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; text-decoration: none; }
     .footer-links a:hover { color: #ffffff; text-decoration: underline; }
 
-    .footer-bottom {
-      max-width: 1240px;
-      margin: 0 auto;
-      padding-top: 2rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.75);
-    }
+    .footer-bottom { max-width: 1240px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.15); display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: rgba(255, 255, 255, 0.75); }
 
     @media (max-width: 1024px) {
       .ficha-tecnica-bar { grid-template-columns: repeat(3, 1fr); }
       .mision-vision-grid, .perfiles-grid { grid-template-columns: 1fr; }
+      .subjects-grid { grid-template-columns: 1fr 1fr; }
       .contacto-institucional-box { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
       .contacto-details { align-items: flex-start; }
       .footer-container { grid-template-columns: 1fr 1fr; }
@@ -385,6 +502,8 @@ import { RouterLink } from '@angular/router';
       .page-hero { padding: 8rem 1.5rem 4rem; }
       .page-hero h1 { font-size: 2.2rem; }
       .ficha-tecnica-bar { grid-template-columns: 1fr; }
+      .subjects-grid { grid-template-columns: 1fr; }
+      .malla-container { padding: 1.75rem 1.25rem; }
       .footer-container { grid-template-columns: 1fr; }
     }
   `],
@@ -555,6 +674,75 @@ import { RouterLink } from '@angular/router';
         </div>
       </section>
 
+      <!-- ===== NUEVA SECCIÓN: MALLA CURRICULAR Y PLAN DE ESTUDIOS (DISEÑO INTERACTIVO PREMIUM) ===== -->
+      <section class="malla-container">
+        <div class="section-header-block">
+          <span class="section-tag-pill">Estructura Académica</span>
+          <h2 class="section-main-title">Malla Curricular del Programa</h2>
+          <p class="section-subtext">
+            Distribución por semestres de las asignaturas, núcleos del conocimiento y créditos académicos del pensum (160 Créditos Totales / 9 Semestres).
+          </p>
+        </div>
+
+        <!-- PESTAÑAS DE SELECCIÓN DE SEMESTRES -->
+        <div class="semester-tabs">
+          @for (s of semestresMalla; track s.numero) {
+            <button
+              class="tab-btn"
+              [class.active]="semestreSeleccionado() === s.numero"
+              (click)="seleccionarSemestre(s.numero)"
+            >
+              Semestre {{ s.numero }}
+            </button>
+          }
+          <button
+            class="tab-btn"
+            [class.active]="semestreSeleccionado() === 0"
+            (click)="seleccionarSemestre(0)"
+          >
+            Ver Todo el Pensum (9 Semestres)
+          </button>
+        </div>
+
+        <!-- MATRIZ DE TARJETAS DE MATERIAS POR SEMESTRE -->
+        @for (s of semestresFiltrados(); track s.numero) {
+          <div class="semester-block">
+            <div class="semester-header">
+              <h4>{{ s.nombre }}</h4>
+              <span class="semester-credits-badge">{{ s.creditosTotales }} Créditos Académicos</span>
+            </div>
+
+            <div class="subjects-grid">
+              @for (m of s.materias; track m.codigo) {
+                <div class="subject-card">
+                  <div class="subject-card-top">
+                    <span class="subject-code">{{ m.codigo }}</span>
+                    <span class="subject-credits-pill">{{ m.creditos }} Créditos</span>
+                  </div>
+
+                  <h5 class="subject-name">{{ m.nombre }}</h5>
+
+                  <div class="subject-card-footer">
+                    <span class="area-chip" [class]="obtenerClaseArea(m.area)">
+                      {{ m.area }}
+                    </span>
+
+                    @if (m.requisito) {
+                      <span class="prereq-info">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                        Prerrequisito: {{ m.requisito }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </section>
+
       <!-- INFORMACIÓN DE CONTACTO DEL PROGRAMA -->
       <section class="contacto-institucional-box">
         <div class="contacto-info">
@@ -626,4 +814,141 @@ import { RouterLink } from '@angular/router';
     </footer>
   `
 })
-export class ProgramaComponent {}
+export class ProgramaComponent {
+  semestreSeleccionado = signal<number>(1);
+
+  readonly semestresMalla: SemestreCurricular[] = [
+    {
+      numero: 1,
+      nombre: 'Semestre I (Primer Semestre)',
+      creditosTotales: 18,
+      materias: [
+        { codigo: 'IS-101', nombre: 'Introducción a la Ingeniería de Sistemas', creditos: 3, area: 'Programación & Software' },
+        { codigo: 'IS-102', nombre: 'Algoritmos y Programación I', creditos: 4, area: 'Programación & Software' },
+        { codigo: 'CB-101', nombre: 'Cálculo Diferencial', creditos: 4, area: 'Ciencias Básicas' },
+        { codigo: 'CB-102', nombre: 'Álgebra Lineal', creditos: 3, area: 'Ciencias Básicas' },
+        { codigo: 'HU-101', nombre: 'Expresión Oral y Escrita', creditos: 2, area: 'Humanística & Ética' },
+        { codigo: 'HU-102', nombre: 'Cátedra Universidad del Pacífico', creditos: 2, area: 'Humanística & Ética' }
+      ]
+    },
+    {
+      numero: 2,
+      nombre: 'Semestre II (Segundo Semestre)',
+      creditosTotales: 18,
+      materias: [
+        { codigo: 'IS-201', nombre: 'Programación Orientada a Objetos II', creditos: 4, area: 'Programación & Software', requisito: 'IS-102' },
+        { codigo: 'IS-202', nombre: 'Estructuras de Datos Discretas', creditos: 3, area: 'Programación & Software', requisito: 'IS-102' },
+        { codigo: 'CB-201', nombre: 'Cálculo Integral', creditos: 4, area: 'Ciencias Básicas', requisito: 'CB-101' },
+        { codigo: 'CB-202', nombre: 'Física Mecánica y Laboratorio', creditos: 4, area: 'Ciencias Básicas', requisito: 'CB-101' },
+        { codigo: 'HU-201', nombre: 'Competencias Ciudadanas y Ética', creditos: 3, area: 'Humanística & Ética' }
+      ]
+    },
+    {
+      numero: 3,
+      nombre: 'Semestre III (Tercer Semestre)',
+      creditosTotales: 18,
+      materias: [
+        { codigo: 'IS-301', nombre: 'Algoritmos Avanzados y Complejidad', creditos: 4, area: 'Programación & Software', requisito: 'IS-201' },
+        { codigo: 'IS-302', nombre: 'Arquitectura de Computadores', creditos: 3, area: 'Redes & Ciberseguridad' },
+        { codigo: 'CB-301', nombre: 'Cálculo Multivariable', creditos: 4, area: 'Ciencias Básicas', requisito: 'CB-201' },
+        { codigo: 'CB-302', nombre: 'Física Electrónica y Electromagnetismo', creditos: 4, area: 'Ciencias Básicas', requisito: 'CB-202' },
+        { codigo: 'CB-303', nombre: 'Probabilidad y Estadística', creditos: 3, area: 'Ciencias Básicas', requisito: 'CB-201' }
+      ]
+    },
+    {
+      numero: 4,
+      nombre: 'Semestre IV (Cuarto Semestre)',
+      creditosTotales: 18,
+      materias: [
+        { codigo: 'IS-401', nombre: 'Sistemas Operativos', creditos: 4, area: 'Redes & Ciberseguridad', requisito: 'IS-302' },
+        { codigo: 'IS-402', nombre: 'Bases de Datos I (Modelado E-R y SQL)', creditos: 4, area: 'Bases de Datos', requisito: 'IS-201' },
+        { codigo: 'IS-403', nombre: 'Redes de Computadores I (Protocolos & TCP/IP)', creditos: 4, area: 'Redes & Ciberseguridad', requisito: 'IS-302' },
+        { codigo: 'CB-401', nombre: 'Ecuaciones Diferenciales', creditos: 3, area: 'Ciencias Básicas', requisito: 'CB-301' },
+        { codigo: 'CB-402', nombre: 'Métodos Numéricos', creditos: 3, area: 'Ciencias Básicas', requisito: 'CB-301' }
+      ]
+    },
+    {
+      numero: 5,
+      nombre: 'Semestre V (Quinto Semestre)',
+      creditosTotales: 18,
+      materias: [
+        { codigo: 'IS-501', nombre: 'Ingeniería de Software I (Metodologías)', creditos: 4, area: 'Programación & Software', requisito: 'IS-301' },
+        { codigo: 'IS-502', nombre: 'Bases de Datos II (Transacciones y NoSQL)', creditos: 4, area: 'Bases de Datos', requisito: 'IS-402' },
+        { codigo: 'IS-503', nombre: 'Redes de Computadores II & Telefonía IP', creditos: 4, area: 'Redes & Ciberseguridad', requisito: 'IS-403' },
+        { codigo: 'IS-504', nombre: 'Programación Web y Dispositivos Móviles', creditos: 3, area: 'Programación & Software', requisito: 'IS-402' },
+        { codigo: 'GP-501', nombre: 'Investigación de Operaciones', creditos: 3, area: 'Gestión & Proyectos', requisito: 'CB-303' }
+      ]
+    },
+    {
+      numero: 6,
+      nombre: 'Semestre VI (Sexto Semestre)',
+      creditosTotales: 18,
+      materias: [
+        { codigo: 'IS-601', nombre: 'Ingeniería de Software II & Arquitectura', creditos: 4, area: 'Programación & Software', requisito: 'IS-501' },
+        { codigo: 'IS-602', nombre: 'Sistemas Distribuidos y Nube', creditos: 4, area: 'Programación & Software', requisito: 'IS-503' },
+        { codigo: 'IS-603', nombre: 'Seguridad de la Información & Ciberseguridad', creditos: 4, area: 'Redes & Ciberseguridad', requisito: 'IS-503' },
+        { codigo: 'GP-601', nombre: 'Formulación y Evaluación de Proyectos TI', creditos: 3, area: 'Gestión & Proyectos' },
+        { codigo: 'EL-601', nombre: 'Electiva Profesional I (Desarrollo Móvil)', creditos: 3, area: 'Programación & Software' }
+      ]
+    },
+    {
+      numero: 7,
+      nombre: 'Semestre VII (Séptimo Semestre)',
+      creditosTotales: 18,
+      materias: [
+        { codigo: 'IS-701', nombre: 'Inteligencia Artificial & Aprendizaje Automático', creditos: 4, area: 'Programación & Software', requisito: 'IS-602' },
+        { codigo: 'GP-701', nombre: 'Gestión de Proyectos Tecnológicos (Scrum/PMI)', creditos: 3, area: 'Gestión & Proyectos', requisito: 'GP-601' },
+        { codigo: 'IN-701', nombre: 'Metodología de la Investigación', creditos: 3, area: 'Investigación & Grado' },
+        { codigo: 'EL-701', nombre: 'Electiva Profesional II (Analítica de Datos)', creditos: 3, area: 'Bases de Datos' },
+        { codigo: 'EL-702', nombre: 'Electiva Profesional III (DevOps & CI/CD)', creditos: 3, area: 'Programación & Software' },
+        { codigo: 'HU-701', nombre: 'Electiva Humanística I', creditos: 2, area: 'Humanística & Ética' }
+      ]
+    },
+    {
+      numero: 8,
+      nombre: 'Semestre VIII (Octavo Semestre)',
+      creditosTotales: 17,
+      materias: [
+        { codigo: 'IN-801', nombre: 'Anteproyecto de Grado', creditos: 3, area: 'Investigación & Grado', requisito: 'IN-701' },
+        { codigo: 'PR-801', nombre: 'Práctica Profesional Supervisada', creditos: 8, area: 'Investigación & Grado' },
+        { codigo: 'EL-801', nombre: 'Electiva Profesional IV (Ciberseguridad)', creditos: 3, area: 'Redes & Ciberseguridad' },
+        { codigo: 'HU-801', nombre: 'Electiva Humanística II', creditos: 3, area: 'Humanística & Ética' }
+      ]
+    },
+    {
+      numero: 9,
+      nombre: 'Semestre IX (Noveno Semestre)',
+      creditosTotales: 17,
+      materias: [
+        { codigo: 'IN-901', nombre: 'Proyecto de Grado / Trabajo de Grado', creditos: 10, area: 'Investigación & Grado', requisito: 'IN-801' },
+        { codigo: 'HU-901', nombre: 'Ética Profesional y Legislación Informática', creditos: 3, area: 'Humanística & Ética' },
+        { codigo: 'IS-901', nombre: 'Seminario de Tendencias Tecnológicas', creditos: 4, area: 'Programación & Software' }
+      ]
+    }
+  ];
+
+  seleccionarSemestre(num: number): void {
+    this.semestreSeleccionado.set(num);
+  }
+
+  semestresFiltrados(): SemestreCurricular[] {
+    const sel = this.semestreSeleccionado();
+    if (sel === 0) {
+      return this.semestresMalla;
+    }
+    return this.semestresMalla.filter(s => s.numero === sel);
+  }
+
+  obtenerClaseArea(area: MateriaCurricular['area']): string {
+    switch (area) {
+      case 'Ciencias Básicas': return 'area-ciencias-basicas';
+      case 'Programación & Software': return 'area-programacion-software';
+      case 'Bases de Datos': return 'area-bases-datos';
+      case 'Redes & Ciberseguridad': return 'area-redes-ciberseguridad';
+      case 'Gestión & Proyectos': return 'area-gestion-proyectos';
+      case 'Investigación & Grado': return 'area-investigacion-grado';
+      case 'Humanística & Ética': return 'area-humanistica-etica';
+      default: return 'area-programacion-software';
+    }
+  }
+}
