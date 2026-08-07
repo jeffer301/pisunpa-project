@@ -1056,11 +1056,11 @@ export class LandingComponent {
       fotoUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=256&q=80'
     },
     {
-      nombre: 'Andrés Felipe Caicedo',
+      nombre: 'JUAN ROMAN CUERO ORDOÑEZ',
       cargo: 'Desarrollador Backend Lead',
       area: 'Backend',
       descripcion: 'Diseño de la arquitectura de la API REST, controladores y lógica principal.',
-      fotoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&q=80'
+      fotoUrl: 'assets/images/desarrolladores/JUAN.jpeg'
     },
     {
       nombre: 'Santiago Mosquera',
