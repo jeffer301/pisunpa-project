@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, ChangeDetectionStrategy, inject, computed, signal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService } from './core/auth/auth.service';
 import { ROL_LABELS, Rol } from './core/auth/role.model';
 import { FeedbackBannerComponent } from './shared/components/feedback-banner/feedback-banner.component';
@@ -15,6 +16,21 @@ import { NotificationBellComponent } from './shared/components/notification-bell
 export class AppComponent {
   authService = inject(AuthService);
   private router = inject(Router);
+
+  currentUrl = signal(this.router.url);
+
+  constructor() {
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd)
+    ).subscribe((e: any) => {
+      this.currentUrl.set(e.urlAfterRedirects || e.url);
+    });
+  }
+
+  readonly esRutaPublica = computed(() => {
+    const url = this.currentUrl();
+    return url === '/' || url.startsWith('/landing') || url.startsWith('/login') || url.startsWith('/registro') || url.startsWith('/programa') || url.startsWith('/docentes') || url.startsWith('/investigacion');
+  });
 
   rolLabel = computed(() => {
     const usuario = this.authService.usuarioActivo();
