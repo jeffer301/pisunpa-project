@@ -108,6 +108,10 @@ import { RouterLink } from '@angular/router';
       text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
 
+    .page-hero h1 span {
+      color: #4ade80;
+    }
+
     .page-hero p {
       font-size: 1.1rem;
       color: #e2e8f0;

@@ -122,6 +122,10 @@ interface DocentePerfil {
       text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
 
+    .page-hero h1 span {
+      color: #4ade80;
+    }
+
     .page-hero p {
       font-size: 1.1rem;
       color: #e2e8f0;
@@ -296,7 +300,7 @@ interface DocentePerfil {
       <div class="hero-overlay"></div>
 
       <div class="page-hero-container">
-        <h1>Nuestros Docentes y Directivos</h1>
+        <h1>Nuestros Docentes y <span>Directivos</span></h1>
         <p>
           Conoce al equipo docente y administrativo del Programa de Ingeniería de Sistemas de la Universidad del Pacífico. Pulsa sobre cualquier perfil para ver la ficha académica completa.
         </p>
