@@ -19,6 +19,10 @@ import { RegistroEstudianteComponent } from './features/registro-estudiante/regi
 import { EstudiantesPendientesComponent } from './features/admin/estudiantes-pendientes/estudiantes-pendientes.component';
 import { ProfesoresComponent } from './features/admin/profesores/profesores.component';
 import { AsignacionProfesoresComponent } from './features/admin/asignacion-profesores/asignacion-profesores.component';
+import { ProgramaComponent } from './features/programa/programa.component';
+import { DocentesComponent } from './features/docentes/docentes.component';
+import { InvestigacionComponent } from './features/investigacion/investigacion.component';
+import { LandingComponent } from './features/landing/landing.component';
 import { authGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { Rol } from './core/auth/role.model';
@@ -27,6 +31,11 @@ const rolesAdmin = ['administrador', 'director', 'secretario'] as Rol[];
 const rolesEstudiante = ['estudiante', 'egresado'] as Rol[];
 
 export const routes: Routes = [
+  { path: 'landing', component: LandingComponent },
+  { path: '', component: LandingComponent },
+  { path: 'programa', component: ProgramaComponent },
+  { path: 'docentes', component: DocentesComponent },
+  { path: 'investigacion', component: InvestigacionComponent },
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
   { path: 'registro/docente', component: RegistroDocenteComponent },
